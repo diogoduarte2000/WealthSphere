@@ -71,6 +71,14 @@ WealthSphere/
 | Data | Alteração | Responsável |
 |------|-----------|-------------|
 | 10/05/2026 | Criação do documento progress.md | - |
+| 10/05/2026 | Version 1 - Initial commit com .gitignore e progress.md | - |
+| 10/05/2026 | Version 2 - Add Docker support, docker-compose e .env | - |
+| 10/05/2026 | Push para GitHub e GitLab realizados | - |
+
+## 🌐 Repositórios Remotos
+
+- **GitHub**: https://github.com/diogoduarte2000/WealthSphere.git (origin)
+- **GitLab**: https://gitlab.com/diogoduarte2000/wealthsphere_backend.git (gitlab)
 
 ---
 
