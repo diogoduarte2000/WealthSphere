@@ -63,11 +63,12 @@
         </label>
         <small *ngIf="isRegister && isInvalid('acceptTerms')" class="field-error">Tens de aceitar os termos para continuar.</small>
 
-        <button type="submit" class="submit-button">
-          {{ isRegister ? 'Criar conta grátis' : 'Entrar' }}
+        <button type="submit" class="submit-button" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'A ligar ao servidor...' : (isRegister ? 'Criar conta grátis' : 'Entrar') }}
         </button>
 
         <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
+        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
       </form>
     </div>
 
@@ -103,8 +104,8 @@
         <span style="height: 86%"></span>
       </div>
       <div class="preview-list">
-        <p><strong>Pronto para backend:</strong> este formulário já valida e prepara o payload.</p>
-        <p>Depois ligamos `submit()` aos endpoints de login, registo e refresh token.</p>
+        <p><strong>Ligado ao backend:</strong> o registo chama `POST /api/auth/register`.</p>
+        <p>Login e refresh token ficam para a próxima ligação.</p>
       </div>
     </aside>
   </section>

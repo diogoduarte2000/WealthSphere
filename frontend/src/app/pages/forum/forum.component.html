@@ -1,1 +1,132 @@
-<p>forum works!</p>
+<div class="forum-container">
+  <!-- Header -->
+  <div class="forum-header">
+    <h1>💬 Comunidade WealthSphere</h1>
+    <p>Partilhe conhecimento, tire dúvidas e conecte-se com outros investidores</p>
+  </div>
+
+  <!-- Filtros de Tags -->
+  <div class="forum-filters" *ngIf="!selectedPost">
+    <h3>Filtrar por tags:</h3>
+    <div class="tags-container">
+      <button 
+        *ngFor="let tag of getAllTags()" 
+        class="tag-btn"
+        [class.active]="activeTag === tag"
+        (click)="filterByTag(tag)">
+        #{{ tag }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Posts -->
+  <div class="posts-list" *ngIf="!selectedPost">
+    <div class="post-card" *ngFor="let post of posts" (click)="selectPost(post)">
+      <div class="post-header">
+        <div class="post-author">
+          <span class="avatar">{{ post.avatar }}</span>
+          <div class="author-info">
+            <div class="author-name">{{ post.author }}</div>
+            <div class="post-date">{{ post.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+        <div class="post-meta">
+          <span class="pinned" *ngIf="post.isPinned">📌 Fixado</span>
+          <span class="comments-count">💬 {{ post.comments }}</span>
+        </div>
+      </div>
+      
+      <h2 class="post-title">{{ post.title }}</h2>
+      <p class="post-content">{{ post.content }}</p>
+      
+      <div class="post-tags">
+        <span class="tag" *ngFor="let tag of post.tags">#{{ tag }}</span>
+      </div>
+      
+      <div class="post-actions">
+        <button class="vote-btn" (click)="upvotePost(post); $event.stopPropagation()">
+          👍 {{ post.upvotes }}
+        </button>
+        <button class="vote-btn" (click)="downvotePost(post); $event.stopPropagation()">
+          👎 {{ post.downvotes }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalhes do Post -->
+  <div class="post-detail" *ngIf="selectedPost">
+    <button class="back-btn" (click)="backToPosts()">← Voltar aos posts</button>
+    
+    <div class="post-detail-header">
+      <div class="post-author">
+        <span class="avatar">{{ selectedPost.avatar }}</span>
+        <div class="author-info">
+          <div class="author-name">{{ selectedPost.author }}</div>
+          <div class="post-date">{{ selectedPost.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
+      </div>
+      
+      <div class="post-actions">
+        <button class="vote-btn" (click)="upvotePost(selectedPost)">
+          👍 {{ selectedPost.upvotes }}
+        </button>
+        <button class="vote-btn" (click)="downvotePost(selectedPost)">
+          👎 {{ selectedPost.downvotes }}
+        </button>
+      </div>
+    </div>
+    
+    <h1 class="post-detail-title">{{ selectedPost.title }}</h1>
+    <div class="post-detail-content">
+      <p>{{ selectedPost.content }}</p>
+    </div>
+    
+    <div class="post-detail-tags">
+      <span class="tag" *ngFor="let tag of selectedPost.tags">#{{ tag }}</span>
+    </div>
+    
+    <!-- Comentários -->
+    <div class="comments-section">
+      <h3>Comentários ({{ comments.length }})</h3>
+      
+      <div class="comment" *ngFor="let comment of comments">
+        <div class="comment-header">
+          <div class="comment-author">
+            <span class="avatar">{{ comment.avatar }}</span>
+            <div class="author-info">
+              <div class="author-name">{{ comment.author }}</div>
+              <div class="comment-date">{{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
+          
+          <div class="comment-actions">
+            <button class="vote-btn small" (click)="upvoteComment(comment)">
+              👍 {{ comment.upvotes }}
+            </button>
+            <button class="vote-btn small" (click)="downvoteComment(comment)">
+              👎 {{ comment.downvotes }}
+            </button>
+          </div>
+        </div>
+        
+        <div class="comment-content">
+          <p>{{ comment.content }}</p>
+        </div>
+      </div>
+      
+      <!-- Demo: Adicionar comentário -->
+      <div class="add-comment-demo">
+        <h4>🎮 Modo Demo - Experimente comentar!</h4>
+        <p>Nesta versão demo, pode experimentar todas as funcionalidades. Os comentários não são guardados na base de dados.</p>
+        <button class="demo-btn">✨ Escrever comentário (Demo)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Notice -->
+  <div class="demo-notice">
+    <h4>🎮 Modo Demonstração</h4>
+    <p>Está a navegar no modo demo. Pode experimentar todas as funcionalidades sem criar conta. Os dados não são persistentes.</p>
+  </div>
+</div>

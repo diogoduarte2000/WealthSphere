@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -13,6 +14,19 @@ import { RouterLink } from '@angular/router';
 type AuthMode = 'login' | 'register';
 type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
 
+interface AuthResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
 @Component({
   selector: 'app-auth',
   standalone: true,
@@ -22,11 +36,15 @@ type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTe
 })
 export class AuthComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
   private morphTimer?: ReturnType<typeof setTimeout>;
+  private readonly apiBaseUrl = this.resolveApiBaseUrl();
 
   mode: AuthMode = 'login';
   submitted = false;
   successMessage = '';
+  errorMessage = '';
+  isSubmitting = false;
   isMorphing = false;
 
   readonly authForm = this.fb.group({
@@ -56,6 +74,7 @@ export class AuthComponent implements OnDestroy {
     this.mode = mode;
     this.submitted = false;
     this.successMessage = '';
+    this.errorMessage = '';
     this.authForm.patchValue({ name: '', confirmPassword: '', acceptTerms: false });
     this.applyModeValidators();
     this.morphTimer = setTimeout(() => {
@@ -66,6 +85,7 @@ export class AuthComponent implements OnDestroy {
   submit(): void {
     this.submitted = true;
     this.successMessage = '';
+    this.errorMessage = '';
     this.authForm.updateValueAndValidity();
 
     if (this.authForm.invalid) {
@@ -74,18 +94,32 @@ export class AuthComponent implements OnDestroy {
     }
 
     const value = this.authForm.getRawValue();
+
+    if (!this.isRegister) {
+      this.successMessage = 'Login validado no frontend. Endpoint de login fica para a próxima ligação.';
+      return;
+    }
+
     const payload = {
-      mode: this.mode,
-      name: this.isRegister ? value.name : undefined,
+      name: value.name,
       email: value.email,
-      password: value.password,
-      remember: value.remember
+      password: value.password
     };
 
-    console.info('Auth payload ready for API integration:', payload);
-    this.successMessage = this.isRegister
-      ? 'Conta validada no frontend. Falta ligar ao endpoint de registo.'
-      : 'Login validado no frontend. Falta ligar ao endpoint de sessão.';
+    this.isSubmitting = true;
+    this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload).subscribe({
+      next: (response) => {
+        localStorage.setItem('wealthsphere_access_token', response.tokens.accessToken);
+        localStorage.setItem('wealthsphere_refresh_token', response.tokens.refreshToken);
+        localStorage.setItem('wealthsphere_user', JSON.stringify(response.user));
+        this.successMessage = `Conta criada com sucesso. Bem-vindo, ${response.user.name}!`;
+        this.isSubmitting = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.getErrorMessage(error);
+        this.isSubmitting = false;
+      }
+    });
   }
 
   isInvalid(controlName: AuthControl): boolean {
@@ -135,6 +169,30 @@ export class AuthComponent implements OnDestroy {
         ? { passwordMismatch: true }
         : null;
     };
+  }
+
+  private resolveApiBaseUrl(): string {
+    const configuredUrl = localStorage.getItem('wealthsphere_api_url')?.trim();
+
+    if (configuredUrl) {
+      return configuredUrl.replace(/\/$/, '');
+    }
+
+    return window.location.hostname === 'localhost'
+      ? 'http://localhost:5000/api'
+      : '/api';
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'Não consegui ligar ao backend. Confirma se o server está em http://localhost:5000.';
+    }
+
+    if (typeof error.error?.message === 'string') {
+      return error.error.message;
+    }
+
+    return 'O registo falhou. Tenta novamente daqui a pouco.';
   }
 
   ngOnDestroy(): void {

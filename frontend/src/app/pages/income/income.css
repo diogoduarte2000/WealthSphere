@@ -1,0 +1,383 @@
+.income-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.income-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.income-header h1 {
+  font-size: 2.5rem;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.income-header p {
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  border-bottom: 2px solid #e5e7eb;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #6b7280;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.tab-btn.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+  font-weight: 600;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.summary-card.income {
+  border-left: 4px solid #10b981;
+}
+
+.summary-card.expenses {
+  border-left: 4px solid #ef4444;
+}
+
+.summary-card.balance {
+  border-left: 4px solid #6366f1;
+}
+
+.summary-card.savings {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.card-content h3 {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.period {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn.income {
+  background: #10b981;
+  color: white;
+}
+
+.action-btn.income:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.action-btn.expense {
+  background: #ef4444;
+  color: white;
+}
+
+.action-btn.expense:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.action-btn.export {
+  background: #6366f1;
+  color: white;
+}
+
+.action-btn.export:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.income-view h2,
+.expenses-view h2,
+.trends-view h2 {
+  font-size: 1.8rem;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.breakdown-item {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.item-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.item-amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.percentage {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: right;
+}
+
+.trends-chart {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid #e5e7eb;
+}
+
+.chart-container {
+  margin-bottom: 24px;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 300px;
+  gap: 16px;
+  padding: 0 8px;
+}
+
+.bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.bar-column {
+  display: flex;
+  gap: 4px;
+  align-items: end;
+  height: 280px;
+}
+
+.bar {
+  width: 24px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.8s ease;
+  min-height: 4px;
+}
+
+.income-bar {
+  background: #10b981;
+}
+
+.expense-bar {
+  background: #ef4444;
+}
+
+.bar-label {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.income-color {
+  background: #10b981;
+}
+
+.expense-color {
+  background: #ef4444;
+}
+
+.demo-notice {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 32px;
+  text-align: center;
+}
+
+.demo-notice h4 {
+  color: #92400e;
+  margin-bottom: 8px;
+}
+
+.demo-notice p {
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .income-container {
+    padding: 16px;
+  }
+  
+  .income-header h1 {
+    font-size: 2rem;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    justify-content: center;
+  }
+  
+  .view-tabs {
+    gap: 4px;
+  }
+  
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .chart-bars {
+    height: 250px;
+    gap: 8px;
+  }
+  
+  .bar {
+    width: 20px;
+  }
+  
+  .chart-legend {
+    gap: 16px;
+  }
+}

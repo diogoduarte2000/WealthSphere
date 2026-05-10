@@ -248,3 +248,135 @@ Algumas secoes anteriores deste `progress.md` parecem ter sido preenchidas com i
 4. Documentar progresso e decisões neste ficheiro
 
 ---
+
+## Sessão Codex - 10/05/2026 (Tarde)
+
+### Git & Deploy
+- **GitHub**: branch `version6` criado/push; `origin/main` atualizado em `32d8799` (sem backend)
+- **GitLab**: branch `version6` criado/push; `gitlab/main` atualizado em `ebfc7cd` (backend-only, sem node_modules)
+- **Vercel**: corrigido output Angular para `browser` em `vercel.json:3`; fallback em `frontend/vercel.json:3`; `.vercelignore:1` ignora backend
+- **Docker backend**: movido para repo GitLab com `Dockerfile:1`, `docker-compose.yml:1`, `.dockerignore:1`
+
+### Validação
+- `cmd /c npm run build` passou
+- `node --check` e `require('./app')` passaram
+- npm ci reportou 3 vulnerabilidades high (não forçado fix)
+
+### Local Execution
+- Frontend: `http://localhost:4200` — status 200
+- Backend: `http://localhost:5000/api/health` — status 200 (inicialmente degraded, MongoDB desconectado)
+
+### Funcionalidades Implementadas
+- Landing page: função "Ver demo" ativa preview com scroll para dashboard mock + destaque visual
+- Auth: ligado ao endpoint `POST http://localhost:5000/api/auth/register`
+- Tokens/user guardados em localStorage quando backend responde OK
+
+### Correções
+- Copiado `backend/.env` para worktree local
+- Backend reiniciado: `http://localhost:5000/api/health` agora retorna `database: "connected"`
+- Teste registo: `POST /api/auth/register` registou na DB e devolveu tokens
+- User teste criado: `codex-smoke-1778426484@example.invalid`
+
+### Pendente
+- Alterações ainda sem commit/push
+- Vercel dashboard: verificar Production Branch (pode estar em `master` em vez de `main`)
+
+---
+
+## Sessão Demo Implementation - 10/05/2026 (Noite)
+
+### Objetivo
+Implementar um modo demo completo onde os utilizadores possam experimentar todas as funcionalidades da WealthSphere sem necessidade de registo ou ligação à base de dados.
+
+### Serviço Demo Criado
+- **Arquivo**: `frontend/src/app/services/demo.service.ts`
+- **Funcionalidades**:
+  - Dados mock para fórum (posts, comentários, tags)
+  - Dados financeiros demo para income tracker
+  - Calculadora de investimentos com juros compostos
+  - Simulações predefinidas (conservador, moderado, agressivo)
+
+### Páginas Implementadas
+
+#### 1. Fórum (`/forum`)
+- **Componente**: `frontend/src/app/pages/forum/forum.component.ts`
+- **Interface**: HTML completo com lista de posts, detalhes, comentários
+- **Funcionalidades Demo**:
+  - Filtragem por tags
+  - Votação em posts e comentários
+  - Navegação entre posts e detalhes
+  - Aviso de modo demo
+
+#### 2. Income Tracker (`/income`)
+- **Componente**: `frontend/src/app/pages/income/income.ts`
+- **Interface**: HTML com múltiplas views (resumo, rendimentos, despesas, tendências)
+- **Funcionalidades Demo**:
+  - Cards de resumo financeiro
+  - Gráficos de barras para visualização
+  - Breakdown detalhado por categorias
+  - Tendências mensais
+  - Botões demo para adicionar rendimentos/despesas
+
+#### 3. Simulador de Investimentos (`/simulador`)
+- **Componente**: `frontend/src/app/pages/simulador/simulador.ts`
+- **Interface**: HTML com painel de parâmetros e visualização de resultados
+- **Funcionalidades Demo**:
+  - Cenários predefinidos
+  - Parâmetros personalizáveis (montante, contribuição, taxa, anos)
+  - Cálculo em tempo real com juros compostos
+  - Tabela de evolução anual
+  - Gráficos de crescimento
+  - Exportação demo de resultados
+
+### Landing Page - Modo Demo
+- **Modificação**: Botão "Ver demo" agora redireciona para `/forum`
+- **Adicionado**: Navegação rápida com acesso direto às 3 páginas demo
+- **Design**: Cards com ícones e efeitos hover glassmorphism
+
+### Design e UX
+- **Identidade Visual**: Consistente com WealthSphere
+- **Cores**: Verde para rendimentos, vermelho para despesas, azul para investimentos
+- **Responsividade**: Adaptado para mobile e desktop
+- **Avisos Demo**: Notificações claras em todas as páginas
+
+### Estado Atual
+- ✅ Serviço demo implementado
+- ✅ Fórum funcional com dados mock
+- ✅ Income tracker com visualizações
+- ✅ Simulador com cálculos reais
+- ✅ Landing page integrada com modo demo
+- ✅ Design responsivo aplicado
+
+### Próximos Passos Recomendados
+1. Testar navegação entre páginas demo
+2. Verificar responsividade em diferentes dispositivos
+3. Considerar adicionar mais dados demo para variedade
+4. Implementar animações e transições
+5. Preparar para commit/push das alterações
+
+---
+
+## Resumo Técnico da Implementação Demo
+
+### Arquivos Criados/Modificados
+- `frontend/src/app/services/demo.service.ts` (NOVO)
+- `frontend/src/app/pages/forum/forum.component.ts` (MODIFICADO)
+- `frontend/src/app/pages/forum/forum.component.html` (MODIFICADO)
+- `frontend/src/app/pages/forum/forum.component.css` (MODIFICADO)
+- `frontend/src/app/pages/income/income.ts` (MODIFICADO)
+- `frontend/src/app/pages/income/income.html` (MODIFICADO)
+- `frontend/src/app/pages/income/income.css` (MODIFICADO)
+- `frontend/src/app/pages/simulador/simulador.ts` (MODIFICADO)
+- `frontend/src/app/pages/simulador/simulador.html` (MODIFICADO)
+- `frontend/src/app/pages/simulador/simulador.css` (MODIFICADO)
+- `frontend/src/app/pages/landing/landing.html` (MODIFICADO)
+- `frontend/src/app/pages/landing/landing.css` (MODIFICADO)
+
+### Tecnologias Utilizadas
+- Angular 17+ (standalone components)
+- TypeScript para tipagem segura
+- CSS Grid e Flexbox para layout responsivo
+- CSS custom properties para consistência visual
+- Juros compostos com capitalização mensal (simulador)
+
+---
