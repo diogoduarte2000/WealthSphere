@@ -1,0 +1,196 @@
+<div class="dashboard-demo">
+  <!-- Demo Banner -->
+  <div class="demo-banner">
+    <div class="demo-banner-left">
+      <span class="demo-dot"></span>
+      <span>MODO DEMO</span>
+      <strong>Dados não são persistentes</strong>
+    </div>
+    <a routerLink="/landing">Sair do Demo</a>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="white" stroke="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="logo-text">WealthSphere</div>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-section">Visão Geral</div>
+        <button class="nav-item" [class.active]="activeSection === 'overview'" (click)="switchSection('overview')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+          Dashboard
+        </button>
+        <button class="nav-item" [class.active]="activeSection === 'portfolio'" (click)="switchSection('portfolio')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+          </svg>
+          Portfolio
+        </button>
+        <button class="nav-item" [class.active]="activeSection === 'transactions'" (click)="switchSection('transactions')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+          </svg>
+          Transações
+        </button>
+
+        <div class="nav-section">Análise</div>
+        <button class="nav-item">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+          </svg>
+          Relatórios
+          <span class="nav-lock">🔒</span>
+        </button>
+        <button class="nav-item">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          Goals
+          <span class="nav-lock">🔒</span>
+        </button>
+
+        <div class="nav-section">Comunidade</div>
+        <button class="nav-item" routerLink="/forum">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+          </svg>
+          Fórum
+          <span class="nav-badge">3</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-user">
+        <div class="user-av">{{ user.avatar }}</div>
+        <div>
+          <div class="user-name">{{ user.name }}</div>
+          <div class="user-role">{{ user.role }}</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Overview Section -->
+      <div *ngIf="activeSection === 'overview'" class="content-section">
+        <header class="section-header">
+          <h1>Visão Geral</h1>
+          <p>Resumo do seu património e performance</p>
+        </header>
+
+        <!-- Portfolio Value Cards -->
+        <div class="value-cards">
+          <div class="value-card primary">
+            <div class="card-label">Valor Total</div>
+            <div class="card-value">{{ formatCurrency(portfolioData.totalValue) }}</div>
+            <div class="card-change" [class]="getChangeClass(portfolioData.monthlyChange)">
+              {{ formatPercentage(portfolioData.monthlyChange) }} este mês
+            </div>
+          </div>
+          <div class="value-card">
+            <div class="card-label">Retorno Anual</div>
+            <div class="card-value">{{ formatPercentage(portfolioData.yearlyReturn) }}</div>
+            <div class="card-sublabel">Performance 2024</div>
+          </div>
+          <div class="value-card">
+            <div class="card-label">Score de Risco</div>
+            <div class="card-value">{{ portfolioData.riskScore }}/10</div>
+            <div class="card-sublabel">Moderado</div>
+          </div>
+        </div>
+
+        <!-- Assets Overview -->
+        <div class="card">
+          <h2>Ativos Principais</h2>
+          <div class="assets-list">
+            <div class="asset-item" *ngFor="let asset of assets">
+              <div class="asset-info">
+                <div class="asset-name">{{ asset.name }}</div>
+                <div class="asset-percentage">{{ asset.percentage }}%</div>
+              </div>
+              <div class="asset-value">
+                <div class="value">{{ formatCurrency(asset.value) }}</div>
+                <div class="change" [class]="getChangeClass(asset.change)">
+                  {{ formatPercentage(asset.change) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card alerts-card">
+          <h2>Alertas e Notificações</h2>
+          <div class="alerts-list">
+            <div class="alert-item" *ngFor="let alert of alerts" [class]="alert.type">
+              <span class="alert-icon">{{ getAlertIcon(alert.type) }}</span>
+              <span class="alert-message">{{ alert.message }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Section -->
+      <div *ngIf="activeSection === 'portfolio'" class="content-section">
+        <header class="section-header">
+          <h1>Portfolio Detalhado</h1>
+          <p>Análise completa dos seus investimentos</p>
+        </header>
+
+        <div class="card">
+          <h2>Distribuição por Ativos</h2>
+          <div class="portfolio-chart">
+            <div class="chart-placeholder">
+              📊 Gráfico de distribuição (em modo demo)
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Performance Histórica</h2>
+          <div class="performance-chart">
+            <div class="chart-placeholder">
+              📈 Gráfico de performance (em modo demo)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions Section -->
+      <div *ngIf="activeSection === 'transactions'" class="content-section">
+        <header class="section-header">
+          <h1>Transações Recentes</h1>
+          <p>Histórico de movimentos</p>
+        </header>
+
+        <div class="card">
+          <div class="transactions-list">
+            <div class="transaction-item" *ngFor="let transaction of recentTransactions">
+              <div class="transaction-date">{{ transaction.date }}</div>
+              <div class="transaction-description">{{ transaction.description }}</div>
+              <div class="transaction-amount" [class]="getChangeClass(transaction.amount)">
+                {{ formatCurrency(transaction.amount) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Demo Notice -->
+  <div class="demo-notice">
+    <h4>🎮 Modo Demonstração</h4>
+    <p>Está a visualizar dados exemplo. Para guardar os seus dados reais, crie uma conta.</p>
+  </div>
+</div>
