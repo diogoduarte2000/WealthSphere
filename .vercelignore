@@ -1,3 +1,5 @@
 backend
 site preview v1
 progress.md
+Dockerfile
+docker-compose.yml
