@@ -380,3 +380,65 @@ Implementar um modo demo completo onde os utilizadores possam experimentar todas
 - Juros compostos com capitalização mensal (simulador)
 
 ---
+
+## Sessão Git Version 7 & 8 - 10/05/2026 (Noite)
+
+### Objetivo
+Criar versões git e implementar dashboard demo encontrado no site preview v1.
+
+### Version 7 - Demo Mode Implementation
+- **Branch**: `version7`
+- **Commit**: "Version 7: Demo mode implementation with forum, income tracker and simulator"
+- **Status**: ✅ Push para GitHub e GitLab completo
+- **Conteúdo**: Implementação completa do modo demo com fórum, income tracker e simulador
+
+### Version 8 - Dashboard Demo Implementation
+- **Branch**: `version8` (branch atual para trabalho futuro)
+- **Commit**: "Version 8: Dashboard demo implementation from site preview v1"
+- **Status**: ✅ Push para GitHub e GitLab completo
+- **Conteúdo**: Dashboard demo baseado no design do site preview v1
+
+### Dashboard Demo Implementado
+- **Arquivos Criados**:
+  - `frontend/src/app/pages/dashboard/dashboard-demo.component.ts`
+  - `frontend/src/app/pages/dashboard/dashboard-demo.component.html`
+  - `frontend/src/app/pages/dashboard/dashboard-demo.component.css`
+
+- **Funcionalidades**:
+  - Sidebar com navegação completa
+  - Visão geral com cards de valor total, retorno anual e score de risco
+  - Lista de ativos principais com percentagens e variações
+  - Sistema de alertas e notificações
+  - Seção de portfolio detalhado
+  - Histórico de transações
+  - Banner demo persistente
+  - Design responsivo baseado no site preview v1
+
+- **Design**:
+  - Cores consistentes com WealthSphere
+  - Animações suaves e transições
+  - Layout profissional com sidebar fixa
+  - Cards interativos com hover effects
+  - Tipografia DM Sans e Lora
+
+### Estado Atual dos Repositórios
+- **GitHub (Frontend)**: Branches `version7` e `version8` disponíveis
+- **GitLab (Backend)**: Branches `version7` e `version8` sincronizados
+- **Branch Atual**: `version8` (pronto para desenvolvimento futuro)
+
+### Próximos Passos Recomendados
+1. **Integrar dashboard demo** nas rotas da aplicação
+2. **Adicionar navegação** para dashboard demo na landing page
+3. **Implementar gráficos reais** no dashboard (Chart.js ou similar)
+4. **Conectar dados demo** do DemoService ao dashboard
+5. **Testar responsividade** em diferentes dispositivos
+6. **Preparar merge** da versão 8 para main quando estiver pronta
+
+### O que Falta Fazer
+- [ ] Adicionar rota `/dashboard-demo` ao router
+- [ ] Integrar dashboard demo com DemoService
+- [ ] Implementar gráficos interativos
+- [ ] Adicionar mais funcionalidades ao dashboard
+- [ ] Testar experiência completa do usuário
+
+---

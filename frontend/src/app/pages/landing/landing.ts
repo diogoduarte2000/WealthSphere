@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   templateUrl: './landing.html',
   styleUrl: './landing.css',
 })
@@ -22,6 +23,17 @@ export class Landing implements AfterViewInit, OnDestroy {
   private demoTimer?: ReturnType<typeof setTimeout>;
 
   isDemoActive = false;
+  showDemoModal = false;
+
+  openDemoModal() {
+    this.showDemoModal = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeDemoModal() {
+    this.showDemoModal = false;
+    document.body.style.overflow = 'auto';
+  }
 
   ngAfterViewInit(): void {
     const root = this.elementRef.nativeElement as HTMLElement;
