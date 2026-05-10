@@ -1,47 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const mongoose = require('mongoose');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-// Load environment variables
-dotenv.config();
+const app = require('./app');
+const env = require('./src/config/env');
+const { connectDatabase } = require('./src/config/db');
 
-const app = express();
 const httpServer = createServer(app);
+const allowCredentials = env.clientOrigin !== '*' && !env.clientOrigin.includes?.('*');
+
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // Allow all origins for development
-    methods: ['GET', 'POST']
+    origin: env.clientOrigin,
+    credentials: allowCredentials,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
   }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// MongoDB connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/wealthsphere';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// Basic Route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'WealthSphere API is running' });
-});
-
-// Socket.io for Real-time features
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-  
+  console.log('Socket connected:', socket.id);
+
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('Socket disconnected:', socket.id);
   });
 });
 
-const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.set('io', io);
+
+async function startServer() {
+  const database = await connectDatabase(env.mongoUri);
+
+  if (database.connected) {
+    console.log('MongoDB connected');
+  } else {
+    console.error('MongoDB connection failed:', database.error.message);
+  }
+
+  httpServer.listen(env.port, () => {
+    console.log(`WealthSphere backend running on port ${env.port}`);
+  });
+}
+
+startServer();
