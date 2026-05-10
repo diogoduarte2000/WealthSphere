@@ -60,7 +60,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       Criar conta grátis
     </a>
-    <a routerLink="/forum" class="btn btn-outline btn-lg">Ver demo</a>
+    <button type="button" class="btn btn-outline btn-lg" (click)="openDemoModal()">Ver demo</button>
   </div>
 
   <!-- Demo Quick Navigation -->
@@ -660,4 +660,51 @@
     </div>
   </div>
 </footer>
+
+<!-- Demo Modal -->
+<div class="demo-modal-overlay" *ngIf="showDemoModal" (click)="closeDemoModal()">
+  <div class="demo-modal-content" (click)="$event.stopPropagation()">
+    <div class="demo-modal-header">
+      <h3>🎮 Experimente o WealthSphere Demo</h3>
+      <button class="demo-modal-close" (click)="closeDemoModal()">×</button>
+    </div>
+    
+    <div class="demo-modal-body">
+      <p>Escolha o que quer experimentar sem criar conta:</p>
+      
+      <div class="demo-options">
+        <a href="/dashboard-demo" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">📊</div>
+          <h4>Dashboard Completo</h4>
+          <p>Veja o dashboard profissional com portfolio, transações e alertas</p>
+        </a>
+        
+        <a routerLink="/forum" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">💬</div>
+          <h4>Fórum</h4>
+          <p>Participe da comunidade, veja posts e comentários</p>
+        </a>
+        
+        <a routerLink="/income" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">💰</div>
+          <h4>Income Tracker</h4>
+          <p>Controle rendimentos e despesas com gráficos detalhados</p>
+        </a>
+        
+        <a routerLink="/simulador" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">📈</div>
+          <h4>Simulador</h4>
+          <p>Simule investimentos com juros compostos e cenários</p>
+        </a>
+      </div>
+      
+      <div class="demo-modal-footer">
+        <p class="demo-note">🎮 Modo demo: dados não são persistentes</p>
+        <button class="btn btn-fill" routerLink="/auth" (click)="closeDemoModal()">
+          Criar conta para guardar dados
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 

@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DemoService } from '../../services/demo.service';
 
 @Component({
   selector: 'app-dashboard-demo',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard-demo.component.html',
   styleUrl: './dashboard-demo.component.css'
 })
