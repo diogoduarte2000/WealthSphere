@@ -136,6 +136,13 @@ WealthSphere/
 
 ---
 
+## Atualização Version 6 (2026-05-10)
+
+- Separação de deploy definida: frontend Angular no GitHub/Vercel; backend Node/Express no GitLab.
+- Vercel ajustado para instalar com `npm ci`, compilar `frontend/` e publicar `frontend/dist/frontend/browser`.
+- Docker/backend deve viver no repositório GitLab do backend, não no GitHub frontend-only.
+- Node de deploy fixado em versão 20 via `.nvmrc`.
+
 ## Estado auditado do repositorio (2026-05-10)
 
 Esta secao foi escrita depois de ler os ficheiros em `site preview v1/` e comparar com o estado atual do frontend e backend. Serve como resumo mais fiel do que ja esta feito e do que ainda falta.
