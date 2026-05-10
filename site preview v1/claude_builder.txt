@@ -1,0 +1,151 @@
+📋 Prompt Completo para Desenvolvimento
+Nome sugerido: WealthSphere ou Finvest ou Kairos
+
+VISÃO GERAL
+Plataforma web full-stack de gestão financeira pessoal, mercados e comunidade. Combina ferramentas privadas de finanças pessoais com um fórum público de discussão e acesso a mercados tradicionais e alternativos. Inspiração visual: Anthropic.com — tons terrosos (areia, terracota, verde musgo), tipografia editorial Lora + DM Sans, ilustrações lineares, cards com cantos arredondados, layout orgânico mas estruturado.
+
+STACK TÉCNICO
+
+Frontend: Angular 17+ (standalone components, signals, lazy loading por módulo)
+Backend: Node.js + Express REST API
+Base de dados: MongoDB Atlas (Mongoose ODM)
+Auth: JWT + Refresh Tokens + bcrypt
+Real-time: Socket.io (notificações, fórum ao vivo)
+Cache: Redis (taxas financeiras, preços de mercado)
+Deploy: Frontend → Vercel, Backend → Render, DB → MongoDB Atlas
+APIs externas:
+
+Alpha Vantage / Finnhub → ações, ETFs
+CoinGecko → cripto
+ECB Data Portal → Euribor
+Banco de Portugal API → TEAG
+Steam Market API → preços CS2/skins
+CSFloat API / Skinport API → skins CS2 detalhadas
+
+
+
+
+MÓDULOS DA APLICAÇÃO
+🔐 AUTH & PERFIL
+
+Registo/Login com email + password
+OAuth Google
+Perfil público (bio, avatar, portfólio visível/oculto, reputação no fórum)
+Perfil privado (income, metas, simulações guardadas)
+Níveis de utilizador: Visitante → Membro → Contribuidor → Expert
+
+📊 DASHBOARD PESSOAL (privado)
+
+Resumo patrimonial: ativos, passivos, net worth
+Gráfico de evolução patrimonial (mensal/anual)
+Alertas personalizados (Euribor subiu X%, ação Y atingiu target)
+Widget de metas financeiras com progresso visual
+
+💰 INCOME TRACKER
+
+Registo de rendimentos: salário, rendas, freelance, dividendos, outros
+Registo de despesas por categoria (habitação, alimentação, lazer, etc.)
+Balanço mensal com gráfico de pizza e barras
+Exportação para CSV/PDF
+Modo de orçamento mensal com limites por categoria
+
+📈 SIMULADOR DE INVESTIMENTOS
+
+Juros compostos com depósito mensal
+Comparador de cenários (ex: ETF vs Depósito a Prazo vs Imóvel)
+Simulador de amortização de crédito habitação
+Calculadora FIRE (Financial Independence, Retire Early)
+Impacto da inflação no poder de compra
+Simulador de dividendos
+Todos os resultados em gráficos interativos (Chart.js ou D3)
+
+🏠 GESTÃO DE RENDAS / IMÓVEIS
+
+Registo de imóveis (valor, localização, área)
+Rendas recebidas por imóvel + histórico
+Cálculo de rentabilidade bruta e líquida
+Simulador de crédito habitação (prestação, TAEG, amortizações)
+Alertas de atualização de renda (índice INE)
+Cálculo de IRS sobre rendimentos prediais
+
+🌍 TAXAS & MERCADOS FINANCEIROS
+
+Euribor (3M, 6M, 12M) em tempo real com histórico
+TEAG dos principais bancos portugueses e europeus
+Spreads de crédito habitação por banco
+Taxas de juro do BCE
+Câmbios (EUR/USD, EUR/GBP, etc.)
+Índices bolsistas (PSI20, S&P500, NASDAQ, DAX, FTSE)
+Pesquisa de ações com ficha técnica (P/E, dividendo, 52w high/low)
+ETFs populares com comparativo de TER
+
+🎮 MERCADOS ALTERNATIVOS (CS2 / STEAM)
+
+Listagem de skins CS2 com preço atual (Steam Market + Skinport)
+Histórico de preços de cada skin (gráfico 30d / 90d / 1ano)
+Calculadora de ROI: comprei por X, vale Y hoje
+Simulador: "se tivesse investido €500 em skins há 1 ano"
+Comparativo: skin vs Bitcoin vs ETF no mesmo período
+Watchlist pessoal de skins
+Fórum dedicado a mercados alternativos com tags específicas
+Calculadora de float/wear e impacto no preço
+Tendências de caixas (cases): preço de abertura vs venda direta
+
+💬 COMUNIDADE / FÓRUM
+
+Posts com título, corpo rico (markdown), tags, imagens
+Sistema de tags: #ações #ETF #cripto #imóveis #cs2-skins #poupança #FIRE #portugal #novato
+Upvote / Downvote + sistema de comentários aninhados
+Flair de utilizador (Expert em ETFs, Landlord, Skin Trader, etc.)
+Feed personalizado baseado em tags seguidas
+Trending posts da semana
+"Ask the Community" — perguntas rápidas com respostas da comunidade
+Notificações em tempo real (Socket.io) para respostas e menções
+Sistema de moderação (reportar posts, shadowban)
+Secção "Portfólios Partilhados" — utilizadores partilham o seu portfólio anonimizado
+
+🔔 NOTIFICAÇÕES & ALERTAS
+
+Alerta quando Euribor atinge valor definido
+Alerta de preço de ação (acima/abaixo de X)
+Alerta de preço de skin CS2
+Notificação de resposta no fórum
+Resumo semanal por email (SendGrid)
+
+
+BASE DE DADOS — MODELOS PRINCIPAIS
+User { id, name, email, passwordHash, avatar, bio, role, preferences, createdAt }
+Income { userId, type, amount, currency, description, date, recurring, category }
+Expense { userId, amount, category, description, date, recurring }
+Property { userId, name, location, value, area, purchaseDate, mortgage }
+Rent { propertyId, userId, amount, tenant, startDate, endDate, paid }
+Simulation { userId, type, params, result, savedAt }
+WatchlistItem { userId, assetType, assetId, targetPrice, createdAt }
+Post { id, authorId, title, body, tags, upvotes, downvotes, views, createdAt }
+Comment { id, postId, parentId, authorId, body, upvotes, createdAt }
+Alert { userId, type, condition, value, triggered, createdAt }
+
+UX / UI
+Identidade visual:
+
+Paleta: areia #f0ebe0, terracota #c96a45, verde musgo #6b8c6b, lilás #8b80c8, tinta #2a2018
+Tipografia: Lora (títulos, serif editorial) + DM Sans (corpo, UI)
+Ilustrações SVG lineares à mão nos cards e estados vazios
+Cards com border-radius: 16px, sombras suaves
+Sidebar fixa à esquerda + topbar
+Animações subtis: fade-in por secção, hover states orgânicos
+Totalmente responsivo (mobile-first)
+
+Páginas:
+
+Landing Page (pública)
+Auth (Login / Registo)
+Dashboard
+Income Tracker
+Simulador
+Rendas & Imóveis
+Taxas & Mercados
+Mercados Alternativos (CS2/Steam)
+Comunidade / Fórum
+Perfil Público
+Definições

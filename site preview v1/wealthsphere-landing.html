@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthSphere — O teu universo financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --sand:   #f0ebe0;
+  --sand2:  #e6dfd1;
+  --sand3:  #d8cfc0;
+  --terra:  #c96a45;
+  --terra2: #b85c38;
+  --terra-l:#e07a52;
+  --sage:   #5f7e5f;
+  --sage-l: #7a9e7a;
+  --lilac:  #8b80c8;
+  --lilac-l:#a496d8;
+  --ink:    #1e1812;
+  --ink2:   #2e2418;
+  --brown:  #5a4a3a;
+  --muted:  #8a7a6a;
+  --white:  #faf9f6;
+  --border: rgba(90,74,58,0.14);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--sand);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* NOISE TEXTURE OVERLAY */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: rgba(240,235,224,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: var(--terra);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.nav-logo-icon svg { width: 18px; height: 18px; }
+
+.nav-logo-text {
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 14px;
+  color: var(--brown);
+  text-decoration: none;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--terra); }
+
+.nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+
+.btn-outline {
+  background: none;
+  color: var(--brown);
+  border: 1.5px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--terra); color: var(--terra); }
+
+.btn-fill {
+  background: var(--terra);
+  color: white;
+}
+.btn-fill:hover { background: var(--terra2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,106,69,0.3); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 48px 80px;
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* big background shapes */
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+.hero-blob-1 { width: 600px; height: 600px; background: var(--terra); top: -100px; right: -100px; }
+.hero-blob-2 { width: 400px; height: 400px; background: var(--sage); bottom: -80px; left: -80px; }
+.hero-blob-3 { width: 300px; height: 300px; background: var(--lilac); top: 40%; left: 60%; }
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: var(--terra);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-bottom: 32px;
+  animation: fadeUp 0.7s ease both;
+}
+
+.hero-eyebrow-dot {
+  width: 6px; height: 6px;
+  background: var(--terra);
+  border-radius: 50%;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.hero h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  max-width: 820px;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--terra);
+}
+
+.hero-sub {
+  margin-top: 24px;
+  font-size: 18px;
+  color: var(--brown);
+  max-width: 560px;
+  line-height: 1.6;
+  font-weight: 300;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+
+.hero-actions {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+.hero-social-proof {
+  margin-top: 48px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: fadeUp 0.7s 0.4s ease both;
+}
+
+.avatars {
+  display: flex;
+}
+
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--sand);
+  margin-left: -8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.avatar:first-child { margin-left: 0; }
+.av1 { background: var(--terra); }
+.av2 { background: var(--sage); }
+.av3 { background: var(--lilac); }
+.av4 { background: #c9a45a; }
+.av5 { background: #7a8c6a; }
+
+.social-text { font-size: 13px; color: var(--muted); }
+.social-text strong { color: var(--ink); font-weight: 600; }
+
+/* HERO DASHBOARD PREVIEW */
+.hero-preview {
+  margin-top: 72px;
+  width: 100%;
+  max-width: 1000px;
+  animation: fadeUp 0.9s 0.5s ease both;
+  position: relative;
+}
+
+.preview-frame {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(42,32,24,0.14), 0 4px 16px rgba(42,32,24,0.08);
+  overflow: hidden;
+}
+
+.preview-bar {
+  background: var(--sand2);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.preview-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+.pd-red { background: #e07070; }
+.pd-yellow { background: #e0c070; }
+.pd-green { background: var(--sage-l); }
+
+.preview-url {
+  margin-left: 12px;
+  flex: 1;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 280px;
+}
+
+.preview-body {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 380px;
+}
+
+.preview-sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+}
+
+.ps-logo {
+  padding: 0 16px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.ps-logo-block {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.ps-logo-icon {
+  width: 28px; height: 28px;
+  background: var(--terra);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.ps-logo-icon svg { width: 14px; height: 14px; }
+
+.ps-name {
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ps-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--brown);
+  border-radius: 0;
+}
+
+.ps-nav-item.active {
+  background: rgba(201,106,69,0.1);
+  color: var(--terra);
+  font-weight: 500;
+}
+
+.ps-nav-item svg { width: 14px; height: 14px; opacity: 0.6; }
+.ps-nav-item.active svg { opacity: 1; }
+
+.ps-section {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  padding: 12px 16px 4px;
+  text-transform: uppercase;
+}
+
+.preview-content {
+  padding: 20px;
+  background: var(--sand);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pc-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pc-greeting {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pc-greeting span { color: var(--terra); font-style: italic; }
+.pc-date { font-size: 11px; color: var(--muted); }
+
+.pc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.pc-stat {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.pc-stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.pc-stat-val { font-size: 16px; font-weight: 600; color: var(--ink); font-family: 'Lora', serif; }
+.pc-stat-change { font-size: 9px; margin-top: 2px; }
+.up { color: var(--sage); }
+.down { color: var(--terra); }
+
+.pc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pc-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.pc-card-title { font-size: 11px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+
+/* mini chart */
+.mini-chart {
+  height: 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mini-chart svg { width: 100%; height: 100%; }
+
+/* community mini */
+.comm-posts { display: flex; flex-direction: column; gap: 8px; }
+.comm-post { display: flex; align-items: flex-start; gap: 8px; }
+.comm-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: white; font-weight: 600;
+}
+.comm-post-content {}
+.comm-post-title { font-size: 10px; color: var(--ink); line-height: 1.3; }
+.comm-post-meta { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.comm-tag {
+  display: inline-block;
+  background: var(--terra-dim, rgba(201,106,69,0.1));
+  color: var(--terra);
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+/* SECTION: FEATURES */
+section { padding: 100px 48px; position: relative; }
+
+.section-label {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--terra);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'Lora', serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  max-width: 640px;
+}
+
+.section-title em { color: var(--terra); font-style: italic; }
+
+.section-sub {
+  margin-top: 16px;
+  font-size: 16px;
+  color: var(--brown);
+  max-width: 520px;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* Features grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 56px;
+}
+
+.feature-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(42,32,24,0.1);
+}
+
+.feature-illus {
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+
+.fi-terra { background: rgba(201,106,69,0.12); }
+.fi-sage  { background: rgba(95,126,95,0.12); }
+.fi-lilac { background: rgba(139,128,200,0.15); }
+.fi-gold  { background: rgba(201,164,90,0.15); }
+.fi-brown { background: rgba(90,74,58,0.08); }
+.fi-game  { background: rgba(95,126,95,0.15); }
+
+.feature-illus svg { width: 32px; height: 32px; }
+
+.feature-card h3 {
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.feature-tag {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--terra);
+  font-weight: 500;
+}
+
+/* RATES SECTION */
+.rates-section {
+  background: var(--ink);
+  color: var(--sand);
+  padding: 100px 48px;
+}
+
+.rates-section .section-title { color: var(--sand); }
+.rates-section .section-title em { color: var(--terra-l); }
+.rates-section .section-sub { color: var(--sand3); }
+
+.rates-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.rate-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  transition: background 0.2s;
+}
+
+.rate-card:hover { background: rgba(255,255,255,0.08); }
+
+.rate-card-label { font-size: 10px; letter-spacing: 0.15em; color: rgba(240,235,224,0.5); text-transform: uppercase; margin-bottom: 8px; }
+.rate-card-name { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--sand); margin-bottom: 12px; }
+.rate-card-val { font-size: 28px; font-weight: 600; color: var(--terra-l); letter-spacing: -0.03em; }
+.rate-card-unit { font-size: 14px; opacity: 0.6; margin-left: 2px; }
+.rate-card-change { margin-top: 6px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+.rate-up { color: #7ecfa0; }
+.rate-dn { color: #e07070; }
+
+/* COMMUNITY */
+.community-section {
+  background: var(--white);
+}
+
+.community-showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 56px;
+  align-items: start;
+}
+
+.comm-left {}
+
+.forum-post {
+  background: var(--sand);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.forum-post:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(42,32,24,0.08); }
+
+.forum-post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.forum-post-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: white; font-weight: 600;
+  flex-shrink: 0;
+}
+.forum-post-user { font-size: 13px; font-weight: 500; color: var(--ink); }
+.forum-post-time { font-size: 11px; color: var(--muted); }
+
+.forum-post-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.forum-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.ft-terra { background: rgba(201,106,69,0.12); color: var(--terra); }
+.ft-sage { background: rgba(95,126,95,0.12); color: var(--sage); }
+.ft-lilac { background: rgba(139,128,200,0.15); color: var(--lilac); }
+.ft-brown { background: rgba(90,74,58,0.08); color: var(--brown); }
+
+.forum-post-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.35; margin-bottom: 6px; }
+.forum-post-excerpt { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.forum-post-footer { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.fpost-stat { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.fpost-stat svg { width: 13px; height: 13px; }
+
+.comm-right {}
+
+.tags-cloud {
+  margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+
+.cloud-tag {
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--brown);
+  background: var(--sand);
+}
+.cloud-tag:hover { border-color: var(--terra); color: var(--terra); background: rgba(201,106,69,0.06); }
+.cloud-tag.active { background: var(--terra); color: white; border-color: var(--terra); }
+
+.trending-title {
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.trending-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.trending-item:last-child { border-bottom: none; }
+
+.trending-num {
+  font-family: 'Lora', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sand3);
+  width: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.trending-info {}
+.trending-tag { font-size: 10px; color: var(--terra); font-weight: 500; margin-bottom: 3px; letter-spacing: 0.05em; }
+.trending-t { font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.trending-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* MARKETS ALTERNATIVE */
+.markets-section {
+  background: var(--sand);
+}
+
+.markets-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 56px;
+  align-items: center;
+}
+
+.market-card-list { display: flex; flex-direction: column; gap: 10px; }
+
+.market-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.market-item:hover { transform: translateX(4px); box-shadow: 0 4px 16px rgba(42,32,24,0.08); }
+
+.market-item-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.market-item-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.market-item-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.market-item-price { margin-left: auto; text-align: right; }
+.market-item-val { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--ink); }
+.market-item-chg { font-size: 12px; }
+
+/* CTA SECTION */
+.cta-section {
+  background: var(--terra);
+  padding: 100px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.2;
+  background: white;
+  pointer-events: none;
+}
+.cb1 { width: 400px; height: 400px; top: -100px; right: -100px; }
+.cb2 { width: 300px; height: 300px; bottom: -80px; left: -60px; }
+
+.cta-section h2 {
+  font-family: 'Lora', serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.cta-section p {
+  font-size: 17px;
+  color: rgba(255,255,255,0.8);
+  max-width: 480px;
+  margin: 0 auto 36px;
+  line-height: 1.6;
+  font-weight: 300;
+  position: relative;
+}
+
+.btn-white {
+  background: white;
+  color: var(--terra);
+  font-size: 15px;
+  padding: 14px 32px;
+  position: relative;
+}
+.btn-white:hover { background: var(--sand); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+/* FOOTER */
+footer {
+  background: var(--ink2);
+  color: var(--sand3);
+  padding: 56px 48px 32px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+.footer-brand {}
+.footer-brand-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.footer-brand-icon { width: 32px; height: 32px; background: var(--terra); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.footer-brand-icon svg { width: 18px; height: 18px; }
+.footer-brand-name { font-family: 'Lora', serif; font-size: 18px; font-weight: 700; color: white; }
+.footer-brand-desc { font-size: 13px; color: rgba(216,207,192,0.6); line-height: 1.6; max-width: 260px; }
+
+.footer-col h4 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(216,207,192,0.5); margin-bottom: 16px; font-weight: 500; }
+.footer-col a { display: block; font-size: 14px; color: rgba(216,207,192,0.7); text-decoration: none; margin-bottom: 10px; transition: color 0.15s; }
+.footer-col a:hover { color: white; }
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-copy { font-size: 12px; color: rgba(216,207,192,0.4); }
+.footer-legal { display: flex; gap: 20px; }
+.footer-legal a { font-size: 12px; color: rgba(216,207,192,0.4); text-decoration: none; }
+.footer-legal a:hover { color: rgba(216,207,192,0.8); }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* terra dim for community */
+.terra-dim { background: rgba(201,106,69,0.1); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  section { padding: 64px 24px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .rates-grid { grid-template-columns: 1fr 1fr; }
+  .community-showcase { grid-template-columns: 1fr; }
+  .markets-split { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .preview-body { grid-template-columns: 1fr; }
+  .preview-sidebar { display: none; }
+  .pc-stats { grid-template-columns: 1fr 1fr; }
+  .rates-section { padding: 64px 24px; }
+  .cta-section { padding: 64px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">WealthSphere</span>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="#features">Funcionalidades</a></li>
+    <li><a href="#mercados">Mercados</a></li>
+    <li><a href="#comunidade">Comunidade</a></li>
+    <li><a href="#taxas">Taxas</a></li>
+  </ul>
+
+  <div class="nav-cta">
+    <a href="#" class="btn btn-outline">Entrar</a>
+    <a href="#" class="btn btn-fill">Começar grátis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+  <div class="hero-blob hero-blob-3"></div>
+
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-dot"></span>
+    Novo · Mercados alternativos já disponíveis
+  </div>
+
+  <h1>O teu universo<br>financeiro, <em>todo num só lugar</em></h1>
+
+  <p class="hero-sub">Gere rendas, simula investimentos, acompanha taxas em tempo real e partilha estratégias com uma comunidade que pensa como tu — incluindo mercados de CS2 e Steam.</p>
+
+  <div class="hero-actions">
+    <a href="#" class="btn btn-fill btn-lg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Criar conta grátis
+    </a>
+    <a href="#" class="btn btn-outline btn-lg">Ver demo</a>
+  </div>
+
+  <div class="hero-social-proof">
+    <div class="avatars">
+      <div class="avatar av1">M</div>
+      <div class="avatar av2">R</div>
+      <div class="avatar av3">J</div>
+      <div class="avatar av4">A</div>
+      <div class="avatar av5">P</div>
+    </div>
+    <span class="social-text"><strong>+2.400 utilizadores</strong> já gerem as suas finanças aqui</span>
+  </div>
+
+  <div class="hero-preview">
+    <div class="preview-frame">
+      <div class="preview-bar">
+        <div class="preview-dot pd-red"></div>
+        <div class="preview-dot pd-yellow"></div>
+        <div class="preview-dot pd-green"></div>
+        <div class="preview-url">wealthsphere.pt/dashboard</div>
+      </div>
+      <div class="preview-body">
+        <div class="preview-sidebar">
+          <div class="ps-logo">
+            <div class="ps-logo-block">
+              <div class="ps-logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <span class="ps-name">WealthSphere</span>
+            </div>
+          </div>
+          <div class="ps-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </div>
+          <div class="ps-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            Income
+          </div>
+          <div class="ps-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Simulador
+          </div>
+          <div class="ps-section">Mercados</div>
+          <div class="ps-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            Taxas & Ações
+          </div>
+          <div class="ps-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            CS2 / Steam
+          </div>
+          <div class="ps-section">Social</div>
+          <div class="ps-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            Comunidade
+          </div>
+        </div>
+
+        <div class="preview-content">
+          <div class="pc-topbar">
+            <div>
+              <div class="pc-greeting">Bom dia, <span>Diogo</span> 👋</div>
+              <div class="pc-date">Domingo, 10 de Maio · Euribor 6M: 2.61%</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:600">D</div>
+            </div>
+          </div>
+
+          <div class="pc-stats">
+            <div class="pc-stat">
+              <div class="pc-stat-label">Net Worth</div>
+              <div class="pc-stat-val">€24.8k</div>
+              <div class="pc-stat-change up">↑ +3.2% este mês</div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-label">Rendas / mês</div>
+              <div class="pc-stat-val">€1.200</div>
+              <div class="pc-stat-change up">↑ 2 imóveis</div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-label">Portfólio ETF</div>
+              <div class="pc-stat-val">€8.4k</div>
+              <div class="pc-stat-change up">↑ +1.8%</div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-label">Skins CS2</div>
+              <div class="pc-stat-val">€620</div>
+              <div class="pc-stat-change down">↓ -0.4%</div>
+            </div>
+          </div>
+
+          <div class="pc-row">
+            <div class="pc-card">
+              <div class="pc-card-title">Evolução Patrimonial</div>
+              <div class="mini-chart">
+                <svg viewBox="0 0 200 56" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#c96a45" stop-opacity="0.2"/>
+                      <stop offset="100%" stop-color="#c96a45" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 48 C20 44 40 38 60 35 S100 28 120 22 S160 14 200 8" fill="none" stroke="#c96a45" stroke-width="2"/>
+                  <path d="M0 48 C20 44 40 38 60 35 S100 28 120 22 S160 14 200 8 L200 56 L0 56Z" fill="url(#g1)"/>
+                </svg>
+              </div>
+            </div>
+            <div class="pc-card">
+              <div class="pc-card-title">Comunidade — Trending</div>
+              <div class="comm-posts">
+                <div class="comm-post">
+                  <div class="comm-avatar" style="background:var(--sage)">R</div>
+                  <div class="comm-post-content">
+                    <div class="comm-post-title"><span class="comm-tag">#ETF</span> Vanguard FTSE All-World — vale a pena em 2025?</div>
+                    <div class="comm-post-meta">47 respostas · há 2h</div>
+                  </div>
+                </div>
+                <div class="comm-post">
+                  <div class="comm-avatar" style="background:var(--lilac)">A</div>
+                  <div class="comm-post-content">
+                    <div class="comm-post-title"><span class="comm-tag" style="background:rgba(95,126,95,0.12);color:var(--sage)">#cs2</span> AK-47 Redline subiu 18% — comprar ou vender?</div>
+                    <div class="comm-post-meta">23 respostas · há 4h</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background:var(--white)">
+  <div class="reveal">
+    <div class="section-label">Funcionalidades</div>
+    <h2 class="section-title">Tudo o que precisas para <em>crescer financeiramente</em></h2>
+    <p class="section-sub">Desde a gestão de rendas ao acompanhamento de skins de CS2 — uma plataforma para todos os teus ativos.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-illus fi-terra">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c96a45" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <h3>Gestão de Rendas</h3>
+      <p>Regista imóveis, acompanha rendas recebidas, calcula rentabilidade líquida e simula crédito habitação com taxas reais dos bancos portugueses.</p>
+      <span class="feature-tag">→ IRS predial incluído</span>
+    </div>
+
+    <div class="feature-card reveal" style="transition-delay:0.08s">
+      <div class="feature-illus fi-sage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5f7e5f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <h3>Simulador Avançado</h3>
+      <p>Juros compostos, comparador de cenários, calculadora FIRE, simulador de dividendos e impacto da inflação. Resultados em gráficos interativos.</p>
+      <span class="feature-tag" style="color:var(--sage)">→ Calculadora FIRE incluída</span>
+    </div>
+
+    <div class="feature-card reveal" style="transition-delay:0.16s">
+      <div class="feature-illus fi-lilac">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8b80c8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <h3>Comunidade</h3>
+      <p>Fórum com tags, portfólios partilhados, sistema de reputação e discussões em tempo real sobre ações, ETFs, imóveis e mercados alternativos.</p>
+      <span class="feature-tag" style="color:var(--lilac)">→ Real-time com Socket.io</span>
+    </div>
+
+    <div class="feature-card reveal" style="transition-delay:0.0s">
+      <div class="feature-illus fi-gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c9a45a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+        </svg>
+      </div>
+      <h3>Income Tracker</h3>
+      <p>Regista salário, rendas, freelance e dividendos. Define orçamentos por categoria e exporta relatórios mensais em CSV ou PDF.</p>
+      <span class="feature-tag" style="color:#c9a45a">→ Export PDF incluído</span>
+    </div>
+
+    <div class="feature-card reveal" style="transition-delay:0.08s">
+      <div class="feature-illus fi-brown">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5a4a3a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+        </svg>
+      </div>
+      <h3>Taxas em Tempo Real</h3>
+      <p>Euribor 3M/6M/12M, TEAG dos principais bancos, spreads de crédito habitação, câmbios e índices bolsistas atualizados automaticamente.</p>
+      <span class="feature-tag" style="color:var(--brown)">→ ECB + Banco de Portugal</span>
+    </div>
+
+    <div class="feature-card reveal" style="transition-delay:0.16s">
+      <div class="feature-illus fi-game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5f7e5f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="15" rx="2"/>
+          <path d="M16 2l-4 5-4-5"/>
+          <line x1="12" y1="12" x2="12" y2="17"/>
+          <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
+        </svg>
+      </div>
+      <h3>Mercados CS2 & Steam</h3>
+      <p>Preços de skins em tempo real, histórico de tendências, calculadora de ROI e comparativo com ativos tradicionais. Watchlist pessoal incluída.</p>
+      <span class="feature-tag" style="color:var(--sage)">→ Steam + CSFloat API</span>
+    </div>
+  </div>
+</section>
+
+<!-- RATES -->
+<section id="taxas" class="rates-section">
+  <div class="reveal">
+    <div class="section-label" style="color:var(--terra-l)">Mercados Financeiros</div>
+    <h2 class="section-title">Taxas e mercados<br><em>sempre atualizados</em></h2>
+    <p class="section-sub">Dados em tempo real das principais fontes europeias e mundiais para tomares decisões informadas.</p>
+  </div>
+
+  <div class="rates-grid reveal">
+    <div class="rate-card">
+      <div class="rate-card-label">Banco Central Europeu</div>
+      <div class="rate-card-name">Euribor 6 Meses</div>
+      <div class="rate-card-val">2.61<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-change rate-dn">↓ -0.08% vs mês anterior</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Banco de Portugal</div>
+      <div class="rate-card-name">TEAG Médio Habitação</div>
+      <div class="rate-card-val">4.12<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-change rate-dn">↓ -0.15% vs mês anterior</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Índice Bolsista</div>
+      <div class="rate-card-name">S&P 500</div>
+      <div class="rate-card-val">5.287<span class="rate-card-unit">pts</span></div>
+      <div class="rate-card-change rate-up">↑ +1.2% esta semana</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Câmbio</div>
+      <div class="rate-card-name">EUR / USD</div>
+      <div class="rate-card-val">1.087<span class="rate-card-unit"></span></div>
+      <div class="rate-card-change rate-up">↑ +0.3% hoje</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">ETF Popular</div>
+      <div class="rate-card-name">Vanguard FTSE All-World</div>
+      <div class="rate-card-val">128.4<span class="rate-card-unit">€</span></div>
+      <div class="rate-card-change rate-up">↑ +0.7% hoje</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Cripto</div>
+      <div class="rate-card-name">Bitcoin</div>
+      <div class="rate-card-val">97.2<span class="rate-card-unit">k€</span></div>
+      <div class="rate-card-change rate-up">↑ +2.1% 24h</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Portugal</div>
+      <div class="rate-card-name">PSI 20</div>
+      <div class="rate-card-val">6.841<span class="rate-card-unit">pts</span></div>
+      <div class="rate-card-change rate-dn">↓ -0.4% hoje</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-card-label">Inflação</div>
+      <div class="rate-card-name">IPC Portugal</div>
+      <div class="rate-card-val">2.3<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-change rate-up">↑ +0.2% vs mês anterior</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="comunidade" class="community-section">
+  <div class="reveal">
+    <div class="section-label">Comunidade</div>
+    <h2 class="section-title">Aprende e investe<br><em>em comunidade</em></h2>
+    <p class="section-sub">Discussões reais sobre ações, ETFs, imóveis, cripto e mercados de CS2 — com pessoas que pensam como tu.</p>
+  </div>
+
+  <div class="community-showcase">
+    <div class="comm-left reveal">
+      <div class="forum-post">
+        <div class="forum-post-header">
+          <div class="forum-post-avatar" style="background:var(--terra)">M</div>
+          <div>
+            <div class="forum-post-user">miguel.f</div>
+            <div class="forum-post-time">há 1 hora</div>
+          </div>
+        </div>
+        <div class="forum-post-tags">
+          <span class="forum-tag ft-terra">#ETF</span>
+          <span class="forum-tag ft-sage">#poupança</span>
+          <span class="forum-tag ft-brown">#portugal</span>
+        </div>
+        <div class="forum-post-title">Vanguard FTSE All-World vs iShares MSCI World — qual escolher para DCA mensal?</div>
+        <div class="forum-post-excerpt">Estou a pensar começar com €200/mês mas não consigo decidir entre os dois. Alguém tem experiência com ambos no contexto fiscal português?</div>
+        <div class="forum-post-footer">
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg>
+            84
+          </span>
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            37 respostas
+          </span>
+          <span class="fpost-stat">👁 412 views</span>
+        </div>
+      </div>
+
+      <div class="forum-post">
+        <div class="forum-post-header">
+          <div class="forum-post-avatar" style="background:var(--lilac)">A</div>
+          <div>
+            <div class="forum-post-user">afx_trade</div>
+            <div class="forum-post-time">há 3 horas</div>
+          </div>
+        </div>
+        <div class="forum-post-tags">
+          <span class="forum-tag ft-sage">#cs2-skins</span>
+          <span class="forum-tag ft-lilac">#mercados-alt</span>
+        </div>
+        <div class="forum-post-title">AK-47 Redline subiu 18% este mês — tendência ou bolha?</div>
+        <div class="forum-post-excerpt">Comprei há 3 meses a €28, agora está a €33. O float é 0.19. Alguém está a acompanhar esta skin? Faz sentido segurar ou realizar lucro?</div>
+        <div class="forum-post-footer">
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg>
+            61
+          </span>
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            23 respostas
+          </span>
+          <span class="fpost-stat">👁 218 views</span>
+        </div>
+      </div>
+
+      <div class="forum-post">
+        <div class="forum-post-header">
+          <div class="forum-post-avatar" style="background:var(--sage)">P</div>
+          <div>
+            <div class="forum-post-user">pedro.invest</div>
+            <div class="forum-post-time">há 6 horas</div>
+          </div>
+        </div>
+        <div class="forum-post-tags">
+          <span class="forum-tag ft-terra">#imóveis</span>
+          <span class="forum-tag ft-brown">#rendas</span>
+        </div>
+        <div class="forum-post-title">Como calcular a rentabilidade líquida de um imóvel depois de IRS e condomínio?</div>
+        <div class="forum-post-excerpt">Tenho um T2 em Setúbal a render €700/mês. Quero perceber se vale mais a pena vender e colocar em ETFs ou manter o imóvel...</div>
+        <div class="forum-post-footer">
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg>
+            52
+          </span>
+          <span class="fpost-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            18 respostas
+          </span>
+          <span class="fpost-stat">👁 310 views</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="comm-right reveal" style="transition-delay:0.15s">
+      <div style="margin-bottom:28px">
+        <div class="trending-title">Explorar por tag</div>
+        <div class="tags-cloud">
+          <span class="forum-tag ft-terra cloud-tag active">#ações</span>
+          <span class="forum-tag ft-sage cloud-tag">#ETF</span>
+          <span class="forum-tag ft-lilac cloud-tag">#cs2-skins</span>
+          <span class="forum-tag ft-brown cloud-tag">#imóveis</span>
+          <span class="cloud-tag">#cripto</span>
+          <span class="cloud-tag">#poupança</span>
+          <span class="cloud-tag">#FIRE</span>
+          <span class="cloud-tag">#portugal</span>
+          <span class="cloud-tag">#steam</span>
+          <span class="cloud-tag">#novato</span>
+          <span class="cloud-tag">#dividendos</span>
+          <span class="cloud-tag">#rendas</span>
+        </div>
+      </div>
+
+      <div class="trending-title">Em destaque esta semana</div>
+      <div>
+        <div class="trending-item">
+          <div class="trending-num">01</div>
+          <div class="trending-info">
+            <div class="trending-tag">#ETF · #portugal</div>
+            <div class="trending-t">Investir em ETFs como residente fiscal em Portugal — guia completo 2025</div>
+            <div class="trending-meta">128 votos · 94 respostas</div>
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-num">02</div>
+          <div class="trending-info">
+            <div class="trending-tag">#cs2-skins</div>
+            <div class="trending-t">Top 10 skins para investir com menos de €50 em 2025</div>
+            <div class="trending-meta">97 votos · 61 respostas</div>
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-num">03</div>
+          <div class="trending-info">
+            <div class="trending-tag">#FIRE · #poupança</div>
+            <div class="trending-t">Quanto precisas de poupar por mês para atingir FIRE aos 45?</div>
+            <div class="trending-meta">82 votos · 48 respostas</div>
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-num">04</div>
+          <div class="trending-info">
+            <div class="trending-tag">#imóveis · #rendas</div>
+            <div class="trending-t">Atualização de rendas 2025 — índice INE calculado: +2.16%</div>
+            <div class="trending-meta">74 votos · 39 respostas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARKETS ALT -->
+<section id="mercados" class="markets-section">
+  <div class="markets-split">
+    <div class="reveal">
+      <div class="section-label">Mercados Alternativos</div>
+      <h2 class="section-title">CS2 e Steam,<br><em>tratados como ativos</em></h2>
+      <p class="section-sub">Acompanha o mercado de skins como acompanhas ações — com histórico de preços, ROI calculado e comparação com investimentos tradicionais.</p>
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--brown)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;flex-shrink:0">✓</span>
+          Preços em tempo real (Steam + Skinport + CSFloat)
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--brown)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;flex-shrink:0">✓</span>
+          Histórico de preços 30d / 90d / 1 ano
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--brown)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;flex-shrink:0">✓</span>
+          Calculadora de ROI e float/wear
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--brown)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;flex-shrink:0">✓</span>
+          Comparação: skin vs ETF vs Bitcoin no mesmo período
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--brown)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;flex-shrink:0">✓</span>
+          Watchlist pessoal com alertas de preço
+        </div>
+      </div>
+    </div>
+
+    <div class="market-card-list reveal" style="transition-delay:0.15s">
+      <div class="market-item">
+        <div class="market-item-icon" style="background:rgba(201,106,69,0.1);font-size:20px">🔫</div>
+        <div>
+          <div class="market-item-name">AK-47 | Redline (FT)</div>
+          <div class="market-item-sub">Float 0.19 · CS2</div>
+        </div>
+        <div class="market-item-price">
+          <div class="market-item-val">€33.20</div>
+          <div class="market-item-chg" style="color:var(--sage);font-size:12px">↑ +18.3% (3M)</div>
+        </div>
+      </div>
+
+      <div class="market-item">
+        <div class="market-item-icon" style="background:rgba(95,126,95,0.1);font-size:20px">🗡️</div>
+        <div>
+          <div class="market-item-name">Karambit | Fade (FN)</div>
+          <div class="market-item-sub">Float 0.01 · CS2</div>
+        </div>
+        <div class="market-item-price">
+          <div class="market-item-val">€1.840</div>
+          <div class="market-item-chg" style="color:var(--sage);font-size:12px">↑ +4.1% (1M)</div>
+        </div>
+      </div>
+
+      <div class="market-item">
+        <div class="market-item-icon" style="background:rgba(139,128,200,0.12);font-size:20px">📦</div>
+        <div>
+          <div class="market-item-name">CS2 Revolution Case</div>
+          <div class="market-item-sub">Caixa · Steam Market</div>
+        </div>
+        <div class="market-item-price">
+          <div class="market-item-val">€0.87</div>
+          <div class="market-item-chg" style="color:var(--terra);font-size:12px">↓ -2.1% (1M)</div>
+        </div>
+      </div>
+
+      <div class="market-item">
+        <div class="market-item-icon" style="background:rgba(201,164,90,0.12);font-size:20px">🔵</div>
+        <div>
+          <div class="market-item-name">AWP | Asiimov (FT)</div>
+          <div class="market-item-sub">Float 0.22 · CS2</div>
+        </div>
+        <div class="market-item-price">
+          <div class="market-item-val">€58.40</div>
+          <div class="market-item-chg" style="color:var(--sage);font-size:12px">↑ +6.8% (3M)</div>
+        </div>
+      </div>
+
+      <div class="market-item" style="background:rgba(201,106,69,0.04);border-color:rgba(201,106,69,0.2)">
+        <div style="font-size:14px;color:var(--muted);padding:4px 0">+ 2.400 skins na watchlist da comunidade →</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-blob cb1"></div>
+  <div class="cta-blob cb2"></div>
+  <h2>O teu patrimônio merece<br>uma plataforma à altura</h2>
+  <p>Junta-te a mais de 2.400 utilizadores que já gerem as suas finanças, investimentos e mercados alternativos num só lugar.</p>
+  <a href="#" class="btn btn-white btn-lg">
+    Começar grátis — sem cartão
+  </a>
+  <div style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.6)">
+    Sem compromisso · Dados seguros · Feito em Portugal 🇵🇹
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-brand-logo">
+        <div class="footer-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <span class="footer-brand-name">WealthSphere</span>
+      </div>
+      <p class="footer-brand-desc">O universo financeiro completo — dashboard pessoal, taxas em tempo real, mercados alternativos e comunidade.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Produto</h4>
+      <a href="#">Dashboard</a>
+      <a href="#">Simulador</a>
+      <a href="#">Taxas & Mercados</a>
+      <a href="#">CS2 & Steam</a>
+      <a href="#">Comunidade</a>
+    </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <a href="#">Sobre nós</a>
+      <a href="#">Blog</a>
+      <a href="#">Carreiras</a>
+      <a href="#">Contacto</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Termos de Uso</a>
+      <a href="#">Privacidade</a>
+      <a href="#">Cookies</a>
+      <a href="#">RGPD</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 WealthSphere. Feito em Portugal 🇵🇹</span>
+    <div class="footer-legal">
+      <a href="#">Termos</a>
+      <a href="#">Privacidade</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 60);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(r => observer.observe(r));
+
+// Tag cloud interaction
+document.querySelectorAll('.cloud-tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    document.querySelectorAll('.cloud-tag').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
