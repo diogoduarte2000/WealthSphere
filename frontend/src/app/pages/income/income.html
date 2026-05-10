@@ -1,2 +1,178 @@
-<h1>Income Tracker</h1>
-<p>Em construção...</p>
+<div class="income-container" *ngIf="incomeData">
+  <!-- Header -->
+  <div class="income-header">
+    <h1>💰 Income Tracker</h1>
+    <p>Controle os seus rendimentos e despesas mensais</p>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="view-tabs">
+    <button 
+      class="tab-btn"
+      [class.active]="selectedView === 'summary'"
+      (click)="changeView('summary')">
+      📊 Resumo
+    </button>
+    <button 
+      class="tab-btn"
+      [class.active]="selectedView === 'income'"
+      (click)="changeView('income')">
+      💵 Rendimentos
+    </button>
+    <button 
+      class="tab-btn"
+      [class.active]="selectedView === 'expenses'"
+      (click)="changeView('expenses')">
+      💳 Despesas
+    </button>
+    <button 
+      class="tab-btn"
+      [class.active]="selectedView === 'trends'"
+      (click)="changeView('trends')">
+      📈 Tendências
+    </button>
+  </div>
+
+  <!-- Summary View -->
+  <div class="summary-view" *ngIf="selectedView === 'summary'">
+    <div class="summary-cards">
+      <div class="summary-card income">
+        <div class="card-icon">💵</div>
+        <div class="card-content">
+          <h3>Rendimentos</h3>
+          <div class="amount">{{ formatCurrency(incomeData.summary.totalIncome) }}</div>
+          <div class="period">{{ incomeData.summary.month }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card expenses">
+        <div class="card-icon">💳</div>
+        <div class="card-content">
+          <h3>Despesas</h3>
+          <div class="amount">{{ formatCurrency(incomeData.summary.totalExpenses) }}</div>
+          <div class="period">{{ incomeData.summary.month }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card balance">
+        <div class="card-icon">💎</div>
+        <div class="card-content">
+          <h3>Saldo</h3>
+          <div class="amount" [style.color]="getBalanceColor()">
+            {{ formatCurrency(incomeData.summary.balance) }}
+          </div>
+          <div class="period">{{ incomeData.summary.month }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card savings">
+        <div class="card-icon">🏦</div>
+        <div class="card-content">
+          <h3>Taxa Poupança</h3>
+          <div class="amount">{{ incomeData.summary.savingsRate }}%</div>
+          <div class="period">{{ incomeData.summary.month }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="action-btn income" (click)="addIncomeDemo()">
+        ➕ Adicionar Rendimento
+      </button>
+      <button class="action-btn expense" (click)="addExpenseDemo()">
+        ➕ Adicionar Despesa
+      </button>
+      <button class="action-btn export" (click)="exportDataDemo()">
+        📊 Exportar Dados
+      </button>
+    </div>
+  </div>
+
+  <!-- Income Breakdown -->
+  <div class="income-view" *ngIf="selectedView === 'income'">
+    <h2>💵 Detalhe dos Rendimentos</h2>
+    <div class="breakdown-list">
+      <div class="breakdown-item" *ngFor="let item of incomeData.incomeBreakdown">
+        <div class="item-info">
+          <div class="item-category" [style.background-color]="item.color + '20'">
+            <span class="color-dot" [style.background-color]="item.color"></span>
+            {{ item.category }}
+          </div>
+          <div class="item-amount">{{ formatCurrency(item.amount) }}</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [style.width.%]="item.percentage"
+               [style.background-color]="item.color">
+          </div>
+        </div>
+        <div class="percentage">{{ item.percentage }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expenses Breakdown -->
+  <div class="expenses-view" *ngIf="selectedView === 'expenses'">
+    <h2>💳 Detalhe das Despesas</h2>
+    <div class="breakdown-list">
+      <div class="breakdown-item" *ngFor="let item of incomeData.expenseBreakdown">
+        <div class="item-info">
+          <div class="item-category" [style.background-color]="item.color + '20'">
+            <span class="color-dot" [style.background-color]="item.color"></span>
+            {{ item.category }}
+          </div>
+          <div class="item-amount">{{ formatCurrency(item.amount) }}</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [style.width.%]="item.percentage"
+               [style.background-color]="item.color">
+          </div>
+        </div>
+        <div class="percentage">{{ item.percentage }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trends View -->
+  <div class="trends-view" *ngIf="selectedView === 'trends'">
+    <h2>📈 Evolução Mensal</h2>
+    <div class="trends-chart">
+      <div class="chart-container">
+        <div class="chart-bars">
+          <div class="bar-group" *ngFor="let month of incomeData.monthlyTrend">
+            <div class="bar-column">
+              <div class="bar income-bar" 
+                   [style.height.%]="(month.income / 4000) * 100"
+                   title="Rendimentos: {{ formatCurrency(month.income) }}">
+              </div>
+              <div class="bar expense-bar" 
+                   [style.height.%]="(month.expenses / 4000) * 100"
+                   title="Despesas: {{ formatCurrency(month.expenses) }}">
+              </div>
+            </div>
+            <div class="bar-label">{{ month.month }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-legend">
+        <div class="legend-item">
+          <span class="legend-color income-color"></span>
+          Rendimentos
+        </div>
+        <div class="legend-item">
+          <span class="legend-color expense-color"></span>
+          Despesas
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Notice -->
+  <div class="demo-notice">
+    <h4>🎮 Modo Demonstração</h4>
+    <p>Está a visualizar dados exemplo. Pode experimentar todas as funcionalidades sem criar conta. Os dados não são persistentes.</p>
+  </div>
+</div>

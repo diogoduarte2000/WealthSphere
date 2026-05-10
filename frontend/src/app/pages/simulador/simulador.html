@@ -1,2 +1,193 @@
-<h1>Simulador</h1>
-<p>Em construção...</p>
+<div class="simulator-container" *ngIf="simulationResults">
+  <!-- Header -->
+  <div class="simulator-header">
+    <h1>📈 Simulador de Investimentos</h1>
+    <p>Projete o crescimento dos seus investimentos ao longo do tempo</p>
+  </div>
+
+  <div class="simulator-layout">
+    <!-- Parameters Panel -->
+    <div class="parameters-panel">
+      <h2>Parâmetros da Simulação</h2>
+      
+      <!-- Predefined Scenarios -->
+      <div class="predefined-scenarios">
+        <h3>Cenários Predefinidos</h3>
+        <div class="scenario-buttons">
+          <button 
+            *ngFor="let sim of predefinedSimulations"
+            class="scenario-btn"
+            [class.active]="selectedSimulation?.name === sim.name"
+            (click)="selectPredefinedSimulation(sim)">
+            {{ sim.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Parameters -->
+      <div class="custom-params">
+        <h3>Parâmetros Personalizados</h3>
+        
+        <div class="param-group">
+          <label for="initialAmount">Montante Inicial (€)</label>
+          <input 
+            type="number" 
+            id="initialAmount"
+            [(ngModel)]="simulationParams.initialAmount"
+            (input)="onInputChange('initialAmount', $event)"
+            min="0"
+            step="100">
+        </div>
+
+        <div class="param-group">
+          <label for="monthlyContribution">Contribuição Mensal (€)</label>
+          <input 
+            type="number" 
+            id="monthlyContribution"
+            [(ngModel)]="simulationParams.monthlyContribution"
+            (input)="onInputChange('monthlyContribution', $event)"
+            min="0"
+            step="50">
+        </div>
+
+        <div class="param-group">
+          <label for="annualRate">Taxa de Juro Anual (%)</label>
+          <input 
+            type="number" 
+            id="annualRate"
+            [(ngModel)]="simulationParams.annualRate"
+            (input)="onInputChange('annualRate', $event)"
+            min="0"
+            max="30"
+            step="0.1">
+        </div>
+
+        <div class="param-group">
+          <label for="years">Período (anos)</label>
+          <input 
+            type="number" 
+            id="years"
+            [(ngModel)]="simulationParams.years"
+            (input)="onYearsChange($event)"
+            min="1"
+            max="50"
+            step="1">
+        </div>
+
+        <div class="action-buttons">
+          <button class="reset-btn" (click)="resetSimulation()">🔄 Reset</button>
+          <button class="save-btn" (click)="saveScenarioDemo()">💾 Guardar Cenário</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+      <!-- Summary Cards -->
+      <div class="results-summary">
+        <div class="result-card final">
+          <div class="card-icon">💎</div>
+          <div class="card-content">
+            <h3>Valor Final</h3>
+            <div class="amount">{{ formatCurrency(simulationResults.finalAmount) }}</div>
+          </div>
+        </div>
+
+        <div class="result-card contributed">
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <h3>Total Investido</h3>
+            <div class="amount">{{ formatCurrency(simulationResults.totalContributed) }}</div>
+          </div>
+        </div>
+
+        <div class="result-card earnings">
+          <div class="card-icon">📈</div>
+          <div class="card-content">
+            <h3>Ganhos</h3>
+            <div class="amount">{{ formatCurrency(simulationResults.totalEarnings) }}</div>
+          </div>
+        </div>
+
+        <div class="result-card roi">
+          <div class="card-icon">🎯</div>
+          <div class="card-content">
+            <h3>ROI</h3>
+            <div class="amount">{{ formatPercentage(simulationResults.roi) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yearly Breakdown -->
+      <div class="yearly-breakdown">
+        <h3>Evolução Anual</h3>
+        <div class="breakdown-table">
+          <div class="table-header">
+            <div>Ano</div>
+            <div>Valor Inicial</div>
+            <div>Valor Final</div>
+            <div>Total Investido</div>
+            <div>Ganhos</div>
+          </div>
+          <div class="table-row" *ngFor="let year of simulationResults.yearlyData">
+            <div class="year">{{ year.year }}</div>
+            <div class="value">{{ formatCurrency(year.startValue) }}</div>
+            <div class="value">{{ formatCurrency(year.endValue) }}</div>
+            <div class="value">{{ formatCurrency(year.contributions) }}</div>
+            <div class="value earnings" [class.positive]="year.earnings > 0">
+              {{ formatCurrency(year.earnings) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Visualization -->
+      <div class="chart-visualization">
+        <h3>Visualização do Crescimento</h3>
+        <div class="growth-chart">
+          <div class="chart-container">
+            <div class="chart-bars">
+              <div class="bar-group" *ngFor="let year of simulationResults.yearlyData">
+                <div class="bar-column">
+                  <div class="bar total-bar" 
+                       [style.height.%]="(year.endValue / simulationResults.finalAmount) * 100"
+                       title="Valor Total: {{ formatCurrency(year.endValue) }}">
+                  </div>
+                  <div class="bar contributions-bar" 
+                       [style.height.%]="(year.contributions / simulationResults.finalAmount) * 100"
+                       title="Investido: {{ formatCurrency(year.contributions) }}">
+                  </div>
+                </div>
+                <div class="bar-label">{{ year.year }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-color total-color"></span>
+              Valor Total
+            </div>
+            <div class="legend-item">
+              <span class="legend-color contributions-color"></span>
+              Investido
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Actions -->
+      <div class="export-actions">
+        <button class="export-btn" (click)="exportResultsDemo()">
+          📊 Exportar Resultados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Notice -->
+  <div class="demo-notice">
+    <h4>🎮 Modo Demonstração</h4>
+    <p>Está a usar o simulador em modo demo. Os cálculos são baseados em juros compostos com capitalização mensal. Numa versão real, poderia guardar cenários e comparar resultados.</p>
+  </div>
+</div>

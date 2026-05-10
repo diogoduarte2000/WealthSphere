@@ -60,7 +60,26 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       Criar conta grátis
     </a>
-    <a routerLink="/dashboard" class="btn btn-outline btn-lg">Ver demo</a>
+    <a routerLink="/forum" class="btn btn-outline btn-lg">Ver demo</a>
+  </div>
+
+  <!-- Demo Quick Navigation -->
+  <div class="demo-quick-nav" data-parallax="0.16">
+    <div class="demo-nav-label">🎮 Experimente sem registo:</div>
+    <div class="demo-nav-links">
+      <a routerLink="/forum" class="demo-link">
+        <span class="demo-icon">💬</span>
+        <span>Fórum</span>
+      </a>
+      <a routerLink="/income" class="demo-link">
+        <span class="demo-icon">💰</span>
+        <span>Income Tracker</span>
+      </a>
+      <a routerLink="/simulador" class="demo-link">
+        <span class="demo-icon">📈</span>
+        <span>Simulador</span>
+      </a>
+    </div>
   </div>
 
   <div class="hero-social-proof" data-parallax="0.14">
@@ -74,7 +93,10 @@
     <span class="social-text"><strong>+2.400 utilizadores</strong> já gerem as suas finanças aqui</span>
   </div>
 
-  <div class="hero-preview" data-parallax="0.18">
+  <div class="hero-preview" [class.demo-active]="isDemoActive" data-parallax="0.18">
+    @if (isDemoActive) {
+      <div class="demo-toast">Demo ativa: dashboard, alertas e métricas em modo preview.</div>
+    }
     <div class="preview-frame">
       <div class="preview-bar">
         <div class="preview-dot pd-red"></div>
