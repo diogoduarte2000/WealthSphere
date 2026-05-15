@@ -26,7 +26,7 @@ const featureRoutes: Routes = [
   },
   {
     path: 'simulador',
-    loadComponent: () => import('./pages/simulador/simulador').then(m => m.Simulador)
+    loadComponent: () => import('./pages/simulador/simulador').then(m => m.SimuladorComponent)
   },
   {
     path: 'rendas',
