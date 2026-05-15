@@ -208,7 +208,7 @@ export class AuthComponent implements OnDestroy {
 
   private getErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) {
-      return 'Não consegui ligar ao backend. Confirma se o server está em http://localhost:5000.';
+      return `Não consegui ligar ao backend. Confirma se o servidor em ${environment.apiUrl} está ativo.`;
     }
 
     if (typeof error.error?.message === 'string') {
