@@ -442,3 +442,37 @@ Criar versões git e implementar dashboard demo encontrado no site preview v1.
 - [ ] Testar experiência completa do usuário
 
 ---
+
+## Sessão de Integração e Sincronização - 15/05/2026
+
+### 🛠️ Modificações e Melhorias
+- **Autenticação Real**: 
+    - Substituição do login mockado por pedidos HTTP reais ao backend (`POST /api/auth/login`).
+    - Gestão de sessão implementada com armazenamento de JWT e dados do utilizador no `localStorage`.
+    - Redirecionamento automático pós-login para o novo Dashboard Real.
+- **Sincronização de Dados de Mercado**:
+    - Atualização da Euribor 6M para **2.55%** e TAEG para **3.85%** em todo o site, refletindo dados reais de Portugal.
+- **Correção de Layout**:
+    - Resolvido bug crítico de espaçamento excessivo na landing page causado por seletores globais no Hero.
+
+### 🚀 Novas Funcionalidades (Dashboard Real)
+- **Criação do Dashboard de Utilizador (`dashboard-user`)**:
+    - Componente independente criado para separar a experiência de demonstração da experiência real.
+    - **Empty State**: O dashboard real inicia agora a zeros para novos utilizadores, removendo todos os dados fictícios da demo.
+    - **Nome Dinâmico**: Saudação personalizada e avatar que mudam consoante o nome do utilizador registado na base de dados.
+- **Gráficos Robustos**:
+    - Corrigido erro de "divisão por zero" no Canvas que ocorria quando o utilizador não tinha dados financeiros registados.
+
+### 🐛 Bug Fixes
+- Corrigidos erros de sintaxe nos ficheiros `.ts` causados por má formatação de template literals.
+- Validação completa do fluxo de registo -> login -> dashboard via testes de navegador.
+
+### 📋 O que falta fazer
+- [ ] **Formulários de Input**: Criar modais e formulários para o utilizador adicionar os seus próprios ativos, rendimentos e despesas no `dashboard-user`.
+- [ ] **Persistência de Dados**: Criar os modelos e endpoints de CRUD no backend para guardar o património do utilizador.
+- [ ] **APIs de Mercado**: Ligar os indicadores de taxas e ETFs a APIs live (BCE, BP, etc.) para atualização automática.
+- [ ] **Desbloqueio de Funcionalidades**: Substituir os botões de "Cria conta" por acessos reais às ferramentas (Simuladores, Rendas) para utilizadores autenticados.
+
+---
+**Mensagem Final do Utilizador:**
+"no dashboard-user preciso de um sitio para o user ir atualizando os dados, btw, nos sitions onde tu clicas e diz \"Cria a tua conta grátis\" , ja podes implementar as funionalidades que é suposto ter, mas por agora nao metas, mete esta mensagem que te estou a enviar no progress.md, e adiciona o que foi modificado , retirado ou adicionado , o que falta fazer , etc (a ultima coisa a meter no .md é esta mensagem)"

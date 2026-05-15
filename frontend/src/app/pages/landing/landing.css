@@ -1,4 +1,4 @@
-.hero > * {
+.hero-eyebrow, .hero > h1, .hero-sub, .hero-actions, .hero-social-proof, .hero-preview {
   position: relative;
   z-index: 1;
 }
@@ -230,55 +230,6 @@
   .feature-card.reveal.visible {
     animation: none;
   }
-}
-
-/* Demo Quick Navigation */
-.demo-quick-nav {
-  margin-top: 32px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.demo-nav-label {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 12px;
-  font-weight: 500;
-}
-
-.demo-nav-links {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.demo-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-}
-
-.demo-link:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.demo-icon {
-  font-size: 1.2rem;
 }
 
 /* Demo Modal */
