@@ -1,5 +1,6 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, OnInit } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-dashboard-user',
@@ -47,6 +48,12 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     }
   };
 
+  private readonly userService = inject(UserService);
+
+  steamInventory: any = null;
+  steamLoading: boolean = false;
+  steamError: string = '';
+
   ngOnInit() {
     const userStr = localStorage.getItem('wealthsphere_user');
     if (userStr) {
@@ -61,6 +68,33 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         console.error('Error parsing user', e);
       }
     }
+    this.loadProfile();
+  }
+
+  loadProfile() {
+    this.userService.getProfile().subscribe({
+      next: (res) => {
+        const profile = res.profile;
+        if (profile.externalApis?.steam?.steamId) {
+          this.loadSteamInventory();
+        }
+      }
+    });
+  }
+
+  loadSteamInventory() {
+    this.steamLoading = true;
+    this.userService.getSteamInventory().subscribe({
+      next: (res) => {
+        this.steamInventory = res;
+        this.steamLoading = false;
+        this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
+      },
+      error: (err) => {
+        this.steamError = err.error?.message || 'Erro ao ligar à Steam';
+        this.steamLoading = false;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -78,6 +112,16 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   openModal() {
     this.modalOpen = true;
+  }
+
+  saveSteamId(id: string) {
+    if (!id) return;
+    this.userService.updateExternalApis({ steamId: id }).subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadSteamInventory();
+      }
+    });
   }
 
   closeModal(e?: Event) {
