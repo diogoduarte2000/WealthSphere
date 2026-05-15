@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { Component, OnDestroy, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -194,6 +195,7 @@ export class AuthComponent implements OnDestroy {
     };
   }
 
+
   private resolveApiBaseUrl(): string {
     const configuredUrl = localStorage.getItem('wealthsphere_api_url')?.trim();
 
@@ -201,9 +203,7 @@ export class AuthComponent implements OnDestroy {
       return configuredUrl.replace(/\/$/, '');
     }
 
-    return window.location.hostname === 'localhost'
-      ? 'http://localhost:5000/api'
-      : '/api';
+    return environment.apiUrl;
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {
