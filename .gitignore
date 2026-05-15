@@ -61,4 +61,5 @@ frontend/tmp/
 frontend/.angular/
 
 # Site preview
-"site preview v1/node_modules/"
+"site preview v1/"
+site preview v1/
