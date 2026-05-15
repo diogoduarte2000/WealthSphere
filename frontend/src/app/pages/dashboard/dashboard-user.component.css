@@ -19,31 +19,12 @@
 html{scroll-behavior:smooth}
 body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
 
-/* DEMO BANNER */
-.demo-banner{
-  background:var(--ink2);color:var(--sand);
-  padding:10px 24px;
-  display:flex;align-items:center;justify-content:space-between;
-  font-size:12px;letter-spacing:0.02em;
-  position:sticky;top:0;z-index:200;
-  flex-shrink:0;
-}
-.demo-banner-left{display:flex;align-items:center;gap:10px}
-.demo-dot{width:7px;height:7px;border-radius:50%;background:var(--terra-l);animation:blink 2s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
-.demo-banner strong{color:var(--terra-l)}
-.demo-banner a{
-  background:var(--terra);color:white;border-radius:100px;
-  padding:5px 14px;font-size:11px;font-weight:600;text-decoration:none;
-  transition:background 0.2s;white-space:nowrap;
-}
-.demo-banner a:hover{background:var(--terra-l)}
 
 /* LAYOUT */
 .app{display:flex;flex:1;min-height:0}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:37px;bottom:0;left:0;z-index:150;overflow-y:auto;overflow-x:hidden}
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:150;overflow-y:auto;overflow-x:hidden}
 .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .logo-icon{width:32px;height:32px;background:var(--terra);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-icon svg{width:17px;height:17px}
@@ -69,7 +50,7 @@ body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;di
 .topbar{
   background:var(--white);border-bottom:1px solid var(--border);
   padding:0 28px;height:56px;display:flex;align-items:center;
-  justify-content:space-between;position:sticky;top:37px;z-index:50;
+  justify-content:space-between;position:sticky;top:0;z-index:50;
 }
 .topbar-title{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--ink)}
 .topbar-sub{font-size:11px;color:var(--muted);margin-top:1px}
