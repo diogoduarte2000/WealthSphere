@@ -349,3 +349,48 @@ canvas{display:block}
 .fade-up{animation:fadeUp 0.5s ease both}
 .fd1{animation-delay:0.05s}.fd2{animation-delay:0.1s}.fd3{animation-delay:0.15s}
 .fd4{animation-delay:0.2s}.fd5{animation-delay:0.25s}
+
+/* STEAM BUTTON STYLES */
+.steam-button {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #171a21;
+  color: white;
+  cursor: pointer;
+  font: 600 14px 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(23, 26, 33, 0.2);
+}
+
+.steam-button:hover {
+  background: #2a475e;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(42, 71, 94, 0.3);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider span {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
