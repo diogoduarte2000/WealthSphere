@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, OnInit } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -10,7 +10,8 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { UserService } from '../../services/user.service';
 
 type AuthMode = 'login' | 'register';
 type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
@@ -35,10 +36,13 @@ interface AuthResponse {
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.css'
 })
-export class AuthComponent implements OnDestroy {
+export class AuthComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly userService = inject(UserService);
+  
   private morphTimer?: ReturnType<typeof setTimeout>;
   private readonly apiBaseUrl = this.resolveApiBaseUrl();
 
@@ -62,6 +66,36 @@ export class AuthComponent implements OnDestroy {
     this.applyModeValidators();
   }
 
+  ngOnInit(): void {
+    // Capturar tokens da URL (vindo do redirect da Steam)
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'];
+      const refresh = params['refresh'];
+      
+      if (token && refresh) {
+        this.isSubmitting = true;
+        localStorage.setItem('wealthsphere_access_token', token);
+        localStorage.setItem('wealthsphere_refresh_token', refresh);
+        
+        // Buscar perfil do utilizador para completar o login
+        this.userService.getProfile().subscribe({
+          next: (res) => {
+            localStorage.setItem('wealthsphere_user', JSON.stringify(res.profile));
+            this.successMessage = `Login via Steam efetuado com sucesso!`;
+            this.isSubmitting = false;
+            setTimeout(() => {
+              this.router.navigate(['/dashboard-user']);
+            }, 1000);
+          },
+          error: () => {
+            this.errorMessage = 'Erro ao sincronizar perfil da Steam.';
+            this.isSubmitting = false;
+          }
+        });
+      }
+    });
+  }
+
   get isRegister(): boolean {
     return this.mode === 'register';
   }
@@ -82,6 +116,11 @@ export class AuthComponent implements OnDestroy {
     this.morphTimer = setTimeout(() => {
       this.isMorphing = false;
     }, 520);
+  }
+
+  loginWithSteam(): void {
+    // Redirecionar para a rota de auth do backend
+    window.location.href = `${this.apiBaseUrl}/auth/steam`;
   }
 
   submit(): void {

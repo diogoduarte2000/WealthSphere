@@ -576,17 +576,19 @@
   <div class="modal">
     <div class="modal-icon">🎮</div>
     <div class="modal-title">Ligar Conta Steam</div>
-    <div class="modal-text">Insere o teu <strong>SteamID64</strong> para sincronizarmos o valor do teu inventário de CS2 em tempo real.</div>
+    <div class="modal-text">Usa o login oficial da Steam para sincronizarmos o teu inventário de CS2 de forma segura.</div>
     
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label style="display:block; font-size:12px; color:var(--muted); margin-bottom:8px;">SteamID64</label>
-      <input type="text" #steamInput placeholder="ex: 76561198089176770" 
-             style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--sand); color:var(--ink); font-family: 'DM Mono', monospace;">
+    <div style="margin: 24px 0; text-align: center;">
+      <button type="button" class="steam-button" (click)="loginWithSteam()" style="width:100%">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px; margin-right:8px;">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 6.637 5.373 12 12 12 6.637 0 12-5.373 12-12 0-6.637-5.373-12-12-12zm4.33 13.911c-.347 1.054-1.22 1.834-2.27 2.054l-2.06 4.122c-.106.213-.314.347-.533.347h-.01c-.22 0-.43-.134-.536-.347l-2.053-4.116c-1.045-.22-1.914-1-2.26-1.954l-4.14-2.07c-.214-.107-.347-.315-.347-.534v-.01c0-.22.133-.427.346-.533l4.134-2.067c.346-1.053 1.218-1.833 2.268-2.053l2.056-4.112c.107-.213.315-.347.534-.347h.01c.22 0 .427.134.533.347l2.067 4.134c1.053.346 1.833 1.218 2.053 2.268l4.112 2.056c.213.107.347.315.347.534v.01c0 .22-.134.427-.347.533l-4.134 2.067z"/>
+        </svg>
+        Sign in through STEAM
+      </button>
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-primary" style="flex:1;justify-content:center" (click)="saveSteamId(steamInput.value)">Guardar e Sincronizar</button>
-      <button class="btn btn-ghost" (click)="closeModal()">Fechar</button>
+      <button class="btn btn-ghost" (click)="closeModal()" style="flex:1">Cancelar</button>
     </div>
   </div>
 </div>

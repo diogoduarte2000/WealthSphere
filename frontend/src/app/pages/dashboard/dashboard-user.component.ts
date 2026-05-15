@@ -71,6 +71,10 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.loadProfile();
   }
 
+  loginWithSteam() {
+    window.location.href = `${environment.apiUrl}/auth/steam`;
+  }
+
   loadProfile() {
     this.userService.getProfile().subscribe({
       next: (res) => {
