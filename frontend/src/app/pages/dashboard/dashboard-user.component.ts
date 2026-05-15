@@ -1,19 +1,22 @@
-import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-dashboard-demo',
+  selector: 'app-dashboard-user',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './dashboard-demo.component.html',
-  styleUrls: ['./dashboard-demo.component.css']
+  templateUrl: './dashboard-user.component.html',
+  styleUrls: ['./dashboard-user.component.css']
 })
-export class DashboardDemoComponent implements AfterViewInit {
+export class DashboardUserComponent implements OnInit, AfterViewInit {
   @ViewChild('patrimonioChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   currentPage: string = 'dashboard';
   modalOpen: boolean = false;
   currentChartPeriod: string = '6m';
+  
+  userName: string = 'Utilizador';
+  userInitial: string = 'U';
 
   titles: { [key: string]: [string, string] } = {
     dashboard: ['Dashboard', 'Domingo, 10 de Maio · Euribor 6M: 2.55% ↓'],
@@ -23,26 +26,42 @@ export class DashboardDemoComponent implements AfterViewInit {
     comunidade: ['Comunidade', '487 membros ativos · 1.240 posts'],
     rendas: ['Rendas & Imóveis', '2 imóveis · €1.200/mês'],
     simulador: ['Simulador', 'Juros compostos · FIRE · Amortizações'],
-    perfil: ['Perfil', 'João Silva · Lisboa 🇵🇹'],
+    perfil: ['Perfil', 'Lisboa 🇵🇹'],
   };
 
   data = {
     '6m': {
-      networth: [36200, 37100, 38400, 39200, 40100, 41500, 42800],
-      etf: [15200, 15800, 16400, 16900, 17200, 17800, 18400],
-      rendas: [10800, 10800, 10800, 11500, 11500, 12000, 12000]
+      networth: [0, 0, 0, 0, 0, 0, 0],
+      etf: [0, 0, 0, 0, 0, 0, 0],
+      rendas: [0, 0, 0, 0, 0, 0, 0]
     },
     '1a': {
-      networth: [28000, 29500, 31000, 32800, 34200, 35600, 37100, 38400, 39200, 40100, 41500, 42800, 42800],
-      etf: [11000, 11800, 12400, 13200, 14000, 14800, 15200, 15800, 16400, 16900, 17200, 17800, 18400],
-      rendas: [8400, 8400, 9000, 9000, 9600, 10200, 10800, 10800, 10800, 11500, 11500, 12000, 12000]
+      networth: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      etf: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      rendas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     '3a': {
-      networth: [12000, 14500, 17000, 19800, 22000, 24500, 27000, 29500, 32000, 35000, 38000, 40500, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800, 42800],
-      etf: [4000, 5200, 6400, 7600, 8800, 9800, 10800, 11800, 12800, 13800, 14800, 15800, 16800, 17400, 18000, 18400, 18400, 18400, 18400, 18400, 18400, 18400, 18400, 18400, 18400],
-      rendas: [0, 0, 2400, 2400, 4800, 4800, 7200, 7200, 8400, 8400, 9600, 10200, 10800, 11000, 11200, 11500, 11800, 12000, 12000, 12000, 12000, 12000, 12000, 12000, 12000]
+      networth: Array(25).fill(0),
+      etf: Array(25).fill(0),
+      rendas: Array(25).fill(0)
     }
   };
+
+  ngOnInit() {
+    const userStr = localStorage.getItem('wealthsphere_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user && user.name) {
+          this.userName = user.name;
+          this.userInitial = user.name.charAt(0).toUpperCase();
+          this.titles['perfil'] = ['Perfil', `${this.userName} · Lisboa 🇵🇹`];
+        }
+      } catch (e) {
+        console.error('Error parsing user', e);
+      }
+    }
+  }
 
   ngAfterViewInit() {
     if (this.chartCanvas) {
@@ -102,7 +121,7 @@ export class DashboardDemoComponent implements AfterViewInit {
       { data: data6m.rendas, color: '#8b80c8' },
     ];
     const allVals = datasets.flatMap(d => d.data);
-    const maxV = Math.max(...allVals);
+    const maxV = Math.max(...allVals) || 1000; // Fallback to 1000 if empty/zero
     const minV = Math.min(...allVals) * 0.95;
     const n = data6m.networth.length;
 
@@ -160,4 +179,3 @@ export class DashboardDemoComponent implements AfterViewInit {
     });
   }
 }
-

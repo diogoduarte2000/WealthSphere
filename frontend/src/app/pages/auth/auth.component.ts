@@ -9,7 +9,7 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 
 type AuthMode = 'login' | 'register';
 type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
@@ -37,6 +37,7 @@ interface AuthResponse {
 export class AuthComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private morphTimer?: ReturnType<typeof setTimeout>;
   private readonly apiBaseUrl = this.resolveApiBaseUrl();
 
@@ -96,7 +97,26 @@ export class AuthComponent implements OnDestroy {
     const value = this.authForm.getRawValue();
 
     if (!this.isRegister) {
-      this.successMessage = 'Login validado no frontend. Endpoint de login fica para a próxima ligação.';
+      this.isSubmitting = true;
+      this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/login`, {
+        email: value.email,
+        password: value.password
+      }).subscribe({
+        next: (response) => {
+          localStorage.setItem('wealthsphere_access_token', response.tokens.accessToken);
+          localStorage.setItem('wealthsphere_refresh_token', response.tokens.refreshToken);
+          localStorage.setItem('wealthsphere_user', JSON.stringify(response.user));
+          this.successMessage = `Bem-vindo de volta, ${response.user.name}!`;
+          this.isSubmitting = false;
+          setTimeout(() => {
+            this.router.navigate(['/dashboard-user']);
+          }, 1500);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = this.getErrorMessage(error);
+          this.isSubmitting = false;
+        }
+      });
       return;
     }
 
@@ -114,6 +134,9 @@ export class AuthComponent implements OnDestroy {
         localStorage.setItem('wealthsphere_user', JSON.stringify(response.user));
         this.successMessage = `Conta criada com sucesso. Bem-vindo, ${response.user.name}!`;
         this.isSubmitting = false;
+        setTimeout(() => {
+          this.router.navigate(['/dashboard-user']);
+        }, 1500);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.getErrorMessage(error);
