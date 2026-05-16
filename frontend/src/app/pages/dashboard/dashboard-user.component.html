@@ -412,48 +412,46 @@
 
       <!-- ======================== CS2 PAGE ======================== -->
       <div id="page-cs2" [style.display]="currentPage === 'cs2' ? 'block' : 'none'">
-        <div class="steam-header fade-up">
-          <div class="steam-av">🎮</div>
-          <div>
-            <div class="steam-name">joaosilva_pt · Steam</div>
-            <div class="steam-id">STEAM_0:1:48291042</div>
-          </div>
-          <div class="steam-stats">
-            <div style="text-align:center"><div class="steam-stat-val">€624</div><div class="steam-stat-label">Valor inventário</div></div>
-            <div style="text-align:center"><div class="steam-stat-val">14</div><div class="steam-stat-label">Itens</div></div>
-            <div style="text-align:center"><div class="steam-stat-val" style="color:var(--sage)">+€47</div><div class="steam-stat-label">Ganho 30d</div></div>
-            <div style="text-align:center"><div class="steam-stat-val">2.1h</div><div class="steam-stat-label">Online</div></div>
-          </div>
-          <button class="btn btn-ghost" style="margin-left:auto" (click)="openModal()">🔄 Sincronizar</button>
+        
+        <div *ngIf="steamLoading" style="padding: 100px; text-align: center; color: var(--muted);">
+          Sincronizando inventário...
         </div>
 
-        <div class="grid-2 fade-up fd2">
+        <div *ngIf="!steamLoading && steamError" style="padding: 40px; text-align: center; color: var(--terra); background: var(--terra-dim); border-radius: 12px; margin-bottom: 20px;">
+          {{ steamError }}
+          <button class="btn btn-ghost" style="margin-top: 10px; display: block; margin-left: auto; margin-right: auto;" (click)="openModal()">Configurar Steam ID</button>
+        </div>
+
+        <div *ngIf="!steamLoading && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--white); border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
+          Ainda não ligaste a tua conta Steam.
+          <button class="btn btn-primary" style="margin-top: 20px; display: block; margin-left: auto; margin-right: auto;" (click)="openModal()">Ligar agora</button>
+        </div>
+
+        <div class="steam-header fade-up" *ngIf="!steamLoading && steamInventory">
+          <div class="steam-av">🎮</div>
+          <div>
+            <div class="steam-name">Inventário Sincronizado</div>
+            <div class="steam-id">{{ steamInventory.count }} Itens detetados</div>
+          </div>
+          <div class="steam-stats">
+            <div style="text-align:center"><div class="steam-stat-val">€--</div><div class="steam-stat-label">Valor total</div></div>
+            <div style="text-align:center"><div class="steam-stat-val">{{ steamInventory.count }}</div><div class="steam-stat-label">Itens</div></div>
+          </div>
+          <button class="btn btn-ghost" style="margin-left:auto" (click)="loadSteamInventory()">🔄 Sincronizar</button>
+        </div>
+
+        <div class="grid-2 fade-up fd2" *ngIf="!steamLoading && steamInventory">
           <div class="card">
             <div class="card-header"><div class="card-title">O meu Inventário CS2</div><span class="card-action">Ver tudo</span></div>
             <div class="skin-grid">
-              <div class="skin-card">
-                <div class="skin-top"><div class="skin-emoji">🔫</div><span class="skin-rarity rarity-covert">Covert</span></div>
-                <div class="skin-name">AK-47 | Redline</div>
-                <div class="skin-wear">Field-Tested · Float 0.19</div>
-                <div class="skin-bottom"><div class="skin-price">€33.20</div><div class="skin-chg" style="color:var(--sage)">↑ +18.3%</div></div>
-              </div>
-              <div class="skin-card">
-                <div class="skin-top"><div class="skin-emoji">🔵</div><span class="skin-rarity rarity-classified">Classified</span></div>
-                <div class="skin-name">AWP | Asiimov</div>
-                <div class="skin-wear">Field-Tested · Float 0.22</div>
-                <div class="skin-bottom"><div class="skin-price">€58.40</div><div class="skin-chg" style="color:var(--sage)">↑ +6.8%</div></div>
-              </div>
-              <div class="skin-card">
-                <div class="skin-top"><div class="skin-emoji">🟣</div><span class="skin-rarity rarity-restricted">Restricted</span></div>
-                <div class="skin-name">M4A4 | Howl</div>
-                <div class="skin-wear">Minimal Wear · Float 0.08</div>
-                <div class="skin-bottom"><div class="skin-price">€412.00</div><div class="skin-chg" style="color:var(--sage)">↑ +3.1%</div></div>
-              </div>
-              <div class="skin-card">
-                <div class="skin-top"><div class="skin-emoji">📦</div><span class="skin-rarity rarity-milspec">Mil-Spec</span></div>
-                <div class="skin-name">Revolution Case</div>
-                <div class="skin-wear">Caixa · x12</div>
-                <div class="skin-bottom"><div class="skin-price">€10.44</div><div class="skin-chg" style="color:var(--terra)">↓ -2.1%</div></div>
+              <div class="skin-card" *ngFor="let item of steamInventory.items.slice(0, 12)">
+                <div class="skin-top">
+                  <div class="skin-emoji"><img [src]="item.icon" style="width: 40px; height: 40px; object-fit: contain;"></div>
+                  <span class="skin-rarity" [style.background]="'#' + item.color + '1a'" [style.color]="'#' + item.color">{{ item.rarity }}</span>
+                </div>
+                <div class="skin-name">{{ item.name }}</div>
+                <div class="skin-wear">{{ item.type }}</div>
+                <div class="skin-bottom"><div class="skin-price">--</div></div>
               </div>
             </div>
           </div>
@@ -576,12 +574,21 @@
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" [class.open]="modalOpen" (click)="closeModal($event)">
   <div class="modal">
-    <div class="modal-icon">🚀</div>
-    <div class="modal-title">Cria a tua conta grátis</div>
-    <div class="modal-text">Esta funcionalidade está disponível na versão completa. Cria uma conta gratuita e acede a tudo — income tracker, simulador, rendas, alertas e comunidade real.</div>
+    <div class="modal-icon">🎮</div>
+    <div class="modal-title">Ligar Conta Steam</div>
+    <div class="modal-text">Usa o login oficial da Steam para sincronizarmos o teu inventário de CS2 de forma segura.</div>
+    
+    <div style="margin: 24px 0; text-align: center;">
+      <button type="button" class="steam-button" (click)="loginWithSteam()" style="width:100%">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px; margin-right:8px;">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 6.637 5.373 12 12 12 6.637 0 12-5.373 12-12 0-6.637-5.373-12-12-12zm4.33 13.911c-.347 1.054-1.22 1.834-2.27 2.054l-2.06 4.122c-.106.213-.314.347-.533.347h-.01c-.22 0-.43-.134-.536-.347l-2.053-4.116c-1.045-.22-1.914-1-2.26-1.954l-4.14-2.07c-.214-.107-.347-.315-.347-.534v-.01c0-.22.133-.427.346-.533l4.134-2.067c.346-1.053 1.218-1.833 2.268-2.053l2.056-4.112c.107-.213.315-.347.534-.347h.01c.22 0 .427.134.533.347l2.067 4.134c1.053.346 1.833 1.218 2.053 2.268l4.112 2.056c.213.107.347.315.347.534v.01c0 .22-.134.427-.347.533l-4.134 2.067z"/>
+        </svg>
+        Sign in through STEAM
+      </button>
+    </div>
+
     <div class="modal-actions">
-      <a href="index.html" class="btn btn-primary" style="flex:1;justify-content:center">Criar conta grátis →</a>
-      <button class="btn btn-ghost" (click)="closeModal()">Fechar</button>
+      <button class="btn btn-ghost" (click)="closeModal()" style="flex:1">Cancelar</button>
     </div>
   </div>
 </div>

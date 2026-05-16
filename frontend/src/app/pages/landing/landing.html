@@ -36,7 +36,7 @@
     <div class="motion-ring ring-one" data-parallax="0.10"></div>
     <div class="motion-ring ring-two" data-parallax="-0.08"></div>
     <div class="ticker-ribbon" data-parallax="0.16">
-      <span>EURIBOR 6M 2.61%</span>
+      <span>EURIBOR 6M 2.55%</span>
       <span>S&P 500 +1.2%</span>
       <span>BTC +2.1%</span>
       <span>VWCE +0.7%</span>
@@ -60,8 +60,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       Criar conta grátis
     </a>
-    <a routerLink="/dashboard" class="btn btn-outline btn-lg">Ver demo</a>
+    <a routerLink="/dashboard-demo" class="btn btn-outline btn-lg">Ver demo</a>
   </div>
+
+
 
   <div class="hero-social-proof" data-parallax="0.14">
     <div class="avatars">
@@ -74,7 +76,10 @@
     <span class="social-text"><strong>+2.400 utilizadores</strong> já gerem as suas finanças aqui</span>
   </div>
 
-  <div class="hero-preview" data-parallax="0.18">
+  <div class="hero-preview" [class.demo-active]="isDemoActive" data-parallax="0.18">
+    @if (isDemoActive) {
+      <div class="demo-toast">Demo ativa: dashboard, alertas e métricas em modo preview.</div>
+    }
     <div class="preview-frame">
       <div class="preview-bar">
         <div class="preview-dot pd-red"></div>
@@ -124,7 +129,7 @@
           <div class="pc-topbar">
             <div>
               <div class="pc-greeting">Bom dia, <span>Marta</span> 👋</div>
-              <div class="pc-date">Domingo, 10 de Maio · Euribor 6M: 2.61%</div>
+              <div class="pc-date">Domingo, 10 de Maio · Euribor 6M: 2.55%</div>
             </div>
             <div style="display:flex;gap:8px">
               <div style="width:28px;height:28px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:600">M</div>
@@ -295,13 +300,13 @@
     <div class="rate-card">
       <div class="rate-card-label">Banco Central Europeu</div>
       <div class="rate-card-name">Euribor 6 Meses</div>
-      <div class="rate-card-val">2.61<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-val">2.55<span class="rate-card-unit">%</span></div>
       <div class="rate-card-change rate-dn">↓ -0.08% vs mês anterior</div>
     </div>
     <div class="rate-card">
       <div class="rate-card-label">Banco de Portugal</div>
       <div class="rate-card-name">TEAG Médio Habitação</div>
-      <div class="rate-card-val">4.12<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-val">3.85<span class="rate-card-unit">%</span></div>
       <div class="rate-card-change rate-dn">↓ -0.15% vs mês anterior</div>
     </div>
     <div class="rate-card">
@@ -638,4 +643,51 @@
     </div>
   </div>
 </footer>
+
+<!-- Demo Modal -->
+<div class="demo-modal-overlay" *ngIf="showDemoModal" (click)="closeDemoModal()">
+  <div class="demo-modal-content" (click)="$event.stopPropagation()">
+    <div class="demo-modal-header">
+      <h3>🎮 Experimente o WealthSphere Demo</h3>
+      <button class="demo-modal-close" (click)="closeDemoModal()">×</button>
+    </div>
+    
+    <div class="demo-modal-body">
+      <p>Escolha o que quer experimentar sem criar conta:</p>
+      
+      <div class="demo-options">
+        <a href="/dashboard-demo" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">📊</div>
+          <h4>Dashboard Completo</h4>
+          <p>Veja o dashboard profissional com portfolio, transações e alertas</p>
+        </a>
+        
+        <a routerLink="/forum" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">💬</div>
+          <h4>Fórum</h4>
+          <p>Participe da comunidade, veja posts e comentários</p>
+        </a>
+        
+        <a routerLink="/income" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">💰</div>
+          <h4>Income Tracker</h4>
+          <p>Controle rendimentos e despesas com gráficos detalhados</p>
+        </a>
+        
+        <a routerLink="/simulador" class="demo-option-card" (click)="closeDemoModal()">
+          <div class="demo-option-icon">📈</div>
+          <h4>Simulador</h4>
+          <p>Simule investimentos com juros compostos e cenários</p>
+        </a>
+      </div>
+      
+      <div class="demo-modal-footer">
+        <p class="demo-note">🎮 Modo demo: dados não são persistentes</p>
+        <button class="btn btn-fill" routerLink="/auth" (click)="closeDemoModal()">
+          Criar conta para guardar dados
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 

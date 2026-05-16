@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   templateUrl: './landing.html',
   styleUrl: './landing.css',
 })
@@ -19,6 +20,20 @@ export class Landing implements AfterViewInit, OnDestroy {
   private mouseY = 0;
   private scrollY = 0;
   private animationFrame = 0;
+  private demoTimer?: ReturnType<typeof setTimeout>;
+
+  isDemoActive = false;
+  showDemoModal = false;
+
+  openDemoModal() {
+    this.showDemoModal = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeDemoModal() {
+    this.showDemoModal = false;
+    document.body.style.overflow = 'auto';
+  }
 
   ngAfterViewInit(): void {
     const root = this.elementRef.nativeElement as HTMLElement;
@@ -67,6 +82,20 @@ export class Landing implements AfterViewInit, OnDestroy {
     this.tagCleanups.forEach((cleanup) => cleanup());
     this.motionCleanups.forEach((cleanup) => cleanup());
     cancelAnimationFrame(this.animationFrame);
+    clearTimeout(this.demoTimer);
+  }
+
+  activateDemo(): void {
+    const root = this.elementRef.nativeElement as HTMLElement;
+    const preview = root.querySelector<HTMLElement>('.hero-preview');
+
+    this.isDemoActive = true;
+    preview?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    clearTimeout(this.demoTimer);
+    this.demoTimer = setTimeout(() => {
+      this.isDemoActive = false;
+    }, 8500);
   }
 
   private scheduleParallax(): void {
