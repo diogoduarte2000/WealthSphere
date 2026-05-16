@@ -476,3 +476,228 @@ Criar versões git e implementar dashboard demo encontrado no site preview v1.
 ---
 **Mensagem Final do Utilizador:**
 "no dashboard-user preciso de um sitio para o user ir atualizando os dados, btw, nos sitions onde tu clicas e diz \"Cria a tua conta grátis\" , ja podes implementar as funionalidades que é suposto ter, mas por agora nao metas, mete esta mensagem que te estou a enviar no progress.md, e adiciona o que foi modificado , retirado ou adicionado , o que falta fazer , etc (a ultima coisa a meter no .md é esta mensagem)"
+
+---
+
+## Sessão de Atualização de Taxas e Login Steam - 16/05/2026
+
+### 🛠️ Modificações e Melhorias
+
+#### README.md
+- **Removido**: Informações sobre backend por segurança
+- **Removido**: Contacto da empresa
+- **Atualizado**: Apenas link Vercel para frontend
+- **Motivo**: Segurança e foco em frontend público
+
+#### Taxas Financeiras (Atualização para Valores Reais)
+- **Euribor 3M**: 2.39% → 2.85%
+- **Euribor 6M**: 2.55% → 3.02%
+- **Euribor 12M**: 2.78% → 3.18%
+- **TEAG**: 4.12% → 4.35%
+- **BCE Deposit**: 2.25% → 2.75%
+- **IPC**: 2.3% → 2.1%
+- **Ficheiros atualizados**:
+  - `frontend/src/app/services/rates.service.ts`
+  - `frontend/src/app/pages/landing/landing.html`
+  - `frontend/src/app/pages/dashboard/dashboard.ts`
+  - `frontend/src/app/pages/dashboard/dashboard.html`
+  - `frontend/src/app/pages/dashboard/dashboard-demo.component.ts`
+  - `frontend/src/app/pages/dashboard/dashboard-demo.component.html`
+  - `frontend/src/app/pages/dashboard/dashboard-user.component.ts`
+  - `frontend/src/app/pages/dashboard/dashboard-user.component.html`
+
+#### Backend - Login Steam
+- **Adicionado**: Rotas de autenticação Steam OpenID
+- **Adicionado**: Rotas de login normal (/api/auth/login)
+- **Adicionado**: Rotas de registo (/api/auth/register)
+- **Modificado**: `backend/server.js` com Passport.js e Steam Strategy
+- **Criado**: `render.yaml` para configuração de deploy automático
+- **Problema**: Backend no Render ainda não fez deploy com novas rotas
+
+#### Investigação de Login Steam
+- **Sites de trading CS analisados**: white.market, CS.MONEY
+- **Padrão identificado**:
+  1. Steam OpenID para autenticação
+  2. Conectar e-mail
+  3. Conectar Steam Trade Link
+  4. App mobile para segurança
+- **Status**: Backend configurado, aguardando deploy no Render
+
+### 📋 O que falta fazer
+- [ ] **Deploy do Backend**: Configurar Render para fazer deploy do branch main com novas rotas Steam
+- [ ] **Steam API Key**: Obter API key da Steam (https://steamcommunity.com/dev/apikey)
+- [ ] **Steam Trade Link**: Implementar conexão de Trade Link no frontend
+- [ ] **Email Verification**: Adicionar verificação de email como sites de trading
+- [ ] **Testar Login Steam**: Testar fluxo completo de autenticação Steam
+- [ ] **Integração Frontend-Backend**: Conectar frontend ao backend para login Steam
+
+### 🔄 Mudanças Recentes
+
+#### Adicionado
+- `backend/server.js` - Servidor Express com rotas Steam e login normal
+- `backend/package.json` - Dependências do backend
+- `render.yaml` - Configuração de deploy automático no Render
+
+#### Removido
+- Informações de backend do README.md
+- Contacto da empresa do README.md
+
+#### Modificado
+- `README.md` - Atualizado para foco em frontend público
+- `frontend/src/app/services/rates.service.ts` - Taxas atualizadas para valores reais
+- Múltiplos ficheiros HTML/TS - Taxas Euribor atualizadas
+
+### 📝 Branches e Deploy
+- **GitHub**: Branch `main` atualizado com backend e taxas
+- **Render**: Backend ainda não fez deploy automático (timestamp antigo)
+- **Vercel**: Frontend configurado e funcionando
+
+### ⚠️ Problemas Conhecidos
+- **Backend Render**: Não fez deploy automático com novas rotas Steam
+- **Login Steam**: Não funcional até backend fazer deploy
+- **Steam API Key**: Ainda não configurada
+
+---
+
+**Process.md (conteúdo integrado):**
+
+# WealthSphere - Processo de Desenvolvimento
+
+## ✅ Concluído
+
+### Frontend
+- [x] Configuração do projeto Angular
+- [x] Lazy loading de componentes (app.routes.ts)
+- [x] Preloading estratégico para animações suaves (PreloadAllModules)
+- [x] Favicon com logo da WealthSphere
+- [x] CSS refatorado para dashboard-demo (separado em arquivo CSS)
+- [x] Correção de hover na sidebar (overflow-x:hidden)
+- [x] Correção de navegação JavaScript (showPage function)
+- [x] Conexão com backend Render (https://wealthsphere-backend.onrender.com/api)
+- [x] Instruções de deploy no Vercel (VERCEL_DEPLOY.md)
+- [x] Animações otimizadas (page-animations.ts)
+- [x] Serviço de taxas em tempo real (rates.service.ts)
+- [x] Taxas atualizadas para valores reais (Maio 2026)
+
+### Backend
+- [x] Configuração do backend Node.js
+- [x] Autenticação Steam OpenID
+- [x] Gestão de sessões
+- [x] Rotas de autenticação (Steam, login, register)
+- [x] Conexão com base de dados
+- [x] Rotas de login normal implementadas
+
+### Git
+- [x] Branch version2 criado e pushado
+- [x] Branch version7 criado e atualizado
+- [x] Branch steam-login-test-2 criado e pushado
+- [x] Branch DEADEND criado para guardar estado
+- [x] Branch feature-steam-integration atualizado
+- [x] Branch main atualizado com backend e taxas
+- [x] .gitignore atualizado para ignorar "site preview v1/"
+
+### Docker
+- [x] Dockerfile para frontend
+- [x] nginx.conf para frontend
+- [x] Dockerfile para backend
+- [x] docker-compose.yml
+
+### Documentação
+- [x] README.md criado para GitHub
+- [x] process.md criado
+- [x] VERCEL_DEPLOY.md criado
+- [x] render.yaml criado para deploy automático
+
+## 🚧 Em Progresso
+
+### Backend
+- [ ] Configurar Render para fazer deploy do branch main
+- [ ] Adicionar Steam API Key
+- [ ] Implementar rotas de taxas em tempo real
+
+### Deploy
+- [ ] Testar deploy do backend no Render com novas rotas
+- [ ] Testar login Steam após deploy
+
+## 📋 A Fazer
+
+### Frontend
+- [ ] Integrar page-animations.ts nos componentes
+- [ ] Integrar rates.service.ts nos componentes de taxas
+- [ ] Implementar lazy loading específico por página
+- [ ] Otimizar animações CSS
+- [ ] Adicionar loading states
+- [ ] Implementar error boundaries
+- [ ] Adicionar tests unitários
+- [ ] Implementar PWA features
+
+### Backend
+- [ ] Adicionar validação de inputs
+- [ ] Implementar rate limiting
+- [ ] Adicionar logging estruturado
+- [ ] Implementar cache Redis
+- [ ] Adicionar tests de integração
+- [ ] Configurar CI/CD
+- [ ] Implementar API real para taxas (Banco de Portugal/ECB)
+
+### Segurança
+- [ ] Adicionar helmet.js
+- [ ] Implementar CSRF protection
+- [ ] Adicionar sanitização de inputs
+- [ ] Configurar CORS corretamente
+- [ ] Implementar 2FA
+
+### Documentação
+- [ ] Documentar API endpoints
+- [ ] Documentar setup de desenvolvimento
+- [ ] Criar guias de contribuição
+- [ ] Adicionar diagramas de arquitetura
+
+## 📝 Notas
+
+### Branches Ativos
+- `main` - Branch principal com backend e taxas atualizadas
+- `version7` - Versão estável com preloading
+- `DEADEND` - Estado guardado (backup)
+- `feature-steam-integration` - Branch com Steam login (integrado no main)
+
+### URLs Importantes
+- Frontend Vercel: https://wealth-sphere-eblw8c1kq-diogosilvanoduarte-3890s-projects.vercel.app/
+- Backend: https://wealthsphere-backend.onrender.com
+- GitHub: https://github.com/diogoduarte2000/WealthSphere
+
+### Problemas Conhecidos
+- **Backend Render**: Não fez deploy automático com novas rotas Steam
+- **Login Steam**: Não funcional até backend fazer deploy
+- **Steam API Key**: Ainda não configurada
+
+### Configurações
+- Angular 17.3.0
+- Node.js 18
+- MongoDB
+- Steam OpenID authentication
+- Vercel (frontend)
+- Render (backend)
+
+## 🔄 Mudanças Recentes
+
+### Adicionado
+- `frontend/src/app/animations/page-animations.ts` - Animações otimizadas
+- `frontend/src/app/services/rates.service.ts` - Serviço de taxas em tempo real
+- `README.md` - Documentação do projeto
+- `process.md` - Este ficheiro (integrado ao progress.md)
+- `backend/server.js` - Servidor Express com rotas Steam
+- `backend/package.json` - Dependências do backend
+- `render.yaml` - Configuração de deploy automático
+
+### Removido
+- Informações de backend do README.md
+- Contacto da empresa do README.md
+- process.md (integrado ao progress.md)
+
+### Modificado
+- `frontend/src/app/app.config.ts` - Adicionado preloading estratégico
+- `frontend/src/index.html` - Atualizado favicon
+- `.gitignore` - Atualizado para ignorar "site preview v1/"
+- `frontend/src/app/services/rates.service.ts` - Taxas atualizadas
+- Múltiplos ficheiros HTML/TS - Taxas Euribor atualizadas
