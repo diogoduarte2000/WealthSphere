@@ -2,6 +2,7 @@ import { Component, AfterViewInit, ElementRef, ViewChild, OnInit, inject } from 
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard-user',
@@ -16,6 +17,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   currentPage: string = 'dashboard';
   modalOpen: boolean = false;
   currentChartPeriod: string = '6m';
+  showUserMenu: boolean = false;
   
   userName: string = 'Utilizador';
   userInitial: string = 'U';
@@ -50,6 +52,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   };
 
   private readonly userService = inject(UserService);
+  private readonly router = inject(Router);
 
   steamInventory: any = null;
   steamLoading: boolean = false;
@@ -70,6 +73,21 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       }
     }
     this.loadProfile();
+  }
+
+  initChart(): void {
+    // Initialize chart here
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  logout(): void {
+    localStorage.removeItem('wealthsphere_access_token');
+    localStorage.removeItem('wealthsphere_refresh_token');
+    localStorage.removeItem('wealthsphere_user');
+    this.router.navigate(['/auth']);
   }
 
   loginWithSteam() {
