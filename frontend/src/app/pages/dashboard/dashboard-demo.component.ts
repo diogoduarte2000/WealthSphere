@@ -16,7 +16,7 @@ export class DashboardDemoComponent implements AfterViewInit {
   currentChartPeriod: string = '6m';
 
   titles: { [key: string]: [string, string] } = {
-    dashboard: ['Dashboard', 'Domingo, 10 de Maio · Euribor 6M: 2.55% ↓'],
+    dashboard: ['Dashboard', 'Domingo, 10 de Maio · Euribor 6M: 3.02% ↓'],
     income: ['Income Tracker', 'Maio 2025 · €1.920 de receitas'],
     taxas: ['Taxas & Mercados', 'Dados em tempo real · BCE · Banco de Portugal'],
     cs2: ['CS2 & Steam', 'Inventário sincronizado · 14 itens · €624'],
