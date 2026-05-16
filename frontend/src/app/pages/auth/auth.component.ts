@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { Component, OnDestroy, inject, OnInit } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -8,10 +10,24 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { UserService } from '../../services/user.service';
 
 type AuthMode = 'login' | 'register';
 type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
+
+interface AuthResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
 
 @Component({
   selector: 'app-auth',
@@ -20,13 +36,21 @@ type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTe
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.css'
 })
-export class AuthComponent implements OnDestroy {
+export class AuthComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly userService = inject(UserService);
+  
   private morphTimer?: ReturnType<typeof setTimeout>;
+  private readonly apiBaseUrl = this.resolveApiBaseUrl();
 
   mode: AuthMode = 'login';
   submitted = false;
   successMessage = '';
+  errorMessage = '';
+  isSubmitting = false;
   isMorphing = false;
 
   readonly authForm = this.fb.group({
@@ -40,6 +64,36 @@ export class AuthComponent implements OnDestroy {
 
   constructor() {
     this.applyModeValidators();
+  }
+
+  ngOnInit(): void {
+    // Capturar tokens da URL (vindo do redirect da Steam)
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'];
+      const refresh = params['refresh'];
+      
+      if (token && refresh) {
+        this.isSubmitting = true;
+        localStorage.setItem('wealthsphere_access_token', token);
+        localStorage.setItem('wealthsphere_refresh_token', refresh);
+        
+        // Buscar perfil do utilizador para completar o login
+        this.userService.getProfile().subscribe({
+          next: (res) => {
+            localStorage.setItem('wealthsphere_user', JSON.stringify(res.profile));
+            this.successMessage = `Login via Steam efetuado com sucesso!`;
+            this.isSubmitting = false;
+            setTimeout(() => {
+              this.router.navigate(['/dashboard-user']);
+            }, 1000);
+          },
+          error: () => {
+            this.errorMessage = 'Erro ao sincronizar perfil da Steam.';
+            this.isSubmitting = false;
+          }
+        });
+      }
+    });
   }
 
   get isRegister(): boolean {
@@ -56,6 +110,7 @@ export class AuthComponent implements OnDestroy {
     this.mode = mode;
     this.submitted = false;
     this.successMessage = '';
+    this.errorMessage = '';
     this.authForm.patchValue({ name: '', confirmPassword: '', acceptTerms: false });
     this.applyModeValidators();
     this.morphTimer = setTimeout(() => {
@@ -63,9 +118,15 @@ export class AuthComponent implements OnDestroy {
     }, 520);
   }
 
+  loginWithSteam(): void {
+    // Redirecionar para a rota de auth do backend
+    window.location.href = `${this.apiBaseUrl}/auth/steam`;
+  }
+
   submit(): void {
     this.submitted = true;
     this.successMessage = '';
+    this.errorMessage = '';
     this.authForm.updateValueAndValidity();
 
     if (this.authForm.invalid) {
@@ -74,18 +135,54 @@ export class AuthComponent implements OnDestroy {
     }
 
     const value = this.authForm.getRawValue();
+
+    if (!this.isRegister) {
+      this.isSubmitting = true;
+      this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/login`, {
+        email: value.email,
+        password: value.password
+      }).subscribe({
+        next: (response) => {
+          localStorage.setItem('wealthsphere_access_token', response.tokens.accessToken);
+          localStorage.setItem('wealthsphere_refresh_token', response.tokens.refreshToken);
+          localStorage.setItem('wealthsphere_user', JSON.stringify(response.user));
+          this.successMessage = `Bem-vindo de volta, ${response.user.name}!`;
+          this.isSubmitting = false;
+          setTimeout(() => {
+            this.router.navigate(['/dashboard-user']);
+          }, 1500);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = this.getErrorMessage(error);
+          this.isSubmitting = false;
+        }
+      });
+      return;
+    }
+
     const payload = {
-      mode: this.mode,
-      name: this.isRegister ? value.name : undefined,
+      name: value.name,
       email: value.email,
-      password: value.password,
-      remember: value.remember
+      password: value.password
     };
 
-    console.info('Auth payload ready for API integration:', payload);
-    this.successMessage = this.isRegister
-      ? 'Conta validada no frontend. Falta ligar ao endpoint de registo.'
-      : 'Login validado no frontend. Falta ligar ao endpoint de sessão.';
+    this.isSubmitting = true;
+    this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload).subscribe({
+      next: (response) => {
+        localStorage.setItem('wealthsphere_access_token', response.tokens.accessToken);
+        localStorage.setItem('wealthsphere_refresh_token', response.tokens.refreshToken);
+        localStorage.setItem('wealthsphere_user', JSON.stringify(response.user));
+        this.successMessage = `Conta criada com sucesso. Bem-vindo, ${response.user.name}!`;
+        this.isSubmitting = false;
+        setTimeout(() => {
+          this.router.navigate(['/dashboard-user']);
+        }, 1500);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.getErrorMessage(error);
+        this.isSubmitting = false;
+      }
+    });
   }
 
   isInvalid(controlName: AuthControl): boolean {
@@ -135,6 +232,29 @@ export class AuthComponent implements OnDestroy {
         ? { passwordMismatch: true }
         : null;
     };
+  }
+
+
+  private resolveApiBaseUrl(): string {
+    const configuredUrl = localStorage.getItem('wealthsphere_api_url')?.trim();
+
+    if (configuredUrl) {
+      return configuredUrl.replace(/\/$/, '');
+    }
+
+    return environment.apiUrl;
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return `Não consegui ligar ao backend. Confirma se o servidor em ${environment.apiUrl} está ativo.`;
+    }
+
+    if (typeof error.error?.message === 'string') {
+      return error.error.message;
+    }
+
+    return 'O registo falhou. Tenta novamente daqui a pouco.';
   }
 
   ngOnDestroy(): void {

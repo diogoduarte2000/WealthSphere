@@ -1,3 +1,11 @@
+<!-- DEMO BANNER -->
+<div class="demo-banner">
+  <div class="demo-banner-left">
+    <span class="demo-dot"></span>
+    <span>Modo <strong>Demo</strong> — Dados fictícios para demonstração · Nenhum dado real é armazenado</span>
+  </div>
+  <a href="index.html">Criar conta grátis →</a>
+</div>
 
 <!-- APP WRAPPER -->
 <div class="app">
@@ -59,10 +67,10 @@
     </div>
 
     <div class="sidebar-user">
-      <div class="user-av">{{ userInitial }}</div>
+      <div class="user-av">J</div>
       <div>
-        <div class="user-name">{{ userName }}</div>
-        <div class="user-role">Membro · Lisboa 🇵🇹</div>
+        <div class="user-name">João Silva</div>
+        <div class="user-role">Demo · Lisboa 🇵🇹</div>
       </div>
     </div>
   </aside>
@@ -102,55 +110,55 @@
               <div class="stat-icon si-terra">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change up">+3.2%</span>
             </div>
             <div class="stat-label">Net Worth</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-val">€42.8k</div>
+            <div class="stat-sub">↑ €1.320 este mês</div>
           </div>
           <div class="stat-card fd2">
             <div class="stat-top">
               <div class="stat-icon si-sage">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
               </div>
-              <span class="stat-change">0 imóveis</span>
+              <span class="stat-change up">+2 imóveis</span>
             </div>
             <div class="stat-label">Rendas / mês</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-val">€1.200</div>
+            <div class="stat-sub">Próx. recebimento: 1 Jun</div>
           </div>
           <div class="stat-card fd3">
             <div class="stat-top">
               <div class="stat-icon si-lilac">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change up">+1.8%</span>
             </div>
             <div class="stat-label">Portfólio ETF</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">Sem ativos registados</div>
+            <div class="stat-val">€18.4k</div>
+            <div class="stat-sub">VWCE · CSPX · EIMI</div>
           </div>
           <div class="stat-card fd4">
             <div class="stat-top">
               <div class="stat-icon si-gold">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 2l-4 5-4-5"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change up">+4.2%</span>
             </div>
             <div class="stat-label">Inventário CS2</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">0 itens</div>
+            <div class="stat-val">€624</div>
+            <div class="stat-sub">14 itens · Steam</div>
           </div>
           <div class="stat-card fd5">
             <div class="stat-top">
               <div class="stat-icon si-brown">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
               </div>
-              <span class="stat-change">€0</span>
+              <span class="stat-change up">+540€</span>
             </div>
-            <div class="stat-label">Poupança Mensal</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-label">Poupança Maio</div>
+            <div class="stat-val">€540</div>
+            <div class="stat-sub">Taxa: 28% do income</div>
           </div>
         </div>
 
@@ -168,7 +176,7 @@
                 <button class="period-tab" [class.active]="currentChartPeriod === '3a'" (click)="updateChart('3a')">3A</button>
               </div>
             </div>
-            <canvas id="patrimonioChart" #patrimonioChart height="160"></canvas>
+            <canvas id="patrimonioChart" height="160"></canvas>
             <div class="chart-legend">
               <div class="legend-item"><div class="legend-dot" style="background:var(--terra)"></div>Net Worth</div>
               <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div>ETF</div>
@@ -186,17 +194,35 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                 </div>
                 <div>
-                  <div class="alert-title">Euribor 6M desceu para <strong>2.55%</strong></div>
+                  <div class="alert-title">Euribor 6M desceu para <strong>2.61%</strong></div>
                   <div class="alert-time">hoje · 09:30</div>
                 </div>
               </div>
               <div class="alert-item">
                 <div class="alert-icon ai-sage">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg>
                 </div>
                 <div>
-                  <div class="alert-title">Bem-vindo à <strong>WealthSphere</strong>!</div>
-                  <div class="alert-time">agora</div>
+                  <div class="alert-title">VWCE atingiu target <strong>€128.40</strong></div>
+                  <div class="alert-time">ontem · 16:45</div>
+                </div>
+              </div>
+              <div class="alert-item">
+                <div class="alert-icon ai-gold">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 2l-4 5-4-5"/></svg>
+                </div>
+                <div>
+                  <div class="alert-title">AK-47 Redline subiu <strong>+18%</strong> em 30d</div>
+                  <div class="alert-time">há 2 dias</div>
+                </div>
+              </div>
+              <div class="alert-item">
+                <div class="alert-icon ai-terra">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                </div>
+                <div>
+                  <div class="alert-title">Renda do T2 Setúbal: recebida <strong>€700</strong></div>
+                  <div class="alert-time">1 Mai · automático</div>
                 </div>
               </div>
             </div>
@@ -213,17 +239,41 @@
               <div class="donut-wrap">
                 <svg viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sand2)" stroke-width="12"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="12" stroke-dasharray="96 143" stroke-dashoffset="0" stroke-linecap="round"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--terra)" stroke-width="12" stroke-dasharray="67 143" stroke-dashoffset="-96" stroke-linecap="round"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--lilac)" stroke-width="12" stroke-dasharray="29 143" stroke-dashoffset="-163" stroke-linecap="round"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="12" stroke-dasharray="10 143" stroke-dashoffset="-192" stroke-linecap="round"/>
                 </svg>
                 <div class="donut-label">
-                  <div class="donut-val">€0</div>
+                  <div class="donut-val">€42k</div>
                   <div class="donut-sub">total</div>
                 </div>
               </div>
               <div class="alloc-list">
                 <div class="alloc-item">
+                  <div class="alloc-dot" style="background:var(--sage)"></div>
+                  <div class="alloc-name">ETFs</div>
+                  <div class="alloc-pct">43%</div>
+                </div>
+                <div class="alloc-item">
+                  <div class="alloc-dot" style="background:var(--terra)"></div>
+                  <div class="alloc-name">Imóveis</div>
+                  <div class="alloc-pct">30%</div>
+                </div>
+                <div class="alloc-item">
+                  <div class="alloc-dot" style="background:var(--lilac)"></div>
+                  <div class="alloc-name">Liquidez</div>
+                  <div class="alloc-pct">13%</div>
+                </div>
+                <div class="alloc-item">
+                  <div class="alloc-dot" style="background:var(--gold)"></div>
+                  <div class="alloc-name">CS2/Steam</div>
+                  <div class="alloc-pct">4%</div>
+                </div>
+                <div class="alloc-item">
                   <div class="alloc-dot" style="background:var(--sand3)"></div>
-                  <div class="alloc-name">Sem ativos</div>
-                  <div class="alloc-pct">0%</div>
+                  <div class="alloc-name">Cripto</div>
+                  <div class="alloc-pct">10%</div>
                 </div>
               </div>
             </div>
@@ -235,20 +285,41 @@
               <span class="card-action">+ Nova</span>
             </div>
             <div class="goals-list">
-              <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 13px;">
-                Ainda não tens metas financeiras definidas.<br>Cria a tua primeira meta!
+              <div class="goal-item">
+                <div class="goal-header">
+                  <div class="goal-name">🏠 Entrada 2º Imóvel</div>
+                  <div class="goal-pct">68%</div>
+                </div>
+                <div class="goal-bar"><div class="goal-fill" style="width:68%;background:var(--terra)"></div></div>
+                <div class="goal-sub"><span>€17.000 / €25.000</span><span>Dez 2025</span></div>
+              </div>
+              <div class="goal-item">
+                <div class="goal-header">
+                  <div class="goal-name">📈 Portfólio €25k</div>
+                  <div class="goal-pct">74%</div>
+                </div>
+                <div class="goal-bar"><div class="goal-fill" style="width:74%;background:var(--sage)"></div></div>
+                <div class="goal-sub"><span>€18.400 / €25.000</span><span>Mar 2026</span></div>
+              </div>
+              <div class="goal-item">
+                <div class="goal-header">
+                  <div class="goal-name">🎮 Fundo Emergência</div>
+                  <div class="goal-pct">90%</div>
+                </div>
+                <div class="goal-bar"><div class="goal-fill" style="width:90%;background:var(--lilac)"></div></div>
+                <div class="goal-sub"><span>€9.000 / €10.000</span><span>Jul 2025</span></div>
               </div>
             </div>
           </div>
 
           <div class="fire-widget fade-up fd4">
             <div class="fire-title">🔥 Calculadora FIRE</div>
-            <div class="fire-number">-</div>
+            <div class="fire-number">14</div>
             <div class="fire-unit">anos para independência financeira</div>
-            <div class="fire-sub">Define os teus investimentos para calcular a tua idade de FIRE.</div>
+            <div class="fire-sub">Com €540/mês poupados a 7% ao ano, atinges €420k aos 39 anos.</div>
             <div class="fire-bar-wrap">
-              <div class="fire-bar-label"><span>Hoje (€0)</span><span>Meta FIRE (€0)</span></div>
-              <div class="fire-bar"><div class="fire-fill" style="width:0%"></div></div>
+              <div class="fire-bar-label"><span>Hoje (€42k)</span><span>Meta FIRE (€420k)</span></div>
+              <div class="fire-bar"><div class="fire-fill"></div></div>
             </div>
           </div>
         </div>
@@ -268,7 +339,32 @@
               </thead>
               <tbody>
                 <tr>
-                  <td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Não tens ativos registados no teu portfólio.</td>
+                  <td><span class="ticker">VWCE</span></td>
+                  <td style="font-size:13px;color:var(--ink)">Vanguard FTSE All-World</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:13px">€9.240</td>
+                  <td><span class="pos-chg">+12.4%</span></td>
+                  <td style="font-size:12px;color:var(--muted)">50%</td>
+                </tr>
+                <tr>
+                  <td><span class="ticker">CSPX</span></td>
+                  <td style="font-size:13px;color:var(--ink)">iShares Core S&P 500</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:13px">€5.520</td>
+                  <td><span class="pos-chg">+18.2%</span></td>
+                  <td style="font-size:12px;color:var(--muted)">30%</td>
+                </tr>
+                <tr>
+                  <td><span class="ticker">EIMI</span></td>
+                  <td style="font-size:13px;color:var(--ink)">iShares MSCI EM IMI</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:13px">€2.208</td>
+                  <td><span class="neg-chg">-2.1%</span></td>
+                  <td style="font-size:12px;color:var(--muted)">12%</td>
+                </tr>
+                <tr>
+                  <td><span class="ticker">AGGH</span></td>
+                  <td style="font-size:13px;color:var(--ink)">iShares Core Glb Agg Bd</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:13px">€1.432</td>
+                  <td><span class="pos-chg">+1.8%</span></td>
+                  <td style="font-size:12px;color:var(--muted)">8%</td>
                 </tr>
               </tbody>
             </table>

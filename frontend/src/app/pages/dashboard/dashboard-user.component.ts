@@ -1,14 +1,16 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, OnInit } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UserService } from '../../services/user.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-dashboard-user',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css']
+  templateUrl: './dashboard-user.component.html',
+  styleUrls: ['./dashboard-user.component.css']
 })
-export class Dashboard implements OnInit, AfterViewInit {
+export class DashboardUserComponent implements OnInit, AfterViewInit {
   @ViewChild('patrimonioChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   currentPage: string = 'dashboard';
@@ -47,6 +49,12 @@ export class Dashboard implements OnInit, AfterViewInit {
     }
   };
 
+  private readonly userService = inject(UserService);
+
+  steamInventory: any = null;
+  steamLoading: boolean = false;
+  steamError: string = '';
+
   ngOnInit() {
     const userStr = localStorage.getItem('wealthsphere_user');
     if (userStr) {
@@ -61,6 +69,37 @@ export class Dashboard implements OnInit, AfterViewInit {
         console.error('Error parsing user', e);
       }
     }
+    this.loadProfile();
+  }
+
+  loginWithSteam() {
+    window.location.href = `${environment.apiUrl}/auth/steam`;
+  }
+
+  loadProfile() {
+    this.userService.getProfile().subscribe({
+      next: (res) => {
+        const profile = res.profile;
+        if (profile.externalApis?.steam?.steamId) {
+          this.loadSteamInventory();
+        }
+      }
+    });
+  }
+
+  loadSteamInventory() {
+    this.steamLoading = true;
+    this.userService.getSteamInventory().subscribe({
+      next: (res) => {
+        this.steamInventory = res;
+        this.steamLoading = false;
+        this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
+      },
+      error: (err) => {
+        this.steamError = err.error?.message || 'Erro ao ligar à Steam';
+        this.steamLoading = false;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -78,6 +117,16 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   openModal() {
     this.modalOpen = true;
+  }
+
+  saveSteamId(id: string) {
+    if (!id) return;
+    this.userService.updateExternalApis({ steamId: id }).subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadSteamInventory();
+      }
+    });
   }
 
   closeModal(e?: Event) {
@@ -121,7 +170,7 @@ export class Dashboard implements OnInit, AfterViewInit {
       { data: data6m.rendas, color: '#8b80c8' },
     ];
     const allVals = datasets.flatMap(d => d.data);
-    const maxV = Math.max(...allVals) || 1000;
+    const maxV = Math.max(...allVals) || 1000; // Fallback to 1000 if empty/zero
     const minV = Math.min(...allVals) * 0.95;
     const n = data6m.networth.length;
 

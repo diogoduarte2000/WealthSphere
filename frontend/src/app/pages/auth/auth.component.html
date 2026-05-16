@@ -63,11 +63,23 @@
         </label>
         <small *ngIf="isRegister && isInvalid('acceptTerms')" class="field-error">Tens de aceitar os termos para continuar.</small>
 
-        <button type="submit" class="submit-button">
-          {{ isRegister ? 'Criar conta grátis' : 'Entrar' }}
+        <button type="submit" class="submit-button" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'A ligar ao servidor...' : (isRegister ? 'Criar conta grátis' : 'Entrar') }}
+        </button>
+
+        <div class="auth-divider">
+          <span>ou continua com</span>
+        </div>
+
+        <button type="button" class="steam-button" (click)="loginWithSteam()" [disabled]="isSubmitting">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 6.637 5.373 12 12 12 6.637 0 12-5.373 12-12 0-6.637-5.373-12-12-12zm4.33 13.911c-.347 1.054-1.22 1.834-2.27 2.054l-2.06 4.122c-.106.213-.314.347-.533.347h-.01c-.22 0-.43-.134-.536-.347l-2.053-4.116c-1.045-.22-1.914-1-2.26-1.954l-4.14-2.07c-.214-.107-.347-.315-.347-.534v-.01c0-.22.133-.427.346-.533l4.134-2.067c.346-1.053 1.218-1.833 2.268-2.053l2.056-4.112c.107-.213.315-.347.534-.347h.01c.22 0 .427.134.533.347l2.067 4.134c1.053.346 1.833 1.218 2.053 2.268l4.112 2.056c.213.107.347.315.347.534v.01c0 .22-.134.427-.347.533l-4.134 2.067z"/>
+          </svg>
+          Sign in through STEAM
         </button>
 
         <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
+        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
       </form>
     </div>
 
@@ -103,8 +115,8 @@
         <span style="height: 86%"></span>
       </div>
       <div class="preview-list">
-        <p><strong>Pronto para backend:</strong> este formulário já valida e prepara o payload.</p>
-        <p>Depois ligamos `submit()` aos endpoints de login, registo e refresh token.</p>
+        <p><strong>Ligado ao backend:</strong> o registo chama `POST /api/auth/register`.</p>
+        <p>Login e refresh token ficam para a próxima ligação.</p>
       </div>
     </aside>
   </section>
