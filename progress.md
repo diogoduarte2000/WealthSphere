@@ -556,6 +556,35 @@ Criar versões git e implementar dashboard demo encontrado no site preview v1.
 - **Backend Render**: Não fez deploy automático com novas rotas Steam
 - **Login Steam**: Não funcional até backend fazer deploy
 - **Steam API Key**: Ainda não configurada
+- **Login Normal**: Implementado mas não testado com backend deployado
+
+---
+
+## Sessão de Adição de Botão de Logout - 16/05/2026
+
+### 🛠️ Modificações e Melhorias
+
+#### Dashboard User - Botão de Logout
+- **Adicionado**: Menu dropdown ao clicar no avatar do utilizador
+- **Adicionado**: Botão de logout no menu dropdown
+- **Implementado**: Função `toggleUserMenu()` para abrir/fechar menu
+- **Implementado**: Função `logout()` para remover tokens e redirecionar
+- **Adicionado**: Router ao componente para navegação
+- **Adicionado**: Estilos CSS para o menu dropdown
+
+#### Ficheiros Modificados
+- `frontend/src/app/pages/dashboard/dashboard-user.component.html` - Menu dropdown no avatar
+- `frontend/src/app/pages/dashboard/dashboard-user.component.ts` - Funções de logout e router
+- `frontend/src/app/pages/dashboard/dashboard-user.component.css` - Estilos do menu
+
+### 📋 O que falta fazer
+- [ ] **Deploy do Backend**: Configurar Render para fazer deploy do branch main com novas rotas Steam
+- [ ] **Steam API Key**: Obter API key da Steam (https://steamcommunity.com/dev/apikey)
+- [ ] **Steam Trade Link**: Implementar conexão de Trade Link no frontend
+- [ ] **Email Verification**: Adicionar verificação de email como sites de trading
+- [ ] **Testar Login Steam**: Testar fluxo completo de autenticação Steam
+- [ ] **Testar Login Normal**: Testar login normal com backend deployado
+- [ ] **Integração Frontend-Backend**: Conectar frontend ao backend para login Steam e normal
 
 ---
 
