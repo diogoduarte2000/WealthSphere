@@ -57,9 +57,37 @@ app.get('/api/auth/steam/return',
   passport.authenticate('steam', { failureRedirect: '/login' }),
   (req, res) => {
     // Successful authentication
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:4200'}/dashboard?steamId=${req.user.id}`);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:4200'}/auth?steamId=${req.user.id}`);
   }
 );
+
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  // TODO: Implementar autenticação real com base de dados
+  if (email && password) {
+    res.json({
+      message: 'Login successful',
+      user: { id: '1', name: 'User', email: email },
+      tokens: { accessToken: 'mock_token', refreshToken: 'mock_refresh' }
+    });
+  } else {
+    res.status(400).json({ message: 'Email and password required' });
+  }
+});
+
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password } = req.body;
+  // TODO: Implementar registo real com base de dados
+  if (name && email && password) {
+    res.json({
+      message: 'Registration successful',
+      user: { id: '1', name: name, email: email },
+      tokens: { accessToken: 'mock_token', refreshToken: 'mock_refresh' }
+    });
+  } else {
+    res.status(400).json({ message: 'Name, email and password required' });
+  }
+});
 
 app.get('/api/user', (req, res) => {
   if (req.user) {
