@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthSphere — CS2 & Steam</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sand:#f0ebe0;--sand2:#e6dfd1;--sand3:#d4cab8;
+  --terra:#c96a45;--terra2:#b85c38;--terra-dim:rgba(201,106,69,0.1);
+  --sage:#5f7e5f;--sage-dim:rgba(95,126,95,0.1);
+  --lilac:#8b80c8;--lilac-dim:rgba(139,128,200,0.12);
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);
+  --red:#c94545;--red-dim:rgba(201,69,69,0.1);
+  --ink:#1e1812;--brown:#5a4a3a;--muted:#8a7a6a;
+  --white:#faf9f6;--border:rgba(90,74,58,0.12);
+  --shadow:0 2px 12px rgba(42,32,24,0.07);--shadow-lg:0 8px 32px rgba(42,32,24,0.10);
+}
+body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;padding:0}
+ 
+/* NAV */
+nav{background:var(--white);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-icon{width:30px;height:30px;background:var(--terra);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px}
+.logo-text{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--ink)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.steam-connected{display:flex;align-items:center;gap:7px;background:var(--sand);border:1px solid var(--border);border-radius:100px;padding:5px 12px;font-size:12px;color:var(--brown)}
+.steam-av{width:22px;height:22px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:10px;color:white}
+.steam-dot{width:6px;height:6px;border-radius:50%;background:var(--sage)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--terra);color:#fff}.btn-primary:hover{background:var(--terra2)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--brown)}.btn-ghost:hover{background:var(--sand2)}
+.btn svg{width:13px;height:13px}
+ 
+/* TABS */
+.tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0}
+.tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap}
+.tab.active{color:var(--terra);border-bottom-color:var(--terra)}
+.tab:hover:not(.active){color:var(--ink)}
+ 
+/* CONTENT */
+.content{padding:24px 28px;max-width:1400px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+ 
+/* STEAM PROFILE BANNER */
+.steam-banner{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:16px;margin-bottom:18px;box-shadow:var(--shadow)}
+.sb-avatar{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#1b2838,#2a475e);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.sb-name{font-family:'Lora',serif;font-size:17px;font-weight:700;color:var(--ink)}
+.sb-id{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+.sb-stats{display:flex;gap:24px;margin-left:auto}
+.sb-stat{text-align:center}
+.sb-val{font-family:'Lora',serif;font-size:20px;font-weight:700;color:var(--ink)}
+.sb-label{font-size:10px;color:var(--muted);margin-top:1px}
+.sb-divider{width:1px;background:var(--border);align-self:stretch}
+ 
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.scard{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.scard-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.scard-val{font-family:'Lora',serif;font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1}
+.scard-chg{font-size:10px;margin-top:3px}
+.pos{color:var(--sage)}.neg{color:var(--red)}.neu{color:var(--muted)}
+ 
+/* LAYOUT */
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+ 
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--ink)}
+.card-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.card-action{font-size:11px;color:var(--terra);cursor:pointer;font-weight:500;border:none;background:none;font-family:inherit}
+ 
+/* SKIN GRID */
+.skin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.skin-card{background:var(--sand);border:1px solid var(--border);border-radius:11px;padding:13px;cursor:pointer;transition:all .2s;position:relative}
+.skin-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);background:var(--sand2)}
+.skin-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.skin-emoji{font-size:30px;line-height:1}
+.skin-rarity{font-size:9px;font-weight:600;padding:2px 7px;border-radius:100px}
+.r-covert{background:rgba(235,75,75,0.12);color:#eb4b4b}
+.r-classified{background:rgba(211,44,230,0.12);color:#d32ce6}
+.r-restricted{background:rgba(75,105,255,0.12);color:#4b69ff}
+.r-milspec{background:rgba(94,152,217,0.12);color:#5e98d9}
+.r-industrial{background:rgba(109,167,171,0.12);color:#6da7ab}
+.skin-name{font-size:12px;font-weight:600;color:var(--ink);line-height:1.25;margin-bottom:2px}
+.skin-wear{font-size:10px;color:var(--muted)}
+.skin-float{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px}
+.skin-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.skin-price{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--ink)}
+.skin-chg{font-size:11px;font-weight:500}
+.skin-badge{position:absolute;top:8px;right:8px}
+ 
+/* FLOAT BAR */
+.float-wrap{margin-top:6px}
+.float-bar{height:4px;background:linear-gradient(to right,#4caf50,#8bc34a,#ffeb3b,#ff9800,#f44336);border-radius:2px;position:relative;margin-top:3px}
+.float-indicator{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:white;border:2px solid var(--ink);transform:translateX(-50%)}
+ 
+/* MARKET LIST */
+.market-list{display:flex;flex-direction:column;gap:6px}
+.market-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--sand);border-radius:9px;transition:background .15s;cursor:default}
+.market-row:hover{background:var(--sand2)}
+.mr-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.mr-name{font-size:13px;font-weight:500;color:var(--ink);flex:1}
+.mr-sub{font-size:10px;color:var(--muted)}
+.mr-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink);text-align:right}
+.mr-chg{font-size:10px;text-align:right;margin-top:1px}
+ 
+/* COMPARE TABLE */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px}
+.cmp-table th{font-size:9px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;text-align:left}
+.cmp-table td{padding:9px 10px;border-bottom:1px solid rgba(90,74,58,.06);vertical-align:middle}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table tr:hover td{background:var(--sand)}
+.winner{background:rgba(95,126,95,.08)!important}
+.winner td:first-child{font-weight:600;color:var(--sage)}
+ 
+/* ROI WIDGET */
+.roi-big{text-align:center;padding:20px 0}
+.roi-number{font-family:'Lora',serif;font-size:48px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.roi-label{font-size:12px;color:var(--muted);margin-top:6px}
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.roi-item{background:var(--sand);border-radius:9px;padding:12px;text-align:center}
+.roi-item-val{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--ink)}
+.roi-item-label{font-size:10px;color:var(--muted);margin-top:2px}
+ 
+/* CASES */
+.case-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.case-card{background:var(--sand);border:1px solid var(--border);border-radius:10px;padding:13px;cursor:pointer;transition:all .15s}
+.case-card:hover{background:var(--sand2);transform:translateX(3px)}
+.case-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.case-icon{font-size:28px}
+.case-name{font-size:13px;font-weight:600;color:var(--ink)}
+.case-price{font-size:11px;color:var(--muted);margin-top:1px}
+.prob-list{display:flex;flex-direction:column;gap:5px}
+.prob-row{display:flex;align-items:center;gap:7px}
+.prob-label{font-size:10px;color:var(--muted);width:80px;flex-shrink:0}
+.prob-bar{flex:1;height:5px;background:var(--sand2);border-radius:3px;overflow:hidden}
+.prob-fill{height:100%;border-radius:3px}
+.prob-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);width:36px;text-align:right;flex-shrink:0}
+.ev-box{margin-top:12px;padding:10px;background:rgba(95,126,95,.08);border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+.ev-label{font-size:11px;color:var(--sage);font-weight:500}
+.ev-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--sage)}
+ 
+/* WATCHLIST */
+.wl-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--sand);border-radius:9px;margin-bottom:6px;transition:background .15s}
+.wl-item:hover{background:var(--sand2)}
+.wl-emoji{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.wl-info{flex:1;min-width:0}
+.wl-name{font-size:13px;font-weight:500;color:var(--ink)}
+.wl-target{font-size:10px;color:var(--muted);margin-top:1px}
+.wl-current{text-align:right}
+.wl-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink)}
+.wl-diff{font-size:10px;margin-top:1px}
+.wl-alert{width:28px;height:28px;border-radius:7px;background:var(--terra-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:none;font-size:13px;transition:background .15s}
+.wl-alert:hover{background:var(--terra);color:white}
+ 
+/* TREND CHART */
+canvas{display:block;width:100%!important}
+.chart-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+ 
+/* PERIOD TABS */
+.ptabs{display:flex;gap:2px;background:var(--sand);border-radius:7px;padding:2px}
+.ptab{padding:4px 9px;border-radius:5px;font-size:10px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit}
+.ptab.active{background:white;color:var(--terra);box-shadow:0 1px 4px rgba(42,32,24,.1)}
+ 
+/* ALERTS STRIP */
+.alert-strip{background:linear-gradient(135deg,var(--terra),#a04a28);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:white}
+.as-text{font-size:13px;font-weight:500}
+.as-sub{font-size:11px;opacity:.75;margin-top:2px}
+.as-badge{background:rgba(255,255,255,.2);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600}
+ 
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--sand3);border-radius:2px}
+ 
+/* ANIM */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease both}
+.fu1{animation-delay:.04s}.fu2{animation-delay:.08s}.fu3{animation-delay:.12s}.fu4{animation-delay:.16s}.fu5{animation-delay:.20s}
+</style>
+</head>
+<body>
+ 
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <span class="logo-text">WealthSphere</span>
+  </div>
+  <div class="nav-right">
+    <div class="steam-connected">
+      <div class="steam-av">D</div>
+      <span>joao_pt · Steam</span>
+      <div class="steam-dot"></div>
+    </div>
+    <button class="btn btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Alertas
+    </button>
+    <button class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Adicionar item
+    </button>
+  </div>
+</nav>
+ 
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('inventario',this)">🎒 Inventário</button>
+  <button class="tab" onclick="showTab('mercado',this)">📈 Mercado ao Vivo</button>
+  <button class="tab" onclick="showTab('roi',this)">💰 Calculadora ROI</button>
+  <button class="tab" onclick="showTab('caixas',this)">📦 Simulador de Caixas</button>
+  <button class="tab" onclick="showTab('watchlist',this)">👁 Watchlist</button>
+  <button class="tab" onclick="showTab('comparativo',this)">⚖️ Comparativo</button>
+</div>
+ 
+<div class="content">
+ 
+  <!-- ═══ TAB: INVENTÁRIO ═══ -->
+  <div class="section active" id="tab-inventario">
+ 
+    <div class="steam-banner fu">
+      <div class="sb-avatar">🎮</div>
+      <div>
+        <div class="sb-name">joao_pt</div>
+        <div class="sb-id">STEAM_0:1:48291042 · CS2 · Dota 2 · Rust</div>
+      </div>
+      <div class="sb-divider"></div>
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-val">€624</div><div class="sb-label">Valor inventário</div></div>
+        <div class="sb-stat"><div class="sb-val">14</div><div class="sb-label">Itens CS2</div></div>
+        <div class="sb-stat"><div class="sb-val" style="color:var(--sage)">+€47</div><div class="sb-label">Ganho 30d</div></div>
+        <div class="sb-stat"><div class="sb-val">+7.5%</div><div class="sb-label">ROI médio</div></div>
+        <div class="sb-stat"><div class="sb-val">2</div><div class="sb-label">Jogos</div></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-left:16px">🔄 Sincronizar</button>
+    </div>
+ 
+    <div class="stat-strip fu fu1">
+      <div class="scard"><div class="scard-label">Total investido</div><div class="scard-val">€581</div><div class="scard-chg neu">compras totais</div></div>
+      <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€624</div><div class="scard-chg pos">+€43 lucro</div></div>
+      <div class="scard"><div class="scard-label">Maior item</div><div class="scard-val">€412</div><div class="scard-chg neu">M4A4 Howl</div></div>
+      <div class="scard"><div class="scard-label">Melhor ROI</div><div class="scard-val">+22%</div><div class="scard-chg pos">AK-47 Redline</div></div>
+      <div class="scard"><div class="scard-label">Comissão Steam</div><div class="scard-val">€93.6</div><div class="scard-chg neg">15% se vender tudo</div></div>
+    </div>
+ 
+    <div class="card fu fu2">
+      <div class="card-hdr">
+        <div><div class="card-title">Inventário CS2 — 14 itens</div><div class="card-sub">Preços Steam Market · Atualizado há 3min</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select style="background:var(--sand);border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:11px;outline:none;font-family:inherit;color:var(--brown)">
+            <option>Ordenar: Valor ↓</option>
+            <option>Ordenar: ROI ↓</option>
+            <option>Ordenar: Nome</option>
+            <option>Ordenar: Data compra</option>
+          </select>
+          <button class="btn btn-ghost" style="font-size:11px">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="skin-grid">
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">🔴</div><span class="skin-rarity r-classified">Classified</span></div>
+          <div class="skin-name">M4A4 | Howl</div>
+          <div class="skin-wear">Minimal Wear</div>
+          <div class="float-wrap">
+            <div class="skin-float">Float: 0.082</div>
+            <div class="float-bar"><div class="float-indicator" style="left:8.2%"></div></div>
+          </div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€412.00</div><div style="font-size:9px;color:var(--muted)">Comprado: €390</div></div>
+            <div class="skin-chg pos">↑ +5.6%</div>
+          </div>
+        </div>
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">🔵</div><span class="skin-rarity r-covert">Covert</span></div>
+          <div class="skin-name">AWP | Asiimov</div>
+          <div class="skin-wear">Field-Tested</div>
+          <div class="float-wrap">
+            <div class="skin-float">Float: 0.224</div>
+            <div class="float-bar"><div class="float-indicator" style="left:22.4%"></div></div>
+          </div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€58.40</div><div style="font-size:9px;color:var(--muted)">Comprado: €52</div></div>
+            <div class="skin-chg pos">↑ +12.3%</div>
+          </div>
+        </div>
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">🟠</div><span class="skin-rarity r-covert">Covert ★</span></div>
+          <div class="skin-name">AK-47 | Redline</div>
+          <div class="skin-wear">Field-Tested</div>
+          <div class="float-wrap">
+            <div class="skin-float">Float: 0.194</div>
+            <div class="float-bar"><div class="float-indicator" style="left:19.4%"></div></div>
+          </div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€33.20</div><div style="font-size:9px;color:var(--muted)">Comprado: €27.20</div></div>
+            <div class="skin-chg pos">↑ +22.1%</div>
+          </div>
+        </div>
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">🟣</div><span class="skin-rarity r-restricted">Restricted</span></div>
+          <div class="skin-name">Glock-18 | Fade</div>
+          <div class="skin-wear">Factory New</div>
+          <div class="float-wrap">
+            <div class="skin-float">Float: 0.006</div>
+            <div class="float-bar"><div class="float-indicator" style="left:0.6%"></div></div>
+          </div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€48.50</div><div style="font-size:9px;color:var(--muted)">Comprado: €51</div></div>
+            <div class="skin-chg neg">↓ -4.9%</div>
+          </div>
+        </div>
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">🔵</div><span class="skin-rarity r-milspec">Mil-Spec</span></div>
+          <div class="skin-name">USP-S | Orion</div>
+          <div class="skin-wear">Well-Worn</div>
+          <div class="float-wrap">
+            <div class="skin-float">Float: 0.421</div>
+            <div class="float-bar"><div class="float-indicator" style="left:42.1%"></div></div>
+          </div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€9.80</div><div style="font-size:9px;color:var(--muted)">Comprado: €10.50</div></div>
+            <div class="skin-chg neg">↓ -6.7%</div>
+          </div>
+        </div>
+ 
+        <div class="skin-card">
+          <div class="skin-top"><div class="skin-emoji">📦</div><span class="skin-rarity r-industrial">Case</span></div>
+          <div class="skin-name">Revolution Case</div>
+          <div class="skin-wear">×12 unidades</div>
+          <div style="height:22px"></div>
+          <div class="skin-bottom">
+            <div><div class="skin-price">€10.44</div><div style="font-size:9px;color:var(--muted)">€0.87/unidade</div></div>
+            <div class="skin-chg neg">↓ -2.1%</div>
+          </div>
+        </div>
+ 
+      </div>
+      <div style="margin-top:12px;text-align:center">
+        <button class="btn btn-ghost" style="font-size:12px">Ver todos os 14 itens →</button>
+      </div>
+    </div>
+ 
+  </div>
+ 
+  <!-- ═══ TAB: MERCADO ═══ -->
+  <div class="section" id="tab-mercado">
+    <div class="grid-2-1">
+      <div class="card fu">
+        <div class="card-hdr">
+          <div><div class="card-title">Tendência de Preços CS2</div><div class="card-sub">Steam Market · Últimos 6 meses</div></div>
+          <div class="ptabs">
+            <button class="ptab active" onclick="setPtab(this)">1M</button>
+            <button class="ptab" onclick="setPtab(this)">3M</button>
+            <button class="ptab" onclick="setPtab(this)">6M</button>
+            <button class="ptab" onclick="setPtab(this)">1A</button>
+          </div>
+        </div>
+        <canvas id="trendChart" height="160"></canvas>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="ldot" style="background:var(--terra)"></div>AK-47 Redline</div>
+          <div class="legend-item"><div class="ldot" style="background:var(--sage)"></div>AWP Asiimov</div>
+          <div class="legend-item"><div class="ldot" style="background:var(--lilac)"></div>M4A4 Howl</div>
+        </div>
+      </div>
+      <div class="card fu fu2">
+        <div class="card-hdr"><div class="card-title">Mais Negociadas Hoje</div></div>
+        <div class="market-list">
+          <div class="market-row"><div class="mr-icon" style="background:var(--terra-dim)">🔫</div><div><div class="mr-name">AK-47 | Redline FT</div><div class="mr-sub">Vol: 1.240 · CS2</div></div><div><div class="mr-val">€33.20</div><div class="mr-chg pos">+18.3% 30d</div></div></div>
+          <div class="market-row"><div class="mr-icon" style="background:var(--lilac-dim)">🔵</div><div><div class="mr-name">AWP | Dragon Lore FN</div><div class="mr-sub">Vol: 42 · CS2</div></div><div><div class="mr-val">€4.820</div><div class="mr-chg pos">+3.1% 30d</div></div></div>
+          <div class="market-row"><div class="mr-icon" style="background:var(--sage-dim)">🟠</div><div><div class="mr-name">Karambit | Fade FN</div><div class="mr-sub">Vol: 18 · CS2</div></div><div><div class="mr-val">€1.840</div><div class="mr-chg pos">+4.8% 30d</div></div></div>
+          <div class="market-row"><div class="mr-icon" style="background:var(--gold-dim)">📦</div><div><div class="mr-name">Recoil Case</div><div class="mr-sub">Vol: 48.200 · CS2</div></div><div><div class="mr-val">€0.64</div><div class="mr-chg neg">-1.4% 30d</div></div></div>
+          <div class="market-row"><div class="mr-icon" style="background:var(--terra-dim)">🔴</div><div><div class="mr-name">M4A4 | Howl MW</div><div class="mr-sub">Vol: 89 · CS2</div></div><div><div class="mr-val">€412</div><div class="mr-chg pos">+5.6% 30d</div></div></div>
+          <div class="market-row"><div class="mr-icon" style="background:var(--lilac-dim)">🟣</div><div><div class="mr-name">Butterfly Knife | Doppler</div><div class="mr-sub">Vol: 31 · CS2</div></div><div><div class="mr-val">€1.120</div><div class="mr-chg neg">-2.3% 30d</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2 fu fu2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Maiores Subidas (30d)</div></div>
+        <div class="market-list">
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--sage);width:36px">+42%</div><div><div class="mr-name">Sticker | Katowice 2014</div><div class="mr-sub">€8.200 → €11.640</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--sage);width:36px">+28%</div><div><div class="mr-name">AK-47 | Fire Serpent FT</div><div class="mr-sub">€820 → €1.050</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--sage);width:36px">+22%</div><div><div class="mr-name">AK-47 | Redline FT</div><div class="mr-sub">€27 → €33.20</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--sage);width:36px">+18%</div><div><div class="mr-name">MP5-SD | Phosphor FN</div><div class="mr-sub">€4.20 → €4.96</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Maiores Quedas (30d)</div></div>
+        <div class="market-list">
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--red);width:36px">-18%</div><div><div class="mr-name">Prisma 2 Case</div><div class="mr-sub">€0.72 → €0.59</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--red);width:36px">-12%</div><div><div class="mr-name">Glock-18 | Gamma Doppler</div><div class="mr-sub">€62 → €54.60</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--red);width:36px">-9%</div><div><div class="mr-name">M4A1-S | Hyper Beast FN</div><div class="mr-sub">€28.40 → €25.80</div></div></div>
+          <div class="market-row"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--red);width:36px">-7%</div><div><div class="mr-name">Revolution Case</div><div class="mr-sub">€0.94 → €0.87</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ═══ TAB: ROI ═══ -->
+  <div class="section" id="tab-roi">
+    <div class="grid-2-1">
+      <div class="card fu">
+        <div class="card-hdr"><div class="card-title">Calculadora de ROI — Skin</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+          <div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Skin</div>
+            <select style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit" onchange="updateROI()">
+              <option value="33.20,27.20">AK-47 | Redline FT</option>
+              <option value="58.40,52.00">AWP | Asiimov FT</option>
+              <option value="412.00,390.00">M4A4 | Howl MW</option>
+              <option value="48.50,51.00">Glock-18 | Fade FN</option>
+              <option value="9.80,10.50">USP-S | Orion WW</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Preço Compra (€)</div>
+            <input type="number" id="roiBuy" value="27.20" step="0.01" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit" oninput="calcROI()">
+          </div>
+          <div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Preço Atual (€)</div>
+            <input type="number" id="roiSell" value="33.20" step="0.01" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit" oninput="calcROI()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Data de Compra</div>
+            <input type="date" id="roiDate" value="2024-11-10" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit" oninput="calcROI()">
+          </div>
+          <div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Quantidade</div>
+            <input type="number" id="roiQty" value="1" min="1" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit" oninput="calcROI()">
+          </div>
+        </div>
+        <div class="roi-grid" id="roiResults">
+          <div class="roi-item"><div class="roi-item-val pos" id="r-lucro">+€5.10</div><div class="roi-item-label">Lucro bruto</div></div>
+          <div class="roi-item"><div class="roi-item-val pos" id="r-liquido">+€3.27</div><div class="roi-item-label">Lucro líquido (após 15% Steam)</div></div>
+          <div class="roi-item"><div class="roi-item-val pos" id="r-roi">+22.1%</div><div class="roi-item-label">ROI total</div></div>
+          <div class="roi-item"><div class="roi-item-val pos" id="r-anual">+44.2%</div><div class="roi-item-label">ROI anualizado</div></div>
+          <div class="roi-item"><div class="roi-item-val" id="r-dias">186 dias</div><div class="roi-item-label">Tempo detido</div></div>
+          <div class="roi-item"><div class="roi-item-val" id="r-comissao">€4.98</div><div class="roi-item-label">Comissão Steam (15%)</div></div>
+        </div>
+      </div>
+ 
+      <div class="card fu fu2">
+        <div class="card-hdr"><div class="card-title">ROI do Portfólio</div></div>
+        <div class="roi-big">
+          <div class="roi-number pos">+7.5%</div>
+          <div class="roi-label">ROI médio ponderado · Portfólio total</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sand);border-radius:8px">
+            <div style="font-size:12px;color:var(--ink)">🏆 M4A4 Howl</div>
+            <div style="font-family:'DM Mono',monospace;font-size:12px" class="pos">+5.6%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sand);border-radius:8px">
+            <div style="font-size:12px;color:var(--ink)">🏆 AK-47 Redline</div>
+            <div style="font-family:'DM Mono',monospace;font-size:12px" class="pos">+22.1%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sand);border-radius:8px">
+            <div style="font-size:12px;color:var(--ink)">🏆 AWP Asiimov</div>
+            <div style="font-family:'DM Mono',monospace;font-size:12px" class="pos">+12.3%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sand);border-radius:8px">
+            <div style="font-size:12px;color:var(--ink)">📉 Glock-18 Fade</div>
+            <div style="font-family:'DM Mono',monospace;font-size:12px" class="neg">-4.9%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sand);border-radius:8px">
+            <div style="font-size:12px;color:var(--ink)">📉 USP-S Orion</div>
+            <div style="font-family:'DM Mono',monospace;font-size:12px" class="neg">-6.7%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ═══ TAB: CAIXAS ═══ -->
+  <div class="section" id="tab-caixas">
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--brown)">
+      💡 <strong>Nota:</strong> O valor esperado (EV) de abrir uma caixa é <strong>quase sempre negativo</strong> — a Steam e o criador do jogo ficam com 10%+2% de cada item. A maioria das vezes compensa mais vender a caixa diretamente.
+    </div>
+    <div class="grid-2 fu">
+      <div>
+        <div class="case-grid">
+          <div class="case-card" onclick="selectCase(this,'Revolution Case','€0.87',0.64)">
+            <div class="case-top"><div class="case-icon">📦</div><div><div class="case-name">Revolution Case</div><div class="case-price">€0.87 + €2.19 chave</div></div></div>
+            <div class="prob-list">
+              <div class="prob-row"><div class="prob-label">Mil-Spec</div><div class="prob-bar"><div class="prob-fill" style="width:80%;background:#5e98d9"></div></div><div class="prob-val">79.92%</div></div>
+              <div class="prob-row"><div class="prob-label">Restricted</div><div class="prob-bar"><div class="prob-fill" style="width:16%;background:#4b69ff"></div></div><div class="prob-val">15.98%</div></div>
+              <div class="prob-row"><div class="prob-label">Classified</div><div class="prob-bar"><div class="prob-fill" style="width:3.2%;background:#d32ce6"></div></div><div class="prob-val">3.20%</div></div>
+              <div class="prob-row"><div class="prob-label">Covert</div><div class="prob-bar"><div class="prob-fill" style="width:0.64%;background:#eb4b4b"></div></div><div class="prob-val">0.64%</div></div>
+              <div class="prob-row"><div class="prob-label">★ Rare</div><div class="prob-bar"><div class="prob-fill" style="width:0.26%;background:#e4ae39"></div></div><div class="prob-val">0.26%</div></div>
+            </div>
+            <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.42</span></div>
+          </div>
+ 
+          <div class="case-card" onclick="selectCase(this,'Recoil Case','€0.64',0.47)">
+            <div class="case-top"><div class="case-icon">🎯</div><div><div class="case-name">Recoil Case</div><div class="case-price">€0.64 + €2.19 chave</div></div></div>
+            <div class="prob-list">
+              <div class="prob-row"><div class="prob-label">Mil-Spec</div><div class="prob-bar"><div class="prob-fill" style="width:80%;background:#5e98d9"></div></div><div class="prob-val">79.92%</div></div>
+              <div class="prob-row"><div class="prob-label">Restricted</div><div class="prob-bar"><div class="prob-fill" style="width:16%;background:#4b69ff"></div></div><div class="prob-val">15.98%</div></div>
+              <div class="prob-row"><div class="prob-label">Classified</div><div class="prob-bar"><div class="prob-fill" style="width:3.2%;background:#d32ce6"></div></div><div class="prob-val">3.20%</div></div>
+              <div class="prob-row"><div class="prob-label">Covert</div><div class="prob-bar"><div class="prob-fill" style="width:0.64%;background:#eb4b4b"></div></div><div class="prob-val">0.64%</div></div>
+              <div class="prob-row"><div class="prob-label">★ Rare</div><div class="prob-bar"><div class="prob-fill" style="width:0.26%;background:#e4ae39"></div></div><div class="prob-val">0.26%</div></div>
+            </div>
+            <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.18</span></div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="card fu fu2">
+        <div class="card-hdr"><div class="card-title">Simulação: <span id="caseName">Revolution Case</span></div></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:var(--sand);border-radius:10px;padding:14px">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Custo total por abertura</div>
+            <div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--ink)" id="caseCost">€3.06</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">€0.87 caixa + €2.19 chave</div>
+          </div>
+          <div style="background:var(--sand);border-radius:10px;padding:14px">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Valor esperado (EV)</div>
+            <div style="font-family:'Lora',serif;font-size:24px;font-weight:700" id="caseEV" class="neg">≈ €1.42</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px" id="caseEVdiff">Esperado perder -€1.64 por abertura</div>
+          </div>
+          <div style="background:var(--terra-dim);border:1px solid rgba(201,106,69,0.2);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:600;color:var(--terra);margin-bottom:6px">⚠ Recomendação</div>
+            <div style="font-size:12px;color:var(--brown);line-height:1.5" id="caseRec">Vender a caixa a €0.87 é mais rentável do que abrí-la. O EV de abertura é negativo em -€1.64 por tentativa.</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Simular N aberturas:</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="font-size:11px" onclick="simAberturas(10)">×10</button>
+              <button class="btn btn-ghost" style="font-size:11px" onclick="simAberturas(50)">×50</button>
+              <button class="btn btn-ghost" style="font-size:11px" onclick="simAberturas(100)">×100</button>
+            </div>
+            <div id="simResult" style="margin-top:10px;display:none;padding:12px;background:var(--sand);border-radius:9px;font-size:12px;color:var(--brown)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ═══ TAB: WATCHLIST ═══ -->
+  <div class="section" id="tab-watchlist">
+    <div class="grid-2-1">
+      <div class="card fu">
+        <div class="card-hdr">
+          <div><div class="card-title">A minha Watchlist</div><div class="card-sub">Alertas automáticos quando o preço atingir o target</div></div>
+          <button class="btn btn-primary" style="font-size:11px">+ Adicionar</button>
+        </div>
+        <div class="alert-strip">
+          <div><div class="as-text">🔔 2 alertas de preço ativos</div><div class="as-sub">Notificação por email e na app quando atingido</div></div>
+          <span class="as-badge">Gerenciar alertas</span>
+        </div>
+        <div>
+          <div class="wl-item">
+            <div class="wl-emoji">🗡️</div>
+            <div class="wl-info">
+              <div class="wl-name">Karambit | Fade FN</div>
+              <div class="wl-target">Target: ≤ €1.700 · Atualmente: €1.840 · CS2</div>
+            </div>
+            <div class="wl-current"><div class="wl-price">€1.840</div><div class="wl-diff neg">€140 acima do target</div></div>
+            <button class="wl-alert" title="Alerta ativo">🔔</button>
+          </div>
+          <div class="wl-item">
+            <div class="wl-emoji">🔫</div>
+            <div class="wl-info">
+              <div class="wl-name">AK-47 | Case Hardened FN Blue Gem</div>
+              <div class="wl-target">Target: ≤ €2.500 · Atualmente: €3.200 · CS2</div>
+            </div>
+            <div class="wl-current"><div class="wl-price">€3.200</div><div class="wl-diff neg">€700 acima do target</div></div>
+            <button class="wl-alert" title="Alerta ativo">🔔</button>
+          </div>
+          <div class="wl-item">
+            <div class="wl-emoji">🔵</div>
+            <div class="wl-info">
+              <div class="wl-name">AWP | Dragon Lore FT</div>
+              <div class="wl-target">Target: ≤ €2.000 · Atualmente: €1.980 · CS2</div>
+            </div>
+            <div class="wl-current"><div class="wl-price" style="color:var(--sage)">€1.980</div><div class="wl-diff pos">✓ Abaixo do target!</div></div>
+            <button class="wl-alert" style="background:var(--sage);color:white" title="Target atingido!">✓</button>
+          </div>
+          <div class="wl-item">
+            <div class="wl-emoji">📦</div>
+            <div class="wl-info">
+              <div class="wl-name">Clutch Case</div>
+              <div class="wl-target">Target: ≤ €0.30 · Atualmente: €0.44 · CS2</div>
+            </div>
+            <div class="wl-current"><div class="wl-price">€0.44</div><div class="wl-diff neg">€0.14 acima</div></div>
+            <button class="wl-alert">🔕</button>
+          </div>
+          <div class="wl-item">
+            <div class="wl-emoji">🟣</div>
+            <div class="wl-info">
+              <div class="wl-name">M9 Bayonet | Crimson Web MW</div>
+              <div class="wl-target">Target: ≤ €320 · Atualmente: €348 · CS2</div>
+            </div>
+            <div class="wl-current"><div class="wl-price">€348</div><div class="wl-diff neg">€28 acima</div></div>
+            <button class="wl-alert">🔔</button>
+          </div>
+        </div>
+      </div>
+ 
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card fu fu2">
+          <div class="card-hdr"><div class="card-title">Configurar Alerta</div></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Nome do item</div>
+              <input type="text" placeholder="Ex: AK-47 | Redline FT" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">App</div>
+                <select style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit">
+                  <option>CS2 (730)</option>
+                  <option>Dota 2 (570)</option>
+                  <option>TF2 (440)</option>
+                  <option>Rust (252490)</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Condição</div>
+                <select style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit">
+                  <option>Preço ≤ (comprar)</option>
+                  <option>Preço ≥ (vender)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Preço target (€)</div>
+              <input type="number" placeholder="0.00" step="0.01" style="width:100%;background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;font-family:inherit">
+            </div>
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">Notificar via</div>
+              <div style="display:flex;gap:6px">
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked> Email</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked> App</label>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="justify-content:center">Criar alerta</button>
+          </div>
+        </div>
+ 
+        <div class="card fu fu3">
+          <div class="card-hdr"><div class="card-title">Dota 2 Watchlist</div></div>
+          <div class="wl-item" style="background:var(--sand)">
+            <div class="wl-emoji">⚔️</div>
+            <div class="wl-info"><div class="wl-name">Arcana | Ogre Magi</div><div class="wl-target">Target: ≤ €18 · Atual: €22.40</div></div>
+            <div class="wl-current"><div class="wl-price">€22.40</div><div class="wl-diff neg">€4.40 acima</div></div>
+            <button class="wl-alert">🔔</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ═══ TAB: COMPARATIVO ═══ -->
+  <div class="section" id="tab-comparativo">
+    <div class="card fu" style="margin-bottom:16px">
+      <div class="card-hdr">
+        <div><div class="card-title">Skin vs Ativos Tradicionais — Mesmo Capital, Mesmo Período</div><div class="card-sub">Simulação: €120 investidos em Novembro 2024 (6 meses)</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div style="background:var(--gold-dim);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">🎮</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">CS2 Skins</div>
+          <div style="font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--sage)">€144</div>
+          <div style="font-size:11px" class="pos">+20.0%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Após comissão Steam</div>
+        </div>
+        <div style="background:var(--terra-dim);border:1px solid rgba(201,106,69,0.2);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">₿</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Bitcoin</div>
+          <div style="font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--sage)">€198</div>
+          <div style="font-size:11px" class="pos">+65.0%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Alta volatilidade</div>
+        </div>
+        <div style="background:var(--sage-dim);border:1px solid rgba(95,126,95,0.2);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">📊</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">VWCE (ETF)</div>
+          <div style="font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--sage)">€134</div>
+          <div style="font-size:11px" class="pos">+11.7%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Baixo risco</div>
+        </div>
+        <div style="background:var(--sand2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">🏦</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Depósito a Prazo</div>
+          <div style="font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--muted)">€121.60</div>
+          <div style="font-size:11px" class="neu">+1.3%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Sem risco</div>
+        </div>
+      </div>
+      <canvas id="compareChart" height="140"></canvas>
+    </div>
+ 
+    <div class="card fu fu2">
+      <div class="card-hdr"><div class="card-title">Análise Detalhada</div></div>
+      <table class="cmp-table">
+        <thead>
+          <tr><th>Ativo</th><th>Capital inicial</th><th>Valor final</th><th>Lucro €</th><th>ROI</th><th>ROI anualizado</th><th>Risco</th><th>Liquidez</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Bitcoin</td><td>€120</td><td>€198</td><td style="color:var(--sage);font-weight:600">+€78</td><td class="pos font-mono">+65.0%</td><td class="pos">+130.0%</td><td><span style="color:var(--red)">■■■■■</span></td><td class="pos">Alta</td></tr>
+          <tr class="winner"><td>🏆 CS2 Skins</td><td>€120</td><td>€144</td><td style="color:var(--sage);font-weight:600">+€24</td><td class="pos">+20.0%</td><td class="pos">+40.0%</td><td><span style="color:var(--gold)">■■■□□</span></td><td class="neu">Média</td></tr>
+          <tr><td>VWCE (ETF)</td><td>€120</td><td>€134</td><td style="color:var(--sage);font-weight:600">+€14</td><td class="pos">+11.7%</td><td class="pos">+23.4%</td><td><span style="color:var(--sage)">■■□□□</span></td><td class="pos">Alta</td></tr>
+          <tr><td>S&P 500</td><td>€120</td><td>€134.80</td><td style="color:var(--sage);font-weight:600">+€14.80</td><td class="pos">+12.3%</td><td class="pos">+24.6%</td><td><span style="color:var(--sage)">■■□□□</span></td><td class="pos">Alta</td></tr>
+          <tr><td>Depósito a Prazo</td><td>€120</td><td>€121.60</td><td style="color:var(--sage);font-weight:600">+€1.60</td><td class="pos">+1.3%</td><td class="pos">+2.6%</td><td><span style="color:var(--muted)">□□□□□</span></td><td class="pos">Alta</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+ 
+</div><!-- /content -->
+ 
+<script>
+// Tab nav
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='mercado'&&!window._trendDrawn){drawTrend();window._trendDrawn=true}
+  if(id==='comparativo'&&!window._compDrawn){drawCompare();window._compDrawn=true}
+}
+ 
+function setPtab(btn){btn.closest('.ptabs').querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+ 
+// ROI Calc
+function updateROI(){
+  const sel=document.querySelector('#tab-roi select');
+  const [sell,buy]=sel.value.split(',').map(Number);
+  document.getElementById('roiBuy').value=buy;
+  document.getElementById('roiSell').value=sell;
+  calcROI();
+}
+ 
+function calcROI(){
+  const buy=parseFloat(document.getElementById('roiBuy').value)||0;
+  const sell=parseFloat(document.getElementById('roiSell').value)||0;
+  const qty=parseInt(document.getElementById('roiQty').value)||1;
+  const dateVal=document.getElementById('roiDate').value;
+  const days=dateVal?Math.round((Date.now()-new Date(dateVal))/(86400000)):180;
+  const commission=sell*0.15*qty;
+  const lucro=(sell-buy)*qty;
+  const liquido=lucro-commission;
+  const roi=buy>0?((sell-buy)/buy*100):0;
+  const anual=days>0?((Math.pow(1+roi/100,365/days)-1)*100):0;
+  const fmt=v=>(v>=0?'+':'')+v.toFixed(2);
+  const fmtE=v=>(v>=0?'+€':'-€')+Math.abs(v).toFixed(2);
+  document.getElementById('r-lucro').textContent=fmtE(lucro);
+  document.getElementById('r-lucro').className='roi-item-val '+(lucro>=0?'pos':'neg');
+  document.getElementById('r-liquido').textContent=fmtE(liquido);
+  document.getElementById('r-liquido').className='roi-item-val '+(liquido>=0?'pos':'neg');
+  document.getElementById('r-roi').textContent=fmt(roi)+'%';
+  document.getElementById('r-roi').className='roi-item-val '+(roi>=0?'pos':'neg');
+  document.getElementById('r-anual').textContent=fmt(anual)+'%';
+  document.getElementById('r-anual').className='roi-item-val '+(anual>=0?'pos':'neg');
+  document.getElementById('r-dias').textContent=days+' dias';
+  document.getElementById('r-comissao').textContent='€'+commission.toFixed(2);
+}
+ 
+// Case simulator
+function selectCase(card,name,price,ev){
+  document.querySelectorAll('.case-card').forEach(c=>c.style.borderColor='var(--border)');
+  card.style.borderColor='var(--terra)';
+  const cost=(parseFloat(price.replace('€',''))+2.19).toFixed(2);
+  const diff=(ev-parseFloat(cost)).toFixed(2);
+  document.getElementById('caseName').textContent=name;
+  document.getElementById('caseCost').textContent='€'+cost;
+  document.getElementById('caseEV').textContent='≈ €'+ev;
+  document.getElementById('caseEVdiff').textContent=`Esperado perder €${Math.abs(diff)} por abertura`;
+  document.getElementById('caseRec').textContent=`Vender a caixa é mais rentável. O EV de abertura é negativo em -€${Math.abs(diff)} por tentativa.`;
+  document.getElementById('simResult').style.display='none';
+}
+ 
+function simAberturas(n){
+  const ev=1.42,cost=3.06;
+  const esperado=(ev*n).toFixed(2);
+  const gasto=(cost*n).toFixed(2);
+  const diff=(ev*n-cost*n).toFixed(2);
+  const el=document.getElementById('simResult');
+  el.style.display='block';
+  el.innerHTML=`<strong>Simulação ${n} aberturas:</strong><br>Gasto: €${gasto} · Valor esperado: €${esperado} · <span style="color:var(--red)">Perda esperada: -€${Math.abs(diff)}</span>`;
+}
+ 
+// Charts
+function drawChart(id,datasets,labels,height){
+  const c=document.getElementById(id);if(!c)return;
+  const ctx=c.getContext('2d');
+  const W=c.offsetWidth,H=height||160;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  const pad={t:10,r:10,b:22,l:42};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  const allV=datasets.flatMap(d=>d.data);
+  const mx=Math.max(...allV)*1.02,mn=Math.min(...allV)*0.98;
+  const n=labels.length;
+  const xOf=i=>pad.l+(i/(n-1))*cW;
+  const yOf=v=>pad.t+cH-((v-mn)/(mx-mn))*cH;
+  ctx.strokeStyle='rgba(90,74,58,0.07)';ctx.lineWidth=1;
+  for(let g=0;g<=3;g++){
+    const y=pad.t+(g/3)*cH;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    const v=mx-(g/3)*(mx-mn);
+    ctx.fillStyle='rgba(138,122,106,0.65)';ctx.font='9px DM Sans';ctx.textAlign='right';
+    ctx.fillText(v>=100?v.toFixed(0):'€'+v.toFixed(0),pad.l-4,y+3);
+  }
+  labels.forEach((l,i)=>{if(i%(Math.ceil(n/6))===0||i===n-1){ctx.fillStyle='rgba(138,122,106,0.65)';ctx.font='9px DM Sans';ctx.textAlign='center';ctx.fillText(l,xOf(i),H-4)}});
+  datasets.forEach(({data,color})=>{
+    const g=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+    g.addColorStop(0,color+'28');g.addColorStop(1,color+'04');
+    ctx.beginPath();data.forEach((v,i)=>i?ctx.lineTo(xOf(i),yOf(v)):ctx.moveTo(xOf(i),yOf(v)));
+    ctx.lineTo(xOf(n-1),pad.t+cH);ctx.lineTo(xOf(0),pad.t+cH);ctx.closePath();
+    ctx.fillStyle=g;ctx.fill();
+    ctx.beginPath();data.forEach((v,i)=>i?ctx.lineTo(xOf(i),yOf(v)):ctx.moveTo(xOf(i),yOf(v)));
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+    ctx.beginPath();ctx.arc(xOf(n-1),yOf(data[n-1]),4,0,Math.PI*2);
+    ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
+  });
+}
+ 
+function drawTrend(){
+  drawChart('trendChart',[
+    {data:[27.2,26.8,27.5,28.1,29.0,30.2,31.4,30.8,31.9,33.2],color:'#c96a45'},
+    {data:[52,51.2,53.4,54.1,55.8,56.2,57.4,56.8,57.9,58.4],color:'#5f7e5f'},
+    {data:[390,392,396,401,404,406,408,409,410,412],color:'#8b80c8'},
+  ],['Nov','Dez','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago'].slice(0,10),160);
+}
+ 
+function drawCompare(){
+  drawChart('compareChart',[
+    {data:[120,124,132,138,142,144],color:'#c9a84c'},
+    {data:[120,138,156,168,184,198],color:'#c96a45'},
+    {data:[120,122,125,128,131,134],color:'#5f7e5f'},
+    {data:[120,120.5,121,121.3,121.5,121.6],color:'#8a7a6a'},
+  ],['Nov 24','Dez 24','Jan 25','Fev 25','Mar 25','Abr 25'],140);
+}
+ 
+window.addEventListener('resize',()=>{
+  if(window._trendDrawn)drawTrend();
+  if(window._compDrawn)drawCompare();
+});
+</script>
+</body>
+</html>

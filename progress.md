@@ -577,14 +577,54 @@ Criar versões git e implementar dashboard demo encontrado no site preview v1.
 - `frontend/src/app/pages/dashboard/dashboard-user.component.ts` - Funções de logout e router
 - `frontend/src/app/pages/dashboard/dashboard-user.component.css` - Estilos do menu
 
-### 📋 O que falta fazer
+### 📋 O que falta fazer (com base no details.md)
+
+#### Prioridade Alta - Auth & Backend
 - [ ] **Deploy do Backend**: Configurar Render para fazer deploy do branch main com novas rotas Steam
 - [ ] **Steam API Key**: Obter API key da Steam (https://steamcommunity.com/dev/apikey)
-- [ ] **Steam Trade Link**: Implementar conexão de Trade Link no frontend
-- [ ] **Email Verification**: Adicionar verificação de email como sites de trading
 - [ ] **Testar Login Steam**: Testar fluxo completo de autenticação Steam
 - [ ] **Testar Login Normal**: Testar login normal com backend deployado
-- [ ] **Integração Frontend-Backend**: Conectar frontend ao backend para login Steam e normal
+- [ ] **JWT Refresh Token**: Implementar refresh token (15min access, 7d refresh)
+- [ ] **Auth Interceptor**: Adicionar Bearer token automaticamente a pedidos HTTP
+- [ ] **Error Interceptor**: Tratar 401 (refresh automático), 403, 500 globalmente
+
+#### Prioridade Alta - Core Features
+- [ ] **Income Tracker**: CRUD completo de rendimentos e despesas
+- [ ] **Taxas & Mercados**: Integrar APIs externas (ECB, Banco de Portugal, Alpha Vantage)
+- [ ] **Cache Redis**: Implementar cache para taxas financeiras (TTL 5min)
+- [ ] **Settings Page**: Implementar 5 secções (Conta, Notificações, Integrações, Preferências, Privacidade)
+- [ ] **Sistema de Alertas**: Cron job backend + Socket.io para alertas em tempo real
+
+#### Prioridade Média - Simulador Completo
+- [ ] **financial.utils.ts**: Implementar todas as fórmulas financeiras como pure functions
+- [ ] **Tab 1 - Juros**: Simples, composto, contínuo, conversão de taxas, desconto
+- [ ] **Tab 2 - Investimento**: DCA, FIRE, dividendos, inflação, TER, retorno histórico
+- [ ] **Tab 3 - Crédito Habitação**: Prestação, comparador bancos, stress test, amortização, LTV, rácio esforço, buy vs rent, refinanciamento
+- [ ] **Tab 4 - Rendas & Imóveis**: Atualização INE, rentabilidade bruta/líquida, YoC, Cap Rate, CoC, IMT, vacância, renda mínima, multi-imóvel, renda vitalícia
+- [ ] **Tab 5 - TIR/VAL/Payback**: Análise de projetos
+- [ ] **Tab 6 - Fiscal PT**: Mais-valias, dividendos, predial, PPR vs ETF, IMI
+- [ ] **Tab 7 - CS2**: ROI, simulador caixas, float, comparativo
+
+#### Prioridade Média - Imóveis & Steam
+- [ ] **Gestão de Imóveis**: CRUD completo de propriedades
+- [ ] **Gestão de Rendas**: CRUD completo de rendas
+- [ ] **Steam Inventory**: Sincronização de inventário CS2
+- [ ] **Portfolio ETF/Ações**: CRUD completo + performance
+- [ ] **Watchlists**: Listas de observação de ativos
+
+#### Prioridade Média - Comunidade
+- [ ] **Fórum**: Posts, comentários, votação, tags, trending
+- [ ] **Perfis Públicos**: Portfólio partilhado
+- [ ] **Sistema de Reputação**: Flairs e reputação
+- [ ] **Notificações Socket.io**: Tempo real
+
+#### Prioridade Baixa - Integrações & Polish
+- [ ] **Trading 212 API**: Sync de portfólio
+- [ ] **Trade Republic Import**: Upload CSV/PDF + parser
+- [ ] **Export de Dados**: CSV/PDF (RGPD)
+- [ ] **Performance**: OnPush, trackBy, virtual scroll
+- [ ] **PWA**: Service worker, offline básico
+- [ ] **Segurança**: helmet.js, rate limiting, sanitização, logs Winston
 
 ---
 
