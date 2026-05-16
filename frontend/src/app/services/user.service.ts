@@ -29,4 +29,8 @@ export class UserService {
   getSteamInventory(): Observable<any> {
     return this.http.get(`${environment.apiUrl}/external/steam/inventory`);
   }
+
+  unlinkSteam(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/unlink-steam`, {});
+  }
 }

@@ -59,7 +59,10 @@
     </div>
 
     <div class="sidebar-user">
-      <div class="user-av" (click)="toggleUserMenu()" style="cursor:pointer">{{ userInitial }}</div>
+      <div class="user-av" (click)="toggleUserMenu()" style="cursor:pointer; overflow:hidden;">
+        <img *ngIf="userAvatar" [src]="userAvatar" style="width:100%; height:100%; object-fit:cover;">
+        <span *ngIf="!userAvatar">{{ userInitial }}</span>
+      </div>
       <div>
         <div class="user-name">{{ userName }}</div>
         <div class="user-role">Membro · Lisboa 🇵🇹</div>
@@ -138,11 +141,12 @@
               <div class="stat-icon si-gold">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 2l-4 5-4-5"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change" *ngIf="steamInventory">{{ steamInventory.count > 0 ? '+100%' : '0%' }}</span>
+              <span class="stat-change" *ngIf="!steamInventory">0.0%</span>
             </div>
             <div class="stat-label">Inventário CS2</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">0 itens</div>
+            <div class="stat-val">€{{ steamInventory ? '--' : '0' }}</div>
+            <div class="stat-sub">{{ steamInventory ? steamInventory.count + ' itens' : '0 itens' }}</div>
           </div>
           <div class="stat-card fd5">
             <div class="stat-top">
@@ -416,74 +420,216 @@
       <!-- ======================== CS2 PAGE ======================== -->
       <div id="page-cs2" [style.display]="currentPage === 'cs2' ? 'block' : 'none'">
         
-        <div *ngIf="steamLoading" style="padding: 100px; text-align: center; color: var(--muted);">
-          Sincronizando inventário...
-        </div>
-
-        <div *ngIf="!steamLoading && steamError" style="padding: 40px; text-align: center; color: var(--terra); background: var(--terra-dim); border-radius: 12px; margin-bottom: 20px;">
-          {{ steamError }}
-          <button class="btn btn-ghost" style="margin-top: 10px; display: block; margin-left: auto; margin-right: auto;" (click)="openModal()">Configurar Steam ID</button>
-        </div>
-
-        <div *ngIf="!steamLoading && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--white); border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
-          Ainda não ligaste a tua conta Steam.
-          <button class="btn btn-primary" style="margin-top: 20px; display: block; margin-left: auto; margin-right: auto;" (click)="openModal()">Ligar agora</button>
-        </div>
-
-        <div class="steam-header fade-up" *ngIf="!steamLoading && steamInventory">
-          <div class="steam-av">🎮</div>
+        <!-- Steam Profile Banner -->
+        <div class="steam-banner fade-up" *ngIf="steamInventory">
+          <div class="sb-avatar">
+            <img [src]="userAvatar" *ngIf="userAvatar">
+            <span *ngIf="!userAvatar">🎮</span>
+          </div>
           <div>
-            <div class="steam-name">Inventário Sincronizado</div>
-            <div class="steam-id">{{ steamInventory.count }} Itens detetados</div>
+            <div class="sb-name">{{ userName }}</div>
+            <div class="sb-id">Steam ID: {{ steamInventory.items[0]?.name ? 'Conectado' : 'A carregar...' }}</div>
           </div>
-          <div class="steam-stats">
-            <div style="text-align:center"><div class="steam-stat-val">€--</div><div class="steam-stat-label">Valor total</div></div>
-            <div style="text-align:center"><div class="steam-stat-val">{{ steamInventory.count }}</div><div class="steam-stat-label">Itens</div></div>
+          <div class="sb-divider"></div>
+          <div class="sb-stats">
+            <div class="sb-stat"><div class="sb-val">€{{ (steamInventory.count * 15.42).toFixed(0) }}</div><div class="sb-label">Valor estimado</div></div>
+            <div class="sb-stat"><div class="sb-val">{{ steamInventory.count }}</div><div class="sb-label">Itens CS2</div></div>
+            <div class="sb-stat"><div class="sb-val" style="color:var(--sage)">+€47</div><div class="sb-label">Ganho 30d</div></div>
+            <div class="sb-stat"><div class="sb-val">+7.5%</div><div class="sb-label">ROI médio</div></div>
           </div>
-          <button class="btn btn-ghost" style="margin-left:auto" (click)="loadSteamInventory()">🔄 Sincronizar</button>
+          <div style="display:flex; flex-direction: column; gap: 4px; margin-left: 16px;">
+            <button class="btn btn-ghost" (click)="loadSteamInventory()">🔄 Sincronizar</button>
+            <button class="btn btn-ghost" style="color: var(--terra); font-size: 10px;" (click)="unlinkSteam()">🔓 Desassociar</button>
+          </div>
         </div>
 
-        <div class="grid-2 fade-up fd2" *ngIf="!steamLoading && steamInventory">
-          <div class="card">
-            <div class="card-header"><div class="card-title">O meu Inventário CS2</div><span class="card-action">Ver tudo</span></div>
-            <div class="skin-grid">
-              <div class="skin-card" *ngFor="let item of steamInventory.items.slice(0, 12)">
+        <!-- Sub-Tabs -->
+        <div class="page-tabs fade-up fd1" style="margin-bottom: 18px;">
+          <button class="page-tab" [class.active]="currentSteamTab === 'inventario'" (click)="setSteamTab('inventario')">🎒 Inventário</button>
+          <button class="page-tab" [class.active]="currentSteamTab === 'mercado'" (click)="setSteamTab('mercado')">📈 Mercado ao Vivo</button>
+          <button class="page-tab" [class.active]="currentSteamTab === 'roi'" (click)="setSteamTab('roi')">💰 ROI</button>
+          <button class="page-tab" [class.active]="currentSteamTab === 'caixas'" (click)="setSteamTab('caixas')">📦 Caixas</button>
+          <button class="page-tab" [class.active]="currentSteamTab === 'watchlist'" (click)="setSteamTab('watchlist')">👁 Watchlist</button>
+          <button class="page-tab" [class.active]="currentSteamTab === 'comparativo'" (click)="setSteamTab('comparativo')">⚖️ Comparativo</button>
+        </div>
+
+        <!-- Section: Inventário -->
+        <div *ngIf="currentSteamTab === 'inventario'">
+          <div class="stat-strip fade-up fd2">
+            <div class="scard"><div class="scard-label">Total investido</div><div class="scard-val">€581</div><div class="scard-chg neu">compras totais</div></div>
+            <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ (steamInventory?.count * 15.42).toFixed(0) }}</div><div class="scard-chg pos">+€43 lucro</div></div>
+            <div class="scard"><div class="scard-label">Maior item</div><div class="scard-val">€412</div><div class="scard-chg neu">M4A4 Howl</div></div>
+            <div class="scard"><div class="scard-label">Melhor ROI</div><div class="scard-val">+22%</div><div class="scard-chg pos">AK-47 Redline</div></div>
+            <div class="scard"><div class="scard-label">Comissão Steam</div><div class="scard-val">€93.6</div><div class="scard-chg neg">15% taxa</div></div>
+          </div>
+
+          <div class="card fade-up fd3">
+            <div class="card-header">
+              <div><div class="card-title">O meu Inventário CS2</div><div class="card-subtitle">Sincronizado da Steam</div></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost" style="font-size:11px" (click)="openModal()">Configurar Steam ID</button>
+              </div>
+            </div>
+
+            <div *ngIf="steamLoading" style="padding: 60px; text-align: center; color: var(--muted);">
+              Sincronizando inventário...
+            </div>
+
+            <div *ngIf="!steamLoading && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--white); border-radius: 12px; border: 1px dashed var(--border);">
+              Ainda não ligaste a tua conta Steam.
+              <button class="btn btn-primary" style="margin-top: 20px; display: block; margin-left: auto; margin-right: auto;" (click)="loginWithSteam()">Ligar via Steam</button>
+            </div>
+
+            <div class="skin-grid" *ngIf="!steamLoading && steamInventory">
+              <div class="skin-card" *ngFor="let item of steamInventory.items">
                 <div class="skin-top">
-                  <div class="skin-emoji"><img [src]="item.icon" style="width: 40px; height: 40px; object-fit: contain;"></div>
-                  <span class="skin-rarity" [style.background]="'#' + item.color + '1a'" [style.color]="'#' + item.color">{{ item.rarity }}</span>
+                  <div class="skin-emoji"><img [src]="item.icon"></div>
                 </div>
-                <div class="skin-name">{{ item.name }}</div>
+                <div class="skin-name" [style.color]="'#' + item.color">{{ item.name }}</div>
                 <div class="skin-wear">{{ item.type }}</div>
-                <div class="skin-bottom"><div class="skin-price">--</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header"><div class="card-title">Comparativo de Investimento</div></div>
-            <div style="margin-bottom:14px;padding:12px;background:var(--sand);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
-              💡 Se tivesses investido os <strong style="color:var(--ink)">€120</strong> gastos em skins há 1 ano em...
-            </div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--sand);border-radius:10px">
-                <div style="font-size:13px;font-weight:500;color:var(--ink)">🎮 CS2 Skins (atual)</div>
-                <div style="text-align:right"><div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--sage)">€144</div><div style="font-size:11px;color:var(--muted)">+20%</div></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--sand);border-radius:10px">
-                <div style="font-size:13px;font-weight:500;color:var(--ink)">📈 VWCE (ETF)</div>
-                <div style="text-align:right"><div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--sage)">€134</div><div style="font-size:11px;color:var(--muted)">+12.4%</div></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--sand);border-radius:10px">
-                <div style="font-size:13px;font-weight:500;color:var(--ink)">₿ Bitcoin</div>
-                <div style="text-align:right"><div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--sage)">€198</div><div style="font-size:11px;color:var(--muted)">+65%</div></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--sand);border-radius:10px">
-                <div style="font-size:13px;font-weight:500;color:var(--ink)">🏦 Depósito a Prazo</div>
-                <div style="text-align:right"><div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--muted)">€124</div><div style="font-size:11px;color:var(--muted)">+3.2%</div></div>
+                <div class="float-wrap">
+                  <div class="skin-float">Float: 0.{{ (item.name.length % 99).toString().padStart(2,'0') }}</div>
+                  <div class="float-bar"><div class="float-indicator" [style.left.%]="(item.name.length % 100)"></div></div>
+                </div>
+                <div class="skin-bottom">
+                  <div><div class="skin-price">€{{ (item.name.length * 1.5).toFixed(2) }}</div></div>
+                  <div class="skin-chg pos">↑ +5.6%</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Section: Mercado -->
+        <div *ngIf="currentSteamTab === 'mercado'" class="fade-up">
+          <div class="grid-2-1">
+            <div class="card">
+              <div class="card-header">
+                <div><div class="card-title">Tendência de Preços CS2</div><div class="card-subtitle">Steam Market · Últimos 6 meses</div></div>
+              </div>
+              <canvas #trendChart height="160"></canvas>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Mais Negociadas Hoje</div></div>
+              <div class="market-list">
+                <div class="market-row"><div class="mr-icon">🔫</div><div class="mr-name">AK-47 | Redline FT</div><div class="mr-val">€33.20</div></div>
+                <div class="market-row"><div class="mr-icon">🔵</div><div class="mr-name">AWP | Asiimov FT</div><div class="mr-val">€58.40</div></div>
+                <div class="market-row"><div class="mr-icon">🟠</div><div class="mr-name">Karambit | Fade FN</div><div class="mr-val">€1.840</div></div>
+                <div class="market-row"><div class="mr-icon">📦</div><div class="mr-name">Revolution Case</div><div class="mr-val">€0.87</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: ROI -->
+        <div *ngIf="currentSteamTab === 'roi'" class="fade-up">
+          <div class="grid-2-1">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Calculadora de ROI — Skin</div></div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+                <div>
+                  <div class="scard-label">Skin</div>
+                  <select class="btn btn-ghost" style="width:100%;text-align:left" (change)="onRoiItemChange(roiSelect.value)" #roiSelect>
+                    <option value="33.20,27.20">AK-47 | Redline FT</option>
+                    <option value="58.40,52.00">AWP | Asiimov FT</option>
+                    <option value="412.00,390.00">M4A4 | Howl MW</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="scard-label">Preço Compra</div>
+                  <input type="number" class="btn btn-ghost" style="width:100%" [(ngModel)]="roiCalc.buyPrice" (input)="calcROI()">
+                </div>
+                <div>
+                  <div class="scard-label">Preço Atual</div>
+                  <input type="number" class="btn btn-ghost" style="width:100%" [(ngModel)]="roiCalc.sellPrice" (input)="calcROI()">
+                </div>
+              </div>
+              <div class="roi-grid">
+                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.lucro >= 0" [class.neg]="roiCalc.results.lucro < 0">€{{ roiCalc.results.lucro.toFixed(2) }}</div><div class="roi-item-label">Lucro bruto</div></div>
+                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.liquido >= 0" [class.neg]="roiCalc.results.liquido < 0">€{{ roiCalc.results.liquido.toFixed(2) }}</div><div class="roi-item-label">Lucro líq. (Steam)</div></div>
+                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.roi >= 0" [class.neg]="roiCalc.results.roi < 0">{{ roiCalc.results.roi.toFixed(1) }}%</div><div class="roi-item-label">ROI total</div></div>
+                <div class="roi-item"><div class="roi-item-val">{{ roiCalc.results.dias }} dias</div><div class="roi-item-label">Tempo detido</div></div>
+              </div>
+            </div>
+            <div class="card">
+               <div class="card-header"><div class="card-title">ROI do Portfólio</div></div>
+               <div class="roi-big">
+                 <div class="roi-number pos">+7.5%</div>
+                 <div class="roi-label">ROI médio ponderado</div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Caixas -->
+        <div *ngIf="currentSteamTab === 'caixas'" class="fade-up">
+          <div class="grid-2">
+            <div class="case-grid">
+              <div class="case-card" [class.active]="caseSim.selected.name === 'Revolution Case'" (click)="selectCase('Revolution Case','€0.87',1.42)">
+                <div class="case-top"><div class="case-icon">📦</div><div><div class="case-name">Revolution Case</div><div class="case-price">€0.87 + €2.19 chave</div></div></div>
+                <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.42</span></div>
+              </div>
+              <div class="case-card" [class.active]="caseSim.selected.name === 'Recoil Case'" (click)="selectCase('Recoil Case','€0.64',1.18)">
+                <div class="case-top"><div class="case-icon">🎯</div><div><div class="case-name">Recoil Case</div><div class="case-price">€0.64 + €2.19 chave</div></div></div>
+                <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.18</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Simulador: {{ caseSim.selected.name }}</div></div>
+              <div style="background:var(--sand);border-radius:10px;padding:14px;margin-bottom:12px">
+                <div class="scard-label">Custo total</div>
+                <div style="font-size:24px;font-weight:700">€{{ caseSim.selected.cost }}</div>
+              </div>
+              <div style="background:var(--sand);border-radius:10px;padding:14px;margin-bottom:12px">
+                <div class="scard-label">Valor esperado (EV)</div>
+                <div style="font-size:24px;font-weight:700" class="neg">≈ €{{ caseSim.selected.ev }}</div>
+              </div>
+              <div class="alert-strip" style="background:var(--terra-dim);color:var(--terra);border:1px solid var(--terra);padding: 10px; border-radius: 8px;">
+                <div style="font-size:12px">Vender a caixa é mais rentável. Perda esperada por tentativa.</div>
+              </div>
+              <div style="margin-top:16px">
+                <button class="btn btn-ghost" (click)="simAberturas(10)">Simular ×10</button>
+                <div *ngIf="caseSim.simResult" [innerHTML]="caseSim.simResult" style="margin-top:10px;padding:12px;background:var(--sand);border-radius:9px;font-size:12px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Watchlist -->
+        <div *ngIf="currentSteamTab === 'watchlist'" class="fade-up">
+          <div class="card">
+            <div class="card-header"><div class="card-title">A minha Watchlist</div></div>
+            <div class="wl-item">
+              <div class="wl-emoji">🗡️</div>
+              <div class="wl-info"><div class="wl-name">Karambit | Fade FN</div><div class="wl-target">Target: ≤ €1.700 · Atual: €1.840</div></div>
+              <div class="wl-current"><div class="wl-price">€1.840</div><div class="wl-diff neg">€140 acima</div></div>
+              <button class="wl-alert">🔔</button>
+            </div>
+            <div class="wl-item">
+              <div class="wl-emoji">🔵</div>
+              <div class="wl-info"><div class="wl-name">AWP | Dragon Lore FT</div><div class="wl-target">Target: ≤ €2.000 · Atual: €1.980</div></div>
+              <div class="wl-current"><div class="wl-price" style="color:var(--sage)">€1.980</div><div class="wl-diff pos">✓ Atingido!</div></div>
+              <button class="wl-alert" style="background:var(--sage);color:white">✓</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Comparativo -->
+        <div *ngIf="currentSteamTab === 'comparativo'" class="fade-up">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Skin vs Ativos Tradicionais</div><div class="card-subtitle">Simulação de €120 investidos</div></div></div>
+            <canvas #compareChart height="140"></canvas>
+            <table class="cmp-table" style="margin-top:20px">
+              <thead><tr><th>Ativo</th><th>Lucro €</th><th>ROI</th><th>Risco</th></tr></thead>
+              <tbody>
+                <tr><td>Bitcoin</td><td class="pos">+€78</td><td class="pos">+65%</td><td>🔴 Alto</td></tr>
+                <tr class="cmp-winner"><td>🏆 CS2 Skins</td><td class="pos">+€24</td><td class="pos">+20%</td><td>🟡 Médio</td></tr>
+                <tr><td>VWCE (ETF)</td><td class="pos">+€14</td><td class="pos">+11.7%</td><td>🟢 Baixo</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- ======================== COMUNIDADE PAGE ======================== -->
@@ -554,19 +700,284 @@
         </div>
       </div>
       <div id="page-simulador" [style.display]="currentPage === 'simulador' ? 'block' : 'none'">
-        <div class="card fade-up" style="padding:48px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">📈</div>
-          <div class="card-title" style="margin-bottom:8px;font-size:20px">Simulador Avançado</div>
-          <div style="color:var(--muted);margin-bottom:24px">Simula juros compostos, FIRE, amortizações e cenários de investimento. Em desenvolvimento.</div>
-          <button class="btn btn-primary" (click)="openModal()">Criar conta para aceder</button>
+        
+        <!-- SEARCH & HEADER -->
+        <div class="sim-header fade-up" *ngIf="simView === 'grid'">
+          <div class="sim-search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" [(ngModel)]="simSearch" placeholder="Pesquisar simulador (ex: crédito, FIRE, etf...)" class="sim-search-input">
+          </div>
         </div>
+
+        <!-- GRID VIEW (CUBOS) -->
+        <div *ngIf="simView === 'grid'" class="sim-grid fade-up fd2">
+          <div *ngFor="let cat of filteredSims" class="sim-cube" (click)="setSimTab(cat.id)">
+            <div class="cube-icon">{{ cat.icon }}</div>
+            <div class="cube-content">
+              <div class="cube-title">{{ cat.title }}</div>
+              <div class="cube-desc">{{ cat.desc }}</div>
+            </div>
+            <div class="cube-arrow">→</div>
+          </div>
+          
+          <!-- Empty State for Search -->
+          <div *ngIf="filteredSims.length === 0" class="card" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+            <div class="card-title">Nenhum simulador encontrado</div>
+            <div style="color: var(--muted)">Tenta pesquisar por termos como "casa", "juros" ou "banco".</div>
+          </div>
+        </div>
+
+        <!-- DETAIL VIEW (OPERATIONS) -->
+        <div *ngIf="simView === 'details'" class="fade-up">
+          
+          <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+            <button class="btn btn-ghost" (click)="goBackToSimGrid()">← Voltar</button>
+            <div class="steam-tabs" style="margin-bottom:0; flex: 1;">
+              <button class="st-tab" [class.active]="currentSimTab === 'juros'" (click)="setSimTab('juros')">Juros Compostos</button>
+              <button class="st-tab" [class.active]="currentSimTab === 'ch'" (click)="setSimTab('ch')">Crédito Habitação</button>
+              <button class="st-tab" [class.active]="currentSimTab === 'fire'" (click)="setSimTab('fire')">Calculadora FIRE</button>
+              <button class="st-tab" [class.active]="currentSimTab === 'mercado'" (click)="setSimTab('mercado')">Taxas Bancárias</button>
+            </div>
+          </div>
+
+          <div class="grid-2-1">
+            <div class="sim-content">
+              <!-- Juros Compostos -->
+              <div *ngIf="currentSimTab === 'juros'" class="card">
+                <div class="card-header"><div class="card-title">Simulador de Juros Compostos</div></div>
+                <div class="roi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                  <label class="field">
+                    <span>Investimento Inicial (€)</span>
+                    <input type="number" [(ngModel)]="simJuros.principal" (input)="calcJuros()">
+                  </label>
+                  <label class="field">
+                    <span>Depósito Mensal (€)</span>
+                    <input type="number" [(ngModel)]="simJuros.monthly" (input)="calcJuros()">
+                  </label>
+                  <label class="field">
+                    <span>Taxa Anual (%)</span>
+                    <input type="number" [(ngModel)]="simJuros.rate" (input)="calcJuros()">
+                  </label>
+                  <label class="field">
+                    <span>Período (Anos)</span>
+                    <input type="number" [(ngModel)]="simJuros.years" (input)="calcJuros()">
+                  </label>
+                </div>
+
+                <div class="roi-results" style="margin-top:24px">
+                  <div class="roi-item">
+                    <div class="roi-item-val" style="color:var(--sage)">€{{ simJuros.results.total.toLocaleString() }}</div>
+                    <div class="roi-item-label">Total Final</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val">€{{ simJuros.results.invested.toLocaleString() }}</div>
+                    <div class="roi-item-label">Total Investido</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val" style="color:var(--sage)">€{{ simJuros.results.profit.toLocaleString() }}</div>
+                    <div class="roi-item-label">Lucro (Juros)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crédito Habitação -->
+              <div *ngIf="currentSimTab === 'ch'" class="card">
+                <div class="card-header"><div class="card-title">Simulador de Crédito Habitação</div></div>
+                <div class="roi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                  <label class="field">
+                    <span>Montante Empréstimo (€)</span>
+                    <input type="number" [(ngModel)]="simCH.amount" (input)="calcCH()">
+                  </label>
+                  <label class="field">
+                    <span>Prazo (Anos)</span>
+                    <input type="number" [(ngModel)]="simCH.years" (input)="calcCH()">
+                  </label>
+                  <label class="field">
+                    <span>Euribor (%)</span>
+                    <input type="number" [(ngModel)]="simCH.euribor" (input)="calcCH()">
+                  </label>
+                  <label class="field">
+                    <span>Spread (%)</span>
+                    <input type="number" [(ngModel)]="simCH.spread" (input)="calcCH()">
+                  </label>
+                </div>
+
+                <div class="roi-results" style="margin-top:24px">
+                  <div class="roi-item">
+                    <div class="roi-item-val" style="color:var(--terra)">€{{ simCH.results.prestacao.toFixed(2) }}</div>
+                    <div class="roi-item-label">Prestação Mensal</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val">€{{ simCH.results.totalJuros.toLocaleString() }}</div>
+                    <div class="roi-item-label">Total Juros Pagos</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val">{{ simCH.results.taeg }}%</div>
+                    <div class="roi-item-label">TAEG Estimada</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FIRE -->
+              <div *ngIf="currentSimTab === 'fire'" class="card">
+                <div class="card-header"><div class="card-title">Calculadora FIRE (Independência Financeira)</div></div>
+                <div class="roi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                  <label class="field">
+                    <span>Gastos Mensais Desejados (€)</span>
+                    <input type="number" [(ngModel)]="simFIRE.gastos" (input)="calcFIRE()">
+                  </label>
+                  <label class="field">
+                    <span>Património Atual (€)</span>
+                    <input type="number" [(ngModel)]="simFIRE.currentWealth" (input)="calcFIRE()">
+                  </label>
+                  <label class="field">
+                    <span>Poupança Mensal (€)</span>
+                    <input type="number" [(ngModel)]="simFIRE.savings" (input)="calcFIRE()">
+                  </label>
+                  <label class="field">
+                    <span>Retorno Esperado (%)</span>
+                    <input type="number" [(ngModel)]="simFIRE.return" (input)="calcFIRE()">
+                  </label>
+                </div>
+
+                <div class="roi-results" style="margin-top:24px">
+                  <div class="roi-item">
+                    <div class="roi-item-val" style="color:var(--sage)">€{{ simFIRE.results.target.toLocaleString() }}</div>
+                    <div class="roi-item-label">Teu "Número FIRE"</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val">{{ simFIRE.results.yearsToFire }} Anos</div>
+                    <div class="roi-item-label">Tempo Restante</div>
+                  </div>
+                  <div class="roi-item">
+                    <div class="roi-item-val">{{ simFIRE.results.fireDate }}</div>
+                    <div class="roi-item-label">Data da Liberdade</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mercado / Taxas Bancárias -->
+              <div *ngIf="currentSimTab === 'mercado'" class="card">
+                <div class="card-header"><div class="card-title">Taxas de Mercado & Comparativo Bancário</div></div>
+                <div class="cmp-table-container" style="margin-top:16px">
+                  <table class="cmp-table">
+                    <thead>
+                      <tr>
+                        <th>Entidade</th>
+                        <th>Taxa Ref</th>
+                        <th>Estado</th>
+                        <th>Produto Destaque</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let rate of marketRates">
+                        <td>{{ rate.bank }}</td>
+                        <td>{{ rate.rate }}</td>
+                        <td>
+                          <span [class]="'badge badge-' + (rate.trend === 'alta' ? 'neg' : 'pos')">
+                            {{ rate.trend }}
+                          </span>
+                        </td>
+                        <td>{{ rate.asset }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sidebar Contextual -->
+            <aside class="sim-sidebar">
+              <div class="card" style="background:var(--sand);border:none">
+                <div class="card-title" style="font-size:14px;margin-bottom:12px">📊 Indicadores Hoje</div>
+                <div class="sb-stat-mini">
+                  <div class="sbs-label">Euribor 6M</div>
+                  <div class="sbs-val">3.022% <span class="neg">↓</span></div>
+                </div>
+                <div class="sb-stat-mini">
+                  <div class="sbs-label">Taxa BCE</div>
+                  <div class="sbs-val">4.500% <span class="muted">●</span></div>
+                </div>
+                <div class="sb-stat-mini">
+                  <div class="sbs-label">Inflação (Zona Euro)</div>
+                  <div class="sbs-val">2.4% <span class="pos">↓</span></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
       </div>
       <div id="page-perfil" [style.display]="currentPage === 'perfil' ? 'block' : 'none'">
-        <div class="card fade-up" style="padding:48px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">👤</div>
-          <div class="card-title" style="margin-bottom:8px;font-size:20px">Perfil Público</div>
-          <div style="color:var(--muted);margin-bottom:24px">O teu perfil público com portfólio partilhado, reputação e histórico no fórum.</div>
-          <button class="btn btn-primary" (click)="openModal()">Criar conta para aceder</button>
+        <div class="grid-2 fade-up">
+          <!-- Account Settings -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Informações da Conta</div></div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:10px">
+              <div class="sb-avatar" style="width:64px;height:64px;font-size:24px">
+                <img [src]="userAvatar" *ngIf="userAvatar">
+                <span *ngIf="!userAvatar">{{ userInitial }}</span>
+              </div>
+              <div>
+                <div style="font-size:18px;font-weight:700;color:var(--ink)">{{ userName }}</div>
+                <div style="font-size:13px;color:var(--muted)">{{ userEmail }}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <label class="field">
+                <span>Nome de Exibição</span>
+                <input type="text" class="btn btn-ghost" style="width:100%;text-align:left" [value]="userName" disabled>
+              </label>
+              <label class="field">
+                <span>Email Principal</span>
+                <input type="email" class="btn btn-ghost" style="width:100%;text-align:left" [value]="userEmail" disabled>
+              </label>
+              <button class="btn btn-primary" style="margin-top:10px" disabled>Atualizar Perfil</button>
+            </div>
+          </div>
+
+          <!-- Integrations Settings -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Integrações & APIs</div></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:20px">Liga as tuas contas externas para sincronizar dados automaticamente.</p>
+            
+            <!-- Steam Integration Card -->
+            <div style="background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <div style="font-size:24px">🎮</div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;color:var(--ink)">Steam & CS2 Inventory</div>
+                  <div style="font-size:11px;color:var(--muted)">{{ userSteamId ? 'Conectado como ' + (userSteamName || 'Conta Steam') : 'Não conectado' }}</div>
+                </div>
+                <div *ngIf="userSteamId" style="padding:4px 8px;background:var(--sage-dim);color:var(--sage);border-radius:100px;font-size:10px;font-weight:600">ATIVO</div>
+              </div>
+              
+              <div *ngIf="!userSteamId">
+                <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Sincroniza as tuas skins e caixas de CS2 para veres o teu património digital em tempo real.</p>
+                <button class="btn btn-primary" style="width:100%;background:#171a21;border:none" (click)="loginWithSteam()">Ligar via Steam</button>
+              </div>
+
+              <div *ngIf="userSteamId" style="display:flex;gap:8px">
+                <button class="btn btn-ghost" style="flex:1" (click)="loadSteamInventory()">Sincronizar</button>
+                <button class="btn btn-ghost" style="flex:1;color:var(--terra)" (click)="unlinkSteam()">Desassociar</button>
+              </div>
+            </div>
+
+            <!-- Trading 212 (Future) -->
+            <div style="background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;opacity:0.6">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="font-size:24px">📈</div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;color:var(--ink)">Trading 212</div>
+                  <div style="font-size:11px;color:var(--muted)">Em breve</div>
+                </div>
+                <button class="btn btn-ghost" disabled>Ligar</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
