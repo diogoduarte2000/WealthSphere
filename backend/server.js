@@ -3,24 +3,38 @@ const passport = require('passport');
 const SteamStrategy = require('passport-steam').Strategy;
 const session = require('express-session');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : 'http://localhost:4200',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
+// Session configuration (Required for passport-steam)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'wealthsphere-secret',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: false,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -28,72 +42,294 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Steam Strategy
 passport.serializeUser((user, done) => {
-  done(null, user);
+  done(null, user.id);
 });
 
-passport.deserializeUser((user, done) => {
-  done(null, user);
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 
+// Steam Strategy
 passport.use(new SteamStrategy({
-  returnURL: `${process.env.BACKEND_URL || 'http://localhost:3000'}/api/auth/steam/return`,
-  realm: process.env.BACKEND_URL || 'http://localhost:3000',
-  apiKey: process.env.STEAM_API_KEY
+  returnURL: `${process.env.SERVER_URL || 'http://localhost:5000'}/api/auth/steam/return`,
+  realm: process.env.SERVER_URL || 'http://localhost:5000',
+  apiKey: process.env.STEAM_API_KEY,
+  passReqToCallback: true // Permitir acesso ao req para saber se há um utilizador a tentar associar conta
 },
-  (identifier, profile, done) => {
-    // Aqui você pode salvar/actualizar o utilizador na base de dados
-    return done(null, profile);
+  async (req, identifier, profile, done) => {
+    try {
+      // 1. Verificar se estamos a tentar associar a uma conta existente
+      if (req.session.linkUserId) {
+        let user = await User.findById(req.session.linkUserId);
+        if (user) {
+          // Verificar se este SteamID já está em outra conta
+          const conflict = await User.findOne({ steamId: profile.id });
+          if (conflict && conflict._id.toString() !== user._id.toString()) {
+            if (!conflict.email) {
+              await User.findByIdAndDelete(conflict._id);
+            } else {
+              return done(new Error('Este Steam já está associado a outra conta com email.'), null);
+            }
+          }
+
+          user.steamId = profile.id;
+          user.steamName = profile.displayName;
+          user.steamAvatar = profile.photos[2].value;
+          // NÃO sobrescrevemos o displayName/avatar principal se já existirem
+          user.lastLogin = new Date();
+          await user.save();
+          return done(null, user);
+        }
+      }
+
+      // 2. Comportamento padrão: Login via Steam (procura ou cria)
+      let user = await User.findOne({ steamId: profile.id });
+      
+      const steamData = {
+        steamId: profile.id,
+        steamName: profile.displayName,
+        steamAvatar: profile.photos[2].value,
+        lastLogin: new Date()
+      };
+
+      if (!user) {
+        // Se for conta nova via Steam, usamos os dados da Steam como principais também
+        user = await User.create({
+          ...steamData,
+          displayName: profile.displayName,
+          avatar: profile.photos[2].value
+        });
+      } else {
+        // Atualizar apenas dados Steam
+        user = await User.findByIdAndUpdate(user._id, steamData, { new: true });
+      }
+      
+      return done(null, user);
+    } catch (err) {
+      return done(err, null);
+    }
   }
 ));
 
-// Routes
-app.get('/api/auth/steam', passport.authenticate('steam'), (req, res) => {
-  // Steam authentication initiated
+// Auth Routes (Login/Register)
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Verificar se já existe
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'Email já registado' });
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      displayName: name,
+      email,
+      password: hashedPassword
+    });
+
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const refreshToken = 'mock_refresh_' + Math.random().toString(36).substring(7);
+
+    res.status(201).json({
+      message: 'Utilizador criado com sucesso',
+      user: { id: user._id, name: user.displayName, email: user.email },
+      tokens: { accessToken, refreshToken }
+    });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ message: 'Erro ao criar conta' });
+  }
 });
 
-app.get('/api/auth/steam/return', 
-  passport.authenticate('steam', { failureRedirect: '/login' }),
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    console.log('Login attempt for email:', email);
+    
+    if (!user) {
+      console.log('User not found');
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+
+    // Determine stored hash (support legacy passwordHash)
+    const storedHash = user.password || user.passwordHash;
+
+    if (!storedHash) {
+      console.log('User has no password field (likely Steam-only)');
+      return res.status(401).json({ message: 'Esta conta só pode entrar via Steam' });
+    }
+
+    // Try bcrypt compare
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, storedHash);
+    } catch (e) {
+      console.log('Bcrypt compare error (possibly plain text password)');
+    }
+
+    // Fallback for plain text passwords (transition period)
+    if (!isMatch && password === storedHash) {
+      console.log('Plain text password match detected. Upgrading to hash...');
+      isMatch = true;
+    }
+
+    if (!isMatch) {
+      console.log('Password mismatch');
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+
+    // Cleanup: If user had legacy field names, unify them
+    if (user.passwordHash || user.name) {
+      console.log('Migrating legacy fields for user:', email);
+      user.password = await bcrypt.hash(password, 10);
+      user.displayName = user.displayName || user.name;
+      // Optional: keep legacy fields for now to avoid breaking other things if any
+      await user.save();
+    }
+
+    const accessToken = jwt.sign({ id: user._id, steamId: user.steamId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const refreshToken = 'mock_refresh_' + Math.random().toString(36).substring(7);
+
+    res.json({
+      message: 'Login efetuado',
+      user: { id: user._id, name: user.displayName, email: user.email, steamId: user.steamId },
+      tokens: { accessToken, refreshToken }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Erro ao entrar' });
+  }
+});
+
+// Steam Routes
+app.get('/api/auth/steam', (req, res, next) => {
+  const token = req.query.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.session.linkUserId = decoded.id;
+      console.log('--- LINKING FLOW STARTED ---');
+      console.log('Token verified. linkUserId set to:', decoded.id);
+      
+      // Force session save before redirecting to Steam
+      return req.session.save((err) => {
+        if (err) console.error('Session save error:', err);
+        passport.authenticate('steam')(req, res, next);
+      });
+    } catch (err) {
+      console.error('Invalid token for Steam linking:', err.message);
+    }
+  }
+  
+  console.log('--- NORMAL LOGIN FLOW ---');
+  passport.authenticate('steam')(req, res, next);
+});
+
+app.get('/api/auth/steam/return',
+  (req, res, next) => {
+    const failureUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/auth?error=steam_failed`;
+    passport.authenticate('steam', { failureRedirect: failureUrl })(req, res, next);
+  },
   (req, res) => {
-    // Successful authentication
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:4200'}/auth?steamId=${req.user.id}`);
+    // Limpar o linkUserId da sessão
+    const wasLinking = req.session.linkUserId;
+    delete req.session.linkUserId;
+
+    // Gerar JWT
+    const token = jwt.sign(
+      { id: req.user._id, steamId: req.user.steamId },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const redirectUrl = `${frontendUrl}/auth?token=${token}&refresh=mock_refresh${wasLinking ? '&linked=true' : ''}`;
+    console.log('Steam Auth Success. Redirecting to:', redirectUrl);
+    res.redirect(redirectUrl);
   }
 );
 
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  // TODO: Implementar autenticação real com base de dados
-  if (email && password) {
-    res.json({
-      message: 'Login successful',
-      user: { id: '1', name: 'User', email: email },
-      tokens: { accessToken: 'mock_token', refreshToken: 'mock_refresh' }
-    });
-  } else {
-    res.status(400).json({ message: 'Email and password required' });
+// Rota para desassociar conta Steam
+app.post('/api/users/unlink-steam', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user) {
+      user.steamId = undefined;
+      // Poderíamos remover displayName/avatar se não forem do login normal
+      await user.save();
+      return res.json({ message: 'Steam account unlinked successfully' });
+    }
+    res.status(404).json({ message: 'User not found' });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
   }
 });
 
-app.post('/api/auth/register', (req, res) => {
-  const { name, email, password } = req.body;
-  // TODO: Implementar registo real com base de dados
-  if (name && email && password) {
-    res.json({
-      message: 'Registration successful',
-      user: { id: '1', name: name, email: email },
-      tokens: { accessToken: 'mock_token', refreshToken: 'mock_refresh' }
-    });
-  } else {
-    res.status(400).json({ message: 'Name, email and password required' });
+app.get('/api/users/me', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    console.log('No Authorization header found in request to:', req.url);
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    res.json({ profile: user });
+  } catch (err) {
+    console.error('JWT Verification Error:', err.message);
+    res.status(401).json({ message: 'Invalid token' });
   }
 });
 
-app.get('/api/user', (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
+app.get('/api/external/steam/inventory', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    
+    if (!user || !user.steamId) {
+      return res.status(400).json({ message: 'User has no Steam ID linked' });
+    }
+
+    // CS2 appid is 730, contextid is 2
+    const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/730/2?l=portuguese&count=5000`;
+    
+    const response = await axios.get(inventoryUrl);
+    
+    // Processar inventário básico para o frontend
+    const items = response.data.descriptions.map(desc => ({
+      name: desc.market_hash_name,
+      icon: `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}`,
+      color: desc.name_color,
+      type: desc.type
+    }));
+
+    res.json({
+      count: response.data.total_inventory_count,
+      items: items.slice(0, 50) // Limitar para o demo
+    });
+  } catch (err) {
+    console.error('Steam Inventory Error:', err.message);
+    res.status(500).json({ message: 'Failed to fetch Steam inventory' });
   }
 });
 
@@ -105,3 +341,4 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`WealthSphere Backend running on port ${PORT}`);
 });
+
