@@ -770,3 +770,33 @@ Criar versões git e implementar dashboard demo encontrado no site preview v1.
 - `.gitignore` - Atualizado para ignorar "site preview v1/"
 - `frontend/src/app/services/rates.service.ts` - Taxas atualizadas
 - Múltiplos ficheiros HTML/TS - Taxas Euribor atualizadas
+
+---
+
+## Sessão de Atualização de Dados Financeiros - 16/05/2026 (Noite)
+
+### 🛠️ Modificações e Melhorias
+
+#### Backend
+- **Model User**: Adicionado campo `financialProfile` para persistir dados de Net Worth, rendimentos, despesas e alocação de ativos (ETF, Imóveis, Cripto).
+- **Histórico**: Implementado sistema de histórico automático no `financialProfile` para registar a evolução patrimonial diária.
+- **API**: Novo endpoint `PATCH /api/users/me/financial-data` para atualização segura dos dados financeiros.
+
+#### Frontend
+- **User Service**: Adicionado método `updateFinancialData` para comunicar com o novo endpoint.
+- **Dashboard User**: 
+    - Implementado Modal de atualização de dados financeiros acessível via botão "+ Atualizar Dados" na topbar.
+    - Sincronização dos cards estatísticos (Net Worth, Income, Expenses, Portfolio) com os dados reais da base de dados.
+    - Gráfico de Evolução Patrimonial agora consome o histórico real do utilizador.
+    - Donut de Alocação de Ativos dinâmico com base nos valores inseridos.
+- **Correção de Fluxo**: Removidos botões de "Criar conta" dentro do `dashboard-user` (visto que o utilizador já está autenticado) e substituídos por redirecionamentos ou estados de "em desenvolvimento".
+
+### 📋 O que falta fazer
+- [ ] **Validação de Inputs**: Adicionar feedback visual mais detalhado no formulário de atualização.
+- [ ] **Múltiplos Ativos**: Permitir que o utilizador adicione itens individuais ao portfólio (ex: diferentes ETFs) em vez de um valor global.
+- [ ] **Gráficos Avançados**: Implementar visualizações para períodos de 1A e 3A usando o histórico acumulado.
+
+---
+**Mensagem Final do Utilizador:**
+"no dashboard-user preciso de um sitio para o user ir atualizando os dados, btw, nos sitions onde tu clicas e diz \"Cria a tua conta grátis\" , ja podes implementar as funionalidades que é suposto ter, mas por agora nao metas, mete esta mensagem que te estou a enviar no progress.md, e adiciona o que foi modificado , retirado ou adicionado , o que falta fazer , etc (a ultima coisa a meter no .md é esta mensagem)"
+

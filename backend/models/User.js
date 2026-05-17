@@ -11,6 +11,40 @@ const userSchema = new mongoose.Schema({
   password: { type: String }, // New field
   passwordHash: String, // Legacy support
   inventory: { type: Array, default: [] },
+  trading212ApiKey: { type: String },
+  binanceApiKey: { type: String },
+  binanceApiSecret: { type: String },
+  financialProfile: {
+    netWorth: { type: Number, default: 0 },
+    monthlyIncome: { type: Number, default: 0 },
+    monthlyExpenses: { type: Number, default: 0 },
+    etfPortfolio: { type: Number, default: 0 },
+    realEstateValue: { type: Number, default: 0 },
+    cryptoValue: { type: Number, default: 0 },
+    history: [{
+      date: { type: Date, default: Date.now },
+      netWorth: Number,
+      etfPortfolio: Number,
+      realEstateValue: Number
+    }]
+  },
+  customSettings: {
+    salary: { type: Number, default: 0 },
+    freelance: { type: Number, default: 0 },
+    supermarket: { type: Number, default: 0 },
+    electricity: { type: Number, default: 0 },
+    steamEarnings: { type: Number, default: 0 }
+  },
+  realEstate: [{
+    name: String,
+    dueDate: Number, // day of the month
+    rentAmount: Number,
+    expenses: [{
+      type: { type: String }, // e.g., 'Seguro', 'Obras'
+      amount: Number,
+      date: { type: Date, default: Date.now }
+    }]
+  }],
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 

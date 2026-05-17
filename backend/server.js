@@ -6,17 +6,23 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// MongoDB Connections
+const mainDB = mongoose.createConnection(process.env.MONGO_URI, { dbName: 'wealthsphere_main' });
+mainDB.on('connected', () => console.log('Connected to Main Database (WealthSphere)'));
+
+const forumDB = mongoose.createConnection(process.env.MONGO_URI, { dbName: 'wealthsphere_community' });
+forumDB.on('connected', () => console.log('Connected to Community Database (Forum)'));
+
+// Models using specific connections
+const User = mainDB.model('User', require('./models/User').schema);
+const ForumPostSchema = require('./models/ForumPost');
+const ForumPost = forumDB.model('ForumPost', ForumPostSchema);
 
 // Middleware
 app.use(cors({
@@ -265,16 +271,209 @@ app.post('/api/users/unlink-steam', async (req, res) => {
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByIdAndUpdate(
+      id, 
+      { 
+        $unset: { 
+          steamId: "", 
+          steamName: "", 
+          steamAvatar: "" 
+        } 
+      },
+      { new: true }
+    );
+    
     if (user) {
-      user.steamId = undefined;
-      // Poderíamos remover displayName/avatar se não forem do login normal
-      await user.save();
-      return res.json({ message: 'Steam account unlinked successfully' });
+      return res.json({ message: 'Steam account unlinked successfully', profile: user });
     }
     res.status(404).json({ message: 'User not found' });
   } catch (err) {
+    console.error('Unlink Steam error:', err);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Rota para atualizar perfil básico (nome)
+app.patch('/api/users/me', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { displayName } = req.body;
+    console.log('Updating profile for user:', decoded.id, 'New name:', displayName);
+    
+    const user = await User.findByIdAndUpdate(
+      decoded.id, 
+      { $set: { displayName, name: displayName } },
+      { new: true }
+    ).select('-password -passwordHash');
+
+    if (!user) {
+      console.log('User not found during update');
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'Perfil atualizado', profile: user });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Rota para atualizar chaves de API externas
+app.patch('/api/users/me/external-apis', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const { trading212ApiKey, binanceApiKey, binanceApiSecret } = req.body;
+    
+    const updateData = {};
+    if (trading212ApiKey !== undefined) updateData.trading212ApiKey = trading212ApiKey;
+    if (binanceApiKey !== undefined) updateData.binanceApiKey = binanceApiKey;
+    if (binanceApiSecret !== undefined) updateData.binanceApiSecret = binanceApiSecret;
+
+    const user = await User.findByIdAndUpdate(
+      id, 
+      { $set: updateData },
+      { new: true }
+    ).select('-password -passwordHash');
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'APIs atualizadas', profile: user });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Rota para atualizar dados financeiros
+app.patch('/api/users/me/financial-data', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { netWorth, monthlyIncome, monthlyExpenses, etfPortfolio, realEstateValue, cryptoValue } = req.body;
+    
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!user.financialProfile) {
+      user.financialProfile = { history: [] };
+    }
+
+    if (netWorth !== undefined) user.financialProfile.netWorth = Number(netWorth);
+    if (monthlyIncome !== undefined) user.financialProfile.monthlyIncome = Number(monthlyIncome);
+    if (monthlyExpenses !== undefined) user.financialProfile.monthlyExpenses = Number(monthlyExpenses);
+    if (etfPortfolio !== undefined) user.financialProfile.etfPortfolio = Number(etfPortfolio);
+    if (realEstateValue !== undefined) user.financialProfile.realEstateValue = Number(realEstateValue);
+    if (cryptoValue !== undefined) user.financialProfile.cryptoValue = Number(cryptoValue);
+
+    user.markModified('financialProfile');
+
+    // Adicionar ao histórico se o netWorth mudou significativamente ou se não houver histórico hoje
+    const today = new Date().toISOString().split('T')[0];
+    const lastHistory = user.financialProfile.history[user.financialProfile.history.length - 1];
+    const lastDate = lastHistory ? lastHistory.date.toISOString().split('T')[0] : null;
+
+    if (lastDate !== today) {
+      user.financialProfile.history.push({
+        date: new Date(),
+        netWorth: user.financialProfile.netWorth,
+        etfPortfolio: user.financialProfile.etfPortfolio,
+        realEstateValue: user.financialProfile.realEstateValue
+      });
+    } else {
+      // Atualiza o registo de hoje
+      lastHistory.netWorth = user.financialProfile.netWorth;
+      lastHistory.etfPortfolio = user.financialProfile.etfPortfolio;
+      lastHistory.realEstateValue = user.financialProfile.realEstateValue;
+    }
+    user.markModified('financialProfile.history');
+
+    await user.save();
+    res.json({ message: 'Dados financeiros atualizados', profile: user });
+  } catch (err) {
+    console.error('Update financial data error:', err);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+app.patch('/api/users/me/settings', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { salary, freelance, supermarket, electricity, steamEarnings } = req.body;
+    
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!user.customSettings) {
+      user.customSettings = {};
+    }
+
+    if (salary !== undefined) user.customSettings.salary = Number(salary);
+    if (freelance !== undefined) user.customSettings.freelance = Number(freelance);
+    if (supermarket !== undefined) user.customSettings.supermarket = Number(supermarket);
+    if (electricity !== undefined) user.customSettings.electricity = Number(electricity);
+    if (steamEarnings !== undefined) user.customSettings.steamEarnings = Number(steamEarnings);
+
+    user.markModified('customSettings');
+
+    await user.save();
+    console.log('Successfully saved user settings to DB:', user.customSettings);
+    res.json({ message: 'Definições atualizadas', profile: user });
+  } catch (err) {
+    console.error('Update settings error:', err);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+app.post('/api/users/me/real-estate', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { action, property, expense, propertyId, expenseId } = req.body;
+    
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!user.realEstate) user.realEstate = [];
+
+    if (action === 'addProperty') {
+      user.realEstate.push({
+        name: property.name,
+        dueDate: property.dueDate,
+        rentAmount: property.rentAmount,
+        expenses: []
+      });
+    } else if (action === 'deleteProperty') {
+      user.realEstate = user.realEstate.filter(r => r._id.toString() !== propertyId);
+    } else if (action === 'addExpense') {
+      const prop = user.realEstate.find(r => r._id.toString() === propertyId);
+      if (prop) {
+        prop.expenses.push({
+          type: expense.type,
+          amount: expense.amount,
+          date: expense.date || new Date()
+        });
+      }
+    } else if (action === 'deleteExpense') {
+      const prop = user.realEstate.find(r => r._id.toString() === propertyId);
+      if (prop) {
+        prop.expenses = prop.expenses.filter(e => e._id.toString() !== expenseId);
+      }
+    }
+
+    await user.save();
+    res.json({ message: 'Imóveis atualizados', profile: user });
+  } catch (err) {
+    console.error('Update real estate error:', err);
     res.status(401).json({ message: 'Invalid token' });
   }
 });
@@ -289,11 +488,50 @@ app.get('/api/users/me', async (req, res) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select('-password -passwordHash');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ profile: user });
   } catch (err) {
     console.error('JWT Verification Error:', err.message);
     res.status(401).json({ message: 'Invalid token' });
+  }
+});
+const steamPriceCache = new Map();
+
+app.get('/api/external/steam/price', async (req, res) => {
+  const { name } = req.query;
+  if (!name) return res.status(400).json({ message: 'Missing item name' });
+
+  // Cache por 15 minutos para evitar rate limit agressivo da Steam
+  if (steamPriceCache.has(name)) {
+    const cached = steamPriceCache.get(name);
+    if (Date.now() - cached.timestamp < 15 * 60 * 1000) {
+      return res.json({ price: cached.price });
+    }
+  }
+
+  try {
+    const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(name)}`;
+    const response = await axios.get(priceUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      timeout: 5000
+    });
+
+    if (response.data && response.data.success) {
+      // Formata "36,41€" para 36.41
+      const priceStr = response.data.lowest_price || response.data.median_price || "0";
+      const price = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      
+      steamPriceCache.set(name, { price, timestamp: Date.now() });
+      return res.json({ price });
+    }
+    
+    res.json({ price: 0 });
+  } catch (err) {
+    console.error('Steam Price Error for', name, ':', err.message);
+    res.json({ price: 0 });
   }
 });
 
@@ -310,26 +548,150 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       return res.status(400).json({ message: 'User has no Steam ID linked' });
     }
 
-    // CS2 appid is 730, contextid is 2
-    const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/730/2?l=portuguese&count=5000`;
+    // Voltar à API Community mas com Headers de Browser (evita bloqueios)
+    const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/730/2?l=portuguese&count=2000`;
     
-    const response = await axios.get(inventoryUrl);
-    
-    // Processar inventário básico para o frontend
+    console.log('Fetching inventory from Community API for:', user.steamId);
+    const response = await axios.get(inventoryUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+
+    if (!response.data || !response.data.descriptions) {
+      console.log('No descriptions found in Steam response');
+      return res.json({ count: 0, items: [] });
+    }
+
     const items = response.data.descriptions.map(desc => ({
       name: desc.market_hash_name,
-      icon: `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}`,
-      color: desc.name_color,
-      type: desc.type
+      icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+      color: desc.name_color || 'ffffff',
+      type: desc.type || 'Item',
+      tradable: desc.tradable,
+      price: null // Será carregado dinamicamente no frontend
     }));
 
     res.json({
-      count: response.data.total_inventory_count,
-      items: items.slice(0, 50) // Limitar para o demo
+      count: response.data.total_inventory_count || items.length,
+      items: items.slice(0, 100)
     });
   } catch (err) {
     console.error('Steam Inventory Error:', err.message);
     res.status(500).json({ message: 'Failed to fetch Steam inventory' });
+  }
+});
+
+app.get('/api/external/trading212/portfolio', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    
+    if (!user || !user.trading212ApiKey) {
+      return res.status(400).json({ message: 'User has no Trading 212 API Key linked' });
+    }
+
+    let response;
+    try {
+      response = await axios.get('https://live.trading212.com/api/v0/equity/account/cash', {
+        headers: { 'Authorization': user.trading212ApiKey },
+        timeout: 10000
+      });
+    } catch (liveErr) {
+      // Se falhar com 401 ou 403, pode ser uma chave de conta Prática (Demo)
+      if (liveErr.response && (liveErr.response.status === 401 || liveErr.response.status === 403)) {
+        console.log('Live T212 API failed, trying Demo API for user:', user.email);
+        response = await axios.get('https://demo.trading212.com/api/v0/equity/account/cash', {
+          headers: { 'Authorization': user.trading212ApiKey },
+          timeout: 10000
+        });
+      } else {
+        throw liveErr;
+      }
+    }
+
+    if (!response || !response.data) {
+      return res.json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      data: response.data
+    });
+  } catch (err) {
+    console.error('Trading 212 API Error:', err.response?.data || err.message);
+    res.status(500).json({ message: 'Failed to fetch Trading 212 data' });
+  }
+});
+
+// ======================== FORUM ROUTES ========================
+
+app.get('/api/forum', async (req, res) => {
+  try {
+    const posts = await ForumPost.find().sort({ createdAt: -1 }).limit(50);
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao carregar fórum' });
+  }
+});
+
+app.post('/api/forum', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'Não autorizado' });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const newPost = new ForumPost({
+      title: req.body.title,
+      content: req.body.content,
+      category: req.body.category,
+      price: req.body.price,
+      game: req.body.game || 'CS2',
+      author: {
+        id: user._id,
+        name: user.displayName || user.name,
+        avatar: user.avatar || ''
+      }
+    });
+
+    await newPost.save();
+    res.json({ message: 'Anúncio publicado com sucesso!', post: newPost });
+  } catch (err) {
+    console.error('Forum Post Error:', err);
+    res.status(401).json({ message: 'Token inválido ou expirado' });
+  }
+});
+
+app.delete('/api/forum/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'Não autorizado' });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const post = await ForumPost.findById(req.params.id);
+    
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+    
+    // Apenas o autor ou admin pode apagar
+    if (post.author.id.toString() !== decoded.id) {
+      return res.status(403).json({ message: 'Sem permissão para apagar este anúncio' });
+    }
+
+    await ForumPost.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Anúncio removido' });
+  } catch (err) {
+    res.status(401).json({ message: 'Erro ao apagar' });
   }
 });
 

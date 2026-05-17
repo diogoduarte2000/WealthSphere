@@ -36,8 +36,10 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     cs2: ['CS2 & Steam', 'Inventário sincronizado · 14 itens · €624'],
     comunidade: ['Comunidade', '487 membros ativos · 1.240 posts'],
     rendas: ['Rendas & Imóveis', '2 imóveis · €1.200/mês'],
+    'add-renda': ['Adicionar Imóvel', 'Adiciona um novo ativo imobiliário à tua carteira'],
     simulador: ['Simulador', 'Juros compostos · FIRE · Amortizações'],
     perfil: ['Perfil', 'Lisboa 🇵🇹'],
+    definicoes: ['Definições', 'Configura os teus rendimentos, despesas e chaves API'],
   };
 
   data = {
@@ -58,6 +60,77 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     }
   };
 
+  financialData = {
+    netWorth: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    etfPortfolio: 0,
+    realEstateValue: 0,
+    cryptoValue: 0
+  };
+
+  customSettings = {
+    salary: 0,
+    freelance: 0,
+    supermarket: 0,
+    electricity: 0,
+    steamEarnings: 0
+  };
+
+  realEstate: any[] = [];
+  t212Portfolio: any = null;
+
+  savingSettings: boolean = false;
+  
+  newProperty = { name: '', dueDate: 1, rentAmount: 0 };
+  newPropertyDateStr: string = new Date().toISOString().split('T')[0];
+  newExpense = { propertyId: '', type: '', amount: 0, date: new Date().toISOString().split('T')[0] };
+
+  financialModalOpen: boolean = false;
+  nameModalOpen: boolean = false;
+  t212ModalOpen: boolean = false;
+  binanceModalOpen: boolean = false;
+  
+  savingFinancial: boolean = false;
+  savingName: boolean = false;
+  savingApis: boolean = false;
+  
+  newDisplayName: string = '';
+  t212ApiKey: string = '';
+  binanceKey: string = '';
+  binanceSecret: string = '';
+
+  userT212Linked: boolean = false;
+  userBinanceLinked: boolean = false;
+
+  // Watchlist & Market State
+  wlChartModalOpen: boolean = false;
+  selectedWlItem: any = null;
+  selectedWlTimeframe: string = '1m';
+  wlSearchQuery: string = '';
+  selectedMarketGameName: string = 'Counter-Strike 2';
+  
+  watchlistItems = [
+    { emoji: '🗡️', name: 'Karambit | Fade FN', target: '€1.700', current: '€1.840', diff: '€140', isHit: false },
+    { emoji: '🔵', name: 'AWP | Dragon Lore FT', target: '€2.000', current: '€1.980', diff: '✓', isHit: true },
+    { emoji: '📦', name: 'Operation Bravo Case', target: '€40', current: '€44.50', diff: '€4.50', isHit: false }
+  ];
+
+  top10Items = [
+    { name: 'AK-47 | Redline (FT)', price: '€33.20' },
+    { name: 'AWP | Asiimov (FT)', price: '€58.40' },
+    { name: 'Revolution Case', price: '€0.87' },
+    { name: 'Recoil Case', price: '€0.64' },
+    { name: 'Fracture Case', price: '€0.52' },
+    { name: 'Dreams & Nightmares Case', price: '€0.81' },
+    { name: 'Desert Eagle | Printstream (MW)', price: '€82.10' },
+    { name: 'USP-S | Printstream (FT)', price: '€34.50' },
+    { name: 'M4A1-S | Printstream (FT)', price: '€68.20' },
+    { name: 'Glock-18 | Fade (FN)', price: '€1.240' }
+  ];
+
+  @ViewChild('wlDetailChart') wlDetailChartCanvas!: ElementRef<HTMLCanvasElement>;
+
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
 
@@ -68,23 +141,16 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   // ROI Calculator
   roiCalc = {
-    selectedItem: '0,0',
+    itemName: 'AK-47 | Redline (FT)',
     buyPrice: 27.20,
     sellPrice: 33.20,
     qty: 1,
-    date: '2024-11-10',
-    results: {
-      lucro: 0,
-      liquido: 0,
-      roi: 0,
-      anual: 0,
-      dias: 0,
-      comissao: 0
-    }
+    results: { lucro: 0, liquido: 0, roi: 0, dias: 0 }
   };
 
   // Case Simulator
-  caseSim = {
+  caseCategory: string = 'cases';
+  caseSim: any = {
     selected: {
       name: 'Revolution Case',
       price: '€0.87',
@@ -206,17 +272,45 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   unlinkSteam() {
-    if (confirm('Tens a certeza que queres desassociar a tua conta Steam?')) {
-      this.userService.unlinkSteam().subscribe({
-        next: () => {
-          this.steamInventory = null;
-          this.steamError = '';
-          alert('Conta Steam desassociada com sucesso.');
-          window.location.reload();
-        },
-        error: (err) => alert('Erro ao desassociar conta.')
-      });
-    }
+    console.log('Unlink Steam clicked');
+    if (!confirm('Tens a certeza que queres desassociar a tua conta Steam?')) return;
+
+    this.steamLoading = true;
+    this.userService.unlinkSteam().subscribe({
+      next: (res) => {
+        console.log('Unlink success:', res);
+        this.steamInventory = null;
+        this.steamError = '';
+        this.userSteamId = '';
+        this.userSteamName = '';
+        this.userSteamAvatar = '';
+        this.titles['cs2'] = ['CS2 & Steam', 'Sincroniza o teu inventário'];
+        
+        // Atualizar storage
+        const userStr = localStorage.getItem('wealthsphere_user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            delete user.steamId;
+            delete user.steamName;
+            delete user.steamAvatar;
+            localStorage.setItem('wealthsphere_user', JSON.stringify(user));
+          } catch (e) {
+            console.error('Error updating storage', e);
+          }
+        }
+
+        alert('Conta Steam desassociada com sucesso.');
+        this.steamLoading = false;
+        // Atualizar perfil para refletir mudanças na UI
+        this.loadProfile();
+      },
+      error: (err) => {
+        console.error('Unlink error:', err);
+        this.steamLoading = false;
+        alert('Erro ao desassociar conta: ' + (err.error?.message || 'Erro desconhecido'));
+      }
+    });
   }
 
   loadProfile() {
@@ -227,9 +321,60 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         this.userEmail = user.email || '';
         this.userAvatar = user.avatar || '';
         this.userInitial = this.userName.charAt(0).toUpperCase();
+        this.newDisplayName = this.userName;
         this.userSteamId = user.steamId || '';
         this.userSteamName = user.steamName || '';
         this.userSteamAvatar = user.steamAvatar || '';
+        
+        this.t212ApiKey = user.trading212ApiKey || '';
+        this.binanceKey = user.binanceApiKey || '';
+        this.binanceSecret = user.binanceApiSecret || '';
+        this.userT212Linked = !!user.trading212ApiKey;
+        this.userBinanceLinked = !!user.binanceApiKey;
+
+        if (user.financialProfile) {
+          this.financialData = {
+            netWorth: user.financialProfile.netWorth || 0,
+            monthlyIncome: user.financialProfile.monthlyIncome || 0,
+            monthlyExpenses: user.financialProfile.monthlyExpenses || 0,
+            etfPortfolio: user.financialProfile.etfPortfolio || 0,
+            realEstateValue: user.financialProfile.realEstateValue || 0,
+            cryptoValue: user.financialProfile.cryptoValue || 0
+          };
+
+          if (user.customSettings) {
+            this.customSettings = {
+              salary: user.customSettings.salary || 0,
+              freelance: user.customSettings.freelance || 0,
+              supermarket: user.customSettings.supermarket || 0,
+              electricity: user.customSettings.electricity || 0,
+              steamEarnings: user.customSettings.steamEarnings || 0
+            };
+          }
+
+          if (user.realEstate) {
+            this.realEstate = user.realEstate;
+          }
+
+          // Atualizar dados do gráfico com o histórico se existir
+          if (user.financialProfile.history && user.financialProfile.history.length > 0) {
+            const history = user.financialProfile.history;
+            this.data['6m'].networth = history.map((h: any) => h.netWorth).slice(-7);
+            this.data['6m'].etf = history.map((h: any) => h.etfPortfolio).slice(-7);
+            this.data['6m'].rendas = history.map((h: any) => h.realEstateValue).slice(-7);
+            
+            // Se tiver menos de 7 pontos, preencher com zeros no início
+            while (this.data['6m'].networth.length < 7) {
+              this.data['6m'].networth.unshift(0);
+              this.data['6m'].etf.unshift(0);
+              this.data['6m'].rendas.unshift(0);
+            }
+
+            if (this.currentPage === 'dashboard') {
+              setTimeout(() => this.drawPatrimonioChart(this.data['6m']), 100);
+            }
+          }
+        }
         
         // Sincronizar local storage com dados frescos
         localStorage.setItem('wealthsphere_user', JSON.stringify(user));
@@ -237,6 +382,249 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         if (user.steamId) {
           this.loadSteamInventory();
         }
+        if (this.userT212Linked) {
+          this.loadT212Portfolio();
+        }
+      }
+    });
+  }
+
+  saveCustomSettings() {
+    this.savingSettings = true;
+    this.userService.updateCustomSettings(this.customSettings).subscribe({
+      next: (res) => {
+        this.savingSettings = false;
+        alert('Definições atualizadas com sucesso!');
+        this.loadProfile();
+      },
+      error: (err) => {
+        this.savingSettings = false;
+        alert('Erro ao atualizar definições: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  addRealEstateProperty() {
+    if (!this.newProperty.name || this.newProperty.rentAmount <= 0) return;
+    
+    // Extrai o dia do mês selecionado no calendário
+    if (this.newPropertyDateStr) {
+      const selectedDate = new Date(this.newPropertyDateStr);
+      // Garantir que a data é válida
+      if (!isNaN(selectedDate.getTime())) {
+        this.newProperty.dueDate = selectedDate.getDate();
+      }
+    }
+
+    this.userService.updateRealEstate({ action: 'addProperty', property: this.newProperty }).subscribe({
+      next: (res) => {
+        this.newProperty = { name: '', dueDate: 1, rentAmount: 0 };
+        this.newPropertyDateStr = new Date().toISOString().split('T')[0];
+        this.loadProfile();
+      }
+    });
+  }
+
+  deleteRealEstateProperty(propertyId: string) {
+    if (!confirm('Eliminar este imóvel?')) return;
+    this.userService.updateRealEstate({ action: 'deleteProperty', propertyId }).subscribe({
+      next: (res) => {
+        this.loadProfile();
+      }
+    });
+  }
+
+  addRealEstateExpense() {
+    if (!this.newExpense.propertyId || !this.newExpense.type || this.newExpense.amount <= 0) return;
+    this.userService.updateRealEstate({ action: 'addExpense', propertyId: this.newExpense.propertyId, expense: this.newExpense }).subscribe({
+      next: (res) => {
+        this.newExpense = { propertyId: '', type: '', amount: 0, date: new Date().toISOString().split('T')[0] };
+        this.loadProfile();
+      }
+    });
+  }
+
+  deleteRealEstateExpense(propertyId: string, expenseId: string) {
+    if (!confirm('Eliminar esta despesa?')) return;
+    this.userService.updateRealEstate({ action: 'deleteExpense', propertyId, expenseId }).subscribe({
+      next: (res) => {
+        this.loadProfile();
+      }
+    });
+  }
+
+  loadT212Portfolio() {
+    this.userService.getT212Portfolio().subscribe({
+      next: (res: any) => {
+        if (res && res.success) {
+          this.t212Portfolio = res.data;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading Trading212 portfolio:', err);
+      }
+    });
+  }
+
+  openFinancialModal() {
+    this.financialModalOpen = true;
+  }
+
+  closeFinancialModal() {
+    this.financialModalOpen = false;
+  }
+
+  openNameModal() {
+    this.newDisplayName = this.userName;
+    this.nameModalOpen = true;
+  }
+
+  closeNameModal() {
+    this.nameModalOpen = false;
+  }
+
+  saveName() {
+    if (!this.newDisplayName || !this.newDisplayName.trim()) return;
+    console.log('Saving new display name:', this.newDisplayName);
+    this.savingName = true;
+    this.userService.updateProfile({ displayName: this.newDisplayName }).subscribe({
+      next: (res) => {
+        console.log('Profile update success:', res);
+        this.savingName = false;
+        this.closeNameModal();
+        this.loadProfile();
+        alert('Nome atualizado com sucesso!');
+      },
+      error: (err) => {
+        console.error('Profile update error:', err);
+        this.savingName = false;
+        alert('Erro ao atualizar nome: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  openT212Modal() {
+    this.t212ModalOpen = true;
+  }
+
+  closeT212Modal() {
+    this.t212ModalOpen = false;
+  }
+
+  saveT212() {
+    if (!this.t212ApiKey.trim()) return;
+    this.savingApis = true;
+    this.userService.updateExternalApis({ trading212ApiKey: this.t212ApiKey }).subscribe({
+      next: (res) => {
+        this.savingApis = false;
+        this.closeT212Modal();
+        this.loadProfile();
+        alert('API Trading 212 ligada com sucesso!');
+      },
+      error: (err) => {
+        this.savingApis = false;
+        alert('Erro ao ligar API: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  get totalIncome() {
+    let rentTotal = 0;
+    this.realEstate.forEach(r => rentTotal += (r.rentAmount || 0));
+    return (this.customSettings.salary || 0) + 
+           (this.customSettings.freelance || 0) + 
+           (this.customSettings.steamEarnings || 0) + 
+           rentTotal;
+  }
+
+  get calculatedNetWorth() {
+    const cash = this.financialData.netWorth || 0; // Utilizado como 'Dinheiro em Conta' no form
+    const etf = this.t212Portfolio && this.t212Portfolio.total ? this.t212Portfolio.total : (this.financialData.etfPortfolio || 0);
+    const crypto = this.financialData.cryptoValue || 0;
+    
+    // Calcula valor total de imóveis somando valor real (manual) + ou podíamos tentar adivinhar pela renda.
+    // O user já preenche "realEstateValue" manualmente no modal financeiro.
+    const realEstate = this.financialData.realEstateValue || 0;
+    
+    return cash + etf + crypto + realEstate;
+  }
+
+  get totalExpenses() {
+    let propExpTotal = 0;
+    this.realEstate.forEach(r => {
+      if (r.expenses) {
+        r.expenses.forEach((e: any) => propExpTotal += (e.amount || 0));
+      }
+    });
+    return (this.customSettings.supermarket || 0) + 
+           (this.customSettings.electricity || 0) + 
+           propExpTotal;
+  }
+
+  get totalSavings() {
+    return this.totalIncome - this.totalExpenses;
+  }
+
+  get nextRentInfo() {
+    if (this.realEstate.length === 0) return { amount: 0, desc: 'Nenhuma' };
+    
+    // Simplification for the closest due date
+    const today = new Date().getDate();
+    let closest = this.realEstate[0];
+    let minDiff = 31;
+    
+    for (let r of this.realEstate) {
+      let diff = r.dueDate - today;
+      if (diff < 0) diff += 30; // next month
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = r;
+      }
+    }
+    
+    return { amount: closest.rentAmount, desc: `${closest.dueDate} deste mês · ${closest.name}` };
+  }
+
+  openBinanceModal() {
+    this.binanceModalOpen = true;
+  }
+
+  closeBinanceModal() {
+    this.binanceModalOpen = false;
+  }
+
+  saveBinance() {
+    if (!this.binanceKey.trim() || !this.binanceSecret.trim()) return;
+    this.savingApis = true;
+    this.userService.updateExternalApis({ 
+      binanceApiKey: this.binanceKey, 
+      binanceApiSecret: this.binanceSecret 
+    }).subscribe({
+      next: (res) => {
+        this.savingApis = false;
+        this.closeBinanceModal();
+        this.loadProfile();
+        alert('API Binance ligada com sucesso!');
+      },
+      error: (err) => {
+        this.savingApis = false;
+        alert('Erro ao ligar API: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  saveFinancialData() {
+    this.savingFinancial = true;
+    this.userService.updateFinancialData(this.financialData).subscribe({
+      next: (res) => {
+        this.savingFinancial = false;
+        this.closeFinancialModal();
+        this.loadProfile(); // Recarregar dados
+        alert('Dados atualizados com sucesso!');
+      },
+      error: (err) => {
+        this.savingFinancial = false;
+        alert('Erro ao guardar dados: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -248,12 +636,40 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         this.steamInventory = res;
         this.steamLoading = false;
         this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
+        
+        // Fetch prices sequentially to avoid overwhelming the server/Steam
+        this.loadSteamPricesSequential(0);
       },
       error: (err) => {
         this.steamError = err.error?.message || 'Erro ao ligar à Steam';
         this.steamLoading = false;
       }
     });
+  }
+
+  private loadSteamPricesSequential(index: number) {
+    if (!this.steamInventory || !this.steamInventory.items || index >= this.steamInventory.items.length) {
+      return;
+    }
+
+    const item = this.steamInventory.items[index];
+    this.userService.getSteamItemPrice(item.name).subscribe({
+      next: (res) => {
+        item.price = res.price;
+        // Proceed to next item after a short delay
+        setTimeout(() => this.loadSteamPricesSequential(index + 1), 300);
+      },
+      error: () => {
+        item.price = 0;
+        // Proceed to next item anyway
+        setTimeout(() => this.loadSteamPricesSequential(index + 1), 300);
+      }
+    });
+  }
+
+  get steamInventoryTotalValue() {
+    if (!this.steamInventory || !this.steamInventory.items) return 0;
+    return this.steamInventory.items.reduce((acc: number, item: any) => acc + (item.price || 0), 0);
   }
 
   ngAfterViewInit() {
@@ -294,22 +710,15 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const buy = this.roiCalc.buyPrice;
     const sell = this.roiCalc.sellPrice;
     const qty = this.roiCalc.qty;
-    const dateVal = this.roiCalc.date;
-    
-    const days = dateVal ? Math.round((Date.now() - new Date(dateVal).getTime()) / (86400000)) : 180;
-    const commission = sell * 0.15 * qty;
-    const lucro = (sell - buy) * qty;
-    const liquido = lucro - commission;
+    const lucroTotal = (sell - buy) * qty;
+    const liquidoTotal = lucroTotal - (sell * 0.15 * qty);
     const roi = buy > 0 ? ((sell - buy) / buy * 100) : 0;
-    const anual = days > 0 ? ((Math.pow(1 + roi / 100, 365 / days) - 1) * 100) : 0;
 
     this.roiCalc.results = {
-      lucro,
-      liquido,
+      lucro: lucroTotal,
+      liquido: liquidoTotal,
       roi,
-      anual,
-      dias: days,
-      comissao: commission
+      dias: 30
     };
   }
 
@@ -318,22 +727,32 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const costNum = parseFloat(price.replace('€', '')) + 2.19;
     this.caseSim.selected = {
       name,
-      price,
-      ev,
-      cost: Number(costNum.toFixed(2)),
-      diff: Number((ev - costNum).toFixed(2))
+      price: '€' + costNum.toFixed(2),
+      ev: '€' + ev.toFixed(2)
     };
     this.caseSim.simResult = '';
   }
 
-  simAberturas(n: number) {
-    const ev = this.caseSim.selected.ev;
-    const cost = this.caseSim.selected.cost;
-    const gasto = (cost * n).toFixed(2);
-    const esperado = (ev * n).toFixed(2);
-    const diff = (ev * n - cost * n).toFixed(2);
-    
-    this.caseSim.simResult = `<strong>Simulação ${n} aberturas:</strong><br>Gasto: €${gasto} · Valor esperado: €${esperado} · <span style="color:var(--terra)">Perda esperada: -€${Math.abs(Number(diff))}</span>`;
+  simAberturas(qtd: number) {
+    const totalCost = (parseFloat(this.caseSim.selected.cost.replace('€','')) * qtd);
+    let totalReturn = 0;
+    let blues = 0, purples = 0, reds = 0;
+
+    for (let i = 0; i < qtd; i++) {
+      const rand = Math.random() * 100;
+      if (rand < 0.64) { reds++; totalReturn += 150 + Math.random() * 500; }
+      else if (rand < 16) { purples++; totalReturn += 5 + Math.random() * 25; }
+      else { blues++; totalReturn += 0.1 + Math.random() * 2; }
+    }
+
+    const profit = totalReturn - totalCost;
+    this.caseSim.simResult = `
+      <b>Resultado da Simulação (${qtd} aberturas):</b><br>
+      Total Gasto: <span style="color:var(--ink)">€${totalCost.toFixed(2)}</span><br>
+      Total Ganho: <span style="color:${totalReturn > totalCost ? 'var(--sage)' : 'var(--terra)'}">€${totalReturn.toFixed(2)}</span><br>
+      Balanço: <span style="font-weight:700; color:${profit > 0 ? 'var(--sage)' : 'var(--terra)'}">€${profit.toFixed(2)}</span><br><br>
+      <small>Drops: ${reds} Vermelhos (Covert), ${purples} Roxos (Restricted), ${blues} Azuis (Mil-spec)</small>
+    `;
   }
 
   // Charts
@@ -573,5 +992,99 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const date = new Date();
     date.setFullYear(date.getFullYear() + years);
     this.simFIRE.results.fireDate = date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  }
+  setCaseCategory(cat: string) {
+    this.caseCategory = cat;
+    this.caseSim.simResult = '';
+    // Select default item for the category
+    if (cat === 'cases') this.selectCase('Kilowatt Case','€1.20',1.85);
+    else if (cat === 'capsules') this.selectCase('Paris 2023 Legends','€0.24',0.12);
+    else if (cat === 'terminals') this.selectCase('Armory Pass Item','€1.50',0.90);
+  }
+
+  selectMarketGame(event: any) {
+    const game = event.target.value;
+    const gameNames: any = {
+      'cs2': 'Counter-Strike 2',
+      'dota2': 'Dota 2',
+      'rust': 'Rust',
+      'tf2': 'Team Fortress 2'
+    };
+    this.selectedMarketGameName = gameNames[game];
+    
+    // Mock update top 10 items based on game
+    if (game === 'cs2') {
+      this.top10Items = [
+        { name: 'AK-47 | Redline (FT)', price: '€33.20' },
+        { name: 'AWP | Asiimov (FT)', price: '€58.40' },
+        { name: 'Revolution Case', price: '€0.87' }
+      ];
+    } else if (game === 'dota2') {
+      this.top10Items = [
+        { name: 'Dragonclaw Hook', price: '€142.10' },
+        { name: 'Mace of Aeons', price: '€210.50' },
+        { name: 'Arcana Bundle', price: '€28.40' }
+      ];
+    } else {
+      this.top10Items = [
+        { name: 'Item Popular 1', price: '€12.50' },
+        { name: 'Item Popular 2', price: '€8.20' },
+        { name: 'Item Popular 3', price: '€4.10' }
+      ];
+    }
+  }
+
+  addToWatchlist() {
+    if (!this.wlSearchQuery.trim()) return;
+    this.watchlistItems.unshift({
+      emoji: '🔍',
+      name: this.wlSearchQuery,
+      target: '€0.00',
+      current: '€' + (Math.random() * 100).toFixed(2),
+      diff: 'Pendente',
+      isHit: false
+    });
+    this.wlSearchQuery = '';
+    alert('Item adicionado à Watchlist!');
+  }
+
+  openWatchlistChart(item: any) {
+    this.selectedWlItem = item;
+    this.wlChartModalOpen = true;
+    setTimeout(() => this.drawWlDetailChart(), 100);
+  }
+
+  closeWlChart() {
+    this.wlChartModalOpen = false;
+    this.selectedWlItem = null;
+  }
+
+  setWlTimeframe(t: string) {
+    this.selectedWlTimeframe = t;
+    this.drawWlDetailChart();
+  }
+
+  drawWlDetailChart() {
+    if (!this.wlDetailChartCanvas) return;
+    const ctx = this.wlDetailChartCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    // Simulate different data based on timeframe
+    const labels = this.selectedWlTimeframe === '24h' ? ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'] : ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'];
+    const data = Array(labels.length).fill(0).map(() => 100 + Math.random() * 50);
+
+    // Clear and draw (Using simple line for now as Chart.js is not imported globally in this context, 
+    // but assuming user has it or we use raw Canvas as in previous examples)
+    ctx.clearRect(0, 0, 400, 400);
+    ctx.beginPath();
+    ctx.strokeStyle = '#df6b45';
+    ctx.lineWidth = 3;
+    data.forEach((val, i) => {
+      const x = (i / (data.length - 1)) * 800;
+      const y = 400 - (val / 200) * 400;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
   }
 }
