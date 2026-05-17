@@ -432,6 +432,7 @@ canvas{display:block}
 .r-milspec{background:rgba(94,152,217,0.12);color:#5e98d9}
 .r-industrial{background:rgba(109,167,171,0.12);color:#6da7ab}
 .skin-float{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px}
+.steam-sort-select{font-size:11px;padding:7px 12px}
 
 /* FLOAT BAR */
 .float-wrap{margin-top:6px}

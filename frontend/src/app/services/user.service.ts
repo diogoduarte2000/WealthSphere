@@ -54,6 +54,10 @@ export class UserService {
     return this.http.get(`${environment.apiUrl}/external/steam/price?name=${encodeURIComponent(name)}`);
   }
 
+  getSteamItemFloat(inspectLink: string): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/external/steam/float?inspectLink=${encodeURIComponent(inspectLink)}`);
+  }
+
   unlinkSteam(): Observable<any> {
     return this.http.post(`${this.apiUrl}/unlink-steam`, {});
   }
