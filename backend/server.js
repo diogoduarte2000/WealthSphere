@@ -542,7 +542,10 @@ app.get('/api/external/steam/price', async (req, res) => {
     if (response.data && response.data.success) {
       // Formata "36,41€" para 36.41
       const priceStr = response.data.lowest_price || response.data.median_price || "0";
-      const price = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      const rawPrice = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      
+      // Valor líquido (deduzindo a comissão de 15% da Steam)
+      const price = rawPrice > 0 ? (rawPrice / 1.15) : 0;
       
       steamPriceCache.set(name, { price, timestamp: Date.now() });
       return res.json({ price });
