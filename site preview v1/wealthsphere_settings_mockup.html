@@ -1,0 +1,267 @@
+
+<h2 class="sr-only">Mockup da página de Definições do WealthSphere</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.ws-wrap{display:flex;height:620px;background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary);font-size:13px}
+.ws-sidebar{width:200px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;flex-shrink:0}
+.ws-logo{padding:14px 16px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px}
+.ws-logo-icon{width:26px;height:26px;background:#c96a45;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.ws-logo-icon i{color:white;font-size:14px}
+.ws-logo-name{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.ws-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px}
+.ws-ns{font-size:10px;color:var(--color-text-tertiary);padding:8px 8px 3px;letter-spacing:.08em;text-transform:uppercase}
+.ws-ni{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--border-radius-md);cursor:pointer;color:var(--color-text-secondary);font-size:12px;border:none;background:none;width:100%;text-align:left}
+.ws-ni i{font-size:15px}
+.ws-ni.active{background:#c96a4518;color:#c96a45}
+.ws-user{padding:10px 12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px}
+.ws-av{width:28px;height:28px;border-radius:50%;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--color-text-info)}
+.ws-un{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.ws-ur{font-size:10px;color:var(--color-text-tertiary)}
+.ws-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ws-topbar{height:48px;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.ws-topbar-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.ws-topbar-sub{font-size:11px;color:var(--color-text-tertiary)}
+.ws-stabs{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;padding:0 20px;flex-shrink:0}
+.ws-stab{padding:10px 14px;font-size:12px;color:var(--color-text-secondary);border-bottom:2px solid transparent;cursor:pointer;border-top:none;border-left:none;border-right:none;background:none;white-space:nowrap}
+.ws-stab.active{color:#c96a45;border-bottom-color:#c96a45;font-weight:500}
+.ws-body{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--color-text-secondary)}
+.field input,.field select{font-size:12px;padding:6px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);outline:none}
+.field.full{grid-column:1/-1}
+.avatar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.avatar-big{width:52px;height:52px;border-radius:50%;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;color:var(--color-text-info);flex-shrink:0}
+.avatar-actions{display:flex;flex-direction:column;gap:4px}
+.avatar-actions span{font-size:12px;color:var(--color-text-secondary)}
+.btn-sm{font-size:11px;padding:5px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-sm i{font-size:13px}
+.btn-primary{background:#c96a45;color:white;border-color:#c96a45;font-size:11px;padding:6px 14px;border-radius:var(--border-radius-md);cursor:pointer;border:none}
+.btn-danger{background:var(--color-background-danger);color:var(--color-text-danger);border:0.5px solid var(--color-border-danger);font-size:11px;padding:5px 10px;border-radius:var(--border-radius-md);cursor:pointer}
+.section-divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:12px 0}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info i{font-size:15px;color:var(--color-text-secondary);margin-right:6px;vertical-align:-2px}
+.toggle-label{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.toggle-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:1px}
+.toggle{width:32px;height:18px;border-radius:9px;background:var(--color-background-tertiary);border:0.5px solid var(--color-border-secondary);position:relative;cursor:pointer;flex-shrink:0}
+.toggle.on{background:#5f7e5f;border-color:#5f7e5f}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:white;transition:transform .15s}
+.toggle.on::after{transform:translateX(14px)}
+.select-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.select-row:last-child{border-bottom:none}
+.integ-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.integ-icon{width:36px;height:36px;border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.integ-name{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.integ-status{font-size:11px;margin-top:2px}
+.status-conn{color:#5f7e5f}.status-disc{color:var(--color-text-tertiary)}.status-err{color:var(--color-text-danger)}
+.integ-actions{margin-left:auto;display:flex;gap:6px;align-items:center}
+.badge{font-size:10px;padding:2px 7px;border-radius:100px;font-weight:500}
+.badge-conn{background:#5f7e5f18;color:#5f7e5f}
+.badge-disc{background:var(--color-background-secondary);color:var(--color-text-tertiary);border:0.5px solid var(--color-border-tertiary)}
+.input-copy{display:flex;gap:6px;align-items:center}
+.input-copy input{flex:1;font-size:11px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-tertiary);font-family:var(--font-mono)}
+.danger-zone{border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);padding:12px;background:var(--color-background-danger)}
+.danger-title{font-size:12px;font-weight:500;color:var(--color-text-danger);margin-bottom:4px}
+.danger-desc{font-size:11px;color:var(--color-text-danger);opacity:.8;margin-bottom:10px;line-height:1.5}
+.privacy-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.priv-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.priv-label{font-size:12px;color:var(--color-text-primary)}
+.priv-sub{font-size:10px;color:var(--color-text-tertiary);margin-top:1px}
+.pref-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.pref-item{display:flex;flex-direction:column;gap:4px}
+.pref-item label{font-size:11px;color:var(--color-text-secondary)}
+.notif-group{margin-bottom:12px}
+.notif-group-title{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+</style>
+
+<div class="ws-wrap">
+  <aside class="ws-sidebar">
+    <div class="ws-logo">
+      <div class="ws-logo-icon"><i class="ti ti-layers-intersect" aria-hidden="true"></i></div>
+      <span class="ws-logo-name">WealthSphere</span>
+    </div>
+    <nav class="ws-nav">
+      <div class="ws-ns">Principal</div>
+      <button class="ws-ni"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</button>
+      <button class="ws-ni"><i class="ti ti-currency-euro" aria-hidden="true"></i>Income</button>
+      <button class="ws-ni"><i class="ti ti-chart-line" aria-hidden="true"></i>Simulador</button>
+      <div class="ws-ns">Patrimônio</div>
+      <button class="ws-ni"><i class="ti ti-home" aria-hidden="true"></i>Rendas</button>
+      <button class="ws-ni"><i class="ti ti-world" aria-hidden="true"></i>Taxas</button>
+      <button class="ws-ni"><i class="ti ti-device-gamepad-2" aria-hidden="true"></i>CS2 & Steam</button>
+      <div class="ws-ns">Conta</div>
+      <button class="ws-ni"><i class="ti ti-message-2" aria-hidden="true"></i>Fórum</button>
+      <button class="ws-ni"><i class="ti ti-user" aria-hidden="true"></i>Perfil</button>
+      <button class="ws-ni active"><i class="ti ti-settings" aria-hidden="true"></i>Definições</button>
+    </nav>
+    <div class="ws-user">
+      <div class="ws-av">D</div>
+      <div><div class="ws-un">Diogo</div><div class="ws-ur">Lisboa</div></div>
+    </div>
+  </aside>
+
+  <main class="ws-main">
+    <div class="ws-topbar">
+      <div>
+        <div class="ws-topbar-title">Definições</div>
+        <div class="ws-topbar-sub">Gerir conta, integrações e preferências</div>
+      </div>
+      <button class="btn-primary">Guardar alterações</button>
+    </div>
+
+    <div class="ws-stabs">
+      <button class="ws-stab active">Conta & Perfil</button>
+      <button class="ws-stab">Integrações</button>
+      <button class="ws-stab">Notificações</button>
+      <button class="ws-stab">Preferências</button>
+      <button class="ws-stab">Privacidade</button>
+    </div>
+
+    <div class="ws-body">
+
+      <!-- Perfil -->
+      <div class="card">
+        <div class="card-title">Perfil público</div>
+        <div class="avatar-row">
+          <div class="avatar-big">D</div>
+          <div class="avatar-actions">
+            <span>Foto de perfil</span>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <button class="btn-sm"><i class="ti ti-upload" aria-hidden="true"></i>Carregar</button>
+              <button class="btn-sm"><i class="ti ti-trash" aria-hidden="true"></i>Remover</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Nome completo</label><input value="Diogo Duarte"></div>
+          <div class="field"><label>Username</label><input value="diogoduarte2000"></div>
+          <div class="field full"><label>Bio</label><input value="Desenvolvedor frontend · Investidor · Lisboa"></div>
+          <div class="field"><label>Localização</label><input value="Lisboa, Portugal"></div>
+          <div class="field"><label>Website</label><input value="github.com/diogoduarte2000"></div>
+        </div>
+      </div>
+
+      <!-- Conta -->
+      <div class="card">
+        <div class="card-title">Conta & segurança</div>
+        <div class="field-row">
+          <div class="field"><label>Email</label><input value="diogo@email.com" type="email"></div>
+          <div class="field"><label>Password</label><input value="••••••••••" type="password"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn-sm"><i class="ti ti-mail" aria-hidden="true"></i>Verificar email</button>
+          <button class="btn-sm"><i class="ti ti-lock" aria-hidden="true"></i>Alterar password</button>
+          <button class="btn-sm"><i class="ti ti-shield-check" aria-hidden="true"></i>Ativar 2FA</button>
+        </div>
+        <hr class="section-divider">
+        <div class="danger-zone">
+          <div class="danger-title"><i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Zona de perigo</div>
+          <div class="danger-desc">Eliminar a conta é irreversível. Todos os dados, portfólios, rendas e histórico serão apagados permanentemente.</div>
+          <button class="btn-danger"><i class="ti ti-trash" aria-hidden="true" style="font-size:12px;vertical-align:-2px;margin-right:4px"></i>Eliminar conta</button>
+        </div>
+      </div>
+
+      <!-- Integrações (collapsed preview) -->
+      <div class="card">
+        <div class="card-title">Integrações <span style="font-size:11px;font-weight:400;color:var(--color-text-tertiary)">ver aba Integrações para detalhes</span></div>
+        <div class="integ-card">
+          <div class="integ-icon" style="background:#1b283818">🎮</div>
+          <div><div class="integ-name">Steam</div><div class="integ-status status-conn"><i class="ti ti-circle-check" style="font-size:11px;vertical-align:-1px" aria-hidden="true"></i> Conectado · joao_pt · sync há 3min</div></div>
+          <div class="integ-actions"><span class="badge badge-conn">Ativo</span><button class="btn-sm"><i class="ti ti-refresh" aria-hidden="true"></i>Sync</button></div>
+        </div>
+        <div class="integ-card">
+          <div class="integ-icon" style="background:#00a65118">📈</div>
+          <div>
+            <div class="integ-name">Trading 212</div>
+            <div class="integ-status status-conn"><i class="ti ti-circle-check" style="font-size:11px;vertical-align:-1px" aria-hidden="true"></i> API key ativa</div>
+            <div class="input-copy" style="margin-top:5px"><input value="T212_••••••••••••••••" readonly><button class="btn-sm" style="padding:4px 7px"><i class="ti ti-copy" aria-hidden="true"></i></button></div>
+          </div>
+          <div class="integ-actions"><span class="badge badge-conn">Ativo</span></div>
+        </div>
+        <div class="integ-card">
+          <div class="integ-icon" style="background:#6c3fc518">💜</div>
+          <div><div class="integ-name">Trade Republic</div><div class="integ-status status-disc"><i class="ti ti-circle-x" style="font-size:11px;vertical-align:-1px" aria-hidden="true"></i> Não conectado · importar via CSV/PDF</div></div>
+          <div class="integ-actions"><span class="badge badge-disc">Inativo</span><button class="btn-sm"><i class="ti ti-upload" aria-hidden="true"></i>Importar</button></div>
+        </div>
+      </div>
+
+      <!-- Notificações preview -->
+      <div class="card">
+        <div class="card-title">Notificações</div>
+        <div class="notif-group">
+          <div class="notif-group-title">Mercados & Taxas</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-chart-line" aria-hidden="true"></i><span class="toggle-label">Alerta Euribor</span><div class="toggle-sub">Notificar quando Euribor 6M atingir 2.50%</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><select style="font-size:11px;padding:3px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary)"><option>≤ 2.50%</option><option>≤ 2.25%</option><option>≥ 3.00%</option></select><div class="toggle on"></div></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-bell" aria-hidden="true"></i><span class="toggle-label">Alertas de ações/ETFs</span><div class="toggle-sub">Quando atingir preço target definido</div></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-device-gamepad-2" aria-hidden="true"></i><span class="toggle-label">Alertas de skins CS2</span><div class="toggle-sub">Quando skin da watchlist atingir target</div></div>
+            <div class="toggle on"></div>
+          </div>
+        </div>
+        <div class="notif-group">
+          <div class="notif-group-title">Rendas & Pagamentos</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-home" aria-hidden="true"></i><span class="toggle-label">Renda em atraso</span><div class="toggle-sub">Alertar se renda não paga após N dias</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><select style="font-size:11px;padding:3px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary)"><option>3 dias</option><option>5 dias</option><option>7 dias</option></select><div class="toggle on"></div></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-calendar" aria-hidden="true"></i><span class="toggle-label">Lembrete de pagamento</span><div class="toggle-sub">Antes de pagamentos programados</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><select style="font-size:11px;padding:3px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary)"><option>3 dias</option><option>5 dias</option></select><div class="toggle on"></div></div>
+          </div>
+        </div>
+        <div class="notif-group">
+          <div class="notif-group-title">Comunidade & Email</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-message-2" aria-hidden="true"></i><span class="toggle-label">Respostas no fórum</span></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-at" aria-hidden="true"></i><span class="toggle-label">Menções</span></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><i class="ti ti-mail" aria-hidden="true"></i><span class="toggle-label">Resumo semanal por email</span><div class="toggle-sub">Toda segunda-feira com rendas e alertas</div></div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferências -->
+      <div class="card">
+        <div class="card-title">Preferências</div>
+        <div class="pref-grid">
+          <div class="pref-item"><label>Moeda</label><select><option>EUR €</option><option>USD $</option><option>GBP £</option></select></div>
+          <div class="pref-item"><label>Língua</label><select><option>Português (PT)</option><option>English</option></select></div>
+          <div class="pref-item"><label>Tema</label><select><option>Sistema</option><option>Claro</option><option>Escuro</option></select></div>
+          <div class="pref-item"><label>Formato de data</label><select><option>DD/MM/AAAA</option><option>MM/DD/AAAA</option></select></div>
+          <div class="pref-item"><label>Números</label><select><option>1.000,00 (PT)</option><option>1,000.00 (EN)</option></select></div>
+          <div class="pref-item"><label>Fuso horário</label><select><option>Europe/Lisbon</option><option>UTC</option></select></div>
+        </div>
+      </div>
+
+      <!-- Privacidade -->
+      <div class="card">
+        <div class="card-title">Privacidade & RGPD</div>
+        <div class="privacy-grid" style="margin-bottom:12px">
+          <div class="priv-item"><div><div class="priv-label">Portfólio público</div><div class="priv-sub">Visível no perfil</div></div><div class="toggle"></div></div>
+          <div class="priv-item"><div><div class="priv-label">Net worth visível</div><div class="priv-sub">Mostrar no perfil</div></div><div class="toggle"></div></div>
+          <div class="priv-item"><div><div class="priv-label">Leaderboards</div><div class="priv-sub">Aparecer em rankings</div></div><div class="toggle on"></div></div>
+          <div class="priv-item"><div><div class="priv-label">Histórico público</div><div class="priv-sub">Posts e comentários</div></div><div class="toggle on"></div></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm"><i class="ti ti-download" aria-hidden="true"></i>Exportar dados (RGPD)</button>
+          <button class="btn-sm"><i class="ti ti-file" aria-hidden="true"></i>Exportar CSV</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

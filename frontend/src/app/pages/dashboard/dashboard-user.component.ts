@@ -604,11 +604,6 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
            rentTotal;
   }
 
-  get totalRents() {
-    let rentTotal = 0;
-    this.realEstate.forEach(r => rentTotal += (r.rentAmount || 0));
-    return rentTotal;
-  }
 
   get totalETF() {
     const t212 = this.t212Portfolio && this.t212Portfolio.total ? this.t212Portfolio.total : 0;

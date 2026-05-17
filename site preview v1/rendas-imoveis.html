@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthSphere — Rendas & Imóveis</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sand:#f0ebe0;--sand2:#e6dfd1;--sand3:#d4cab8;--sand4:#c8bfb0;
+  --terra:#c96a45;--terra2:#b85c38;--terra-l:#e07a52;--terra-dim:rgba(201,106,69,0.10);
+  --sage:#5f7e5f;--sage-l:#7a9e7a;--sage-dim:rgba(95,126,95,0.10);
+  --lilac:#8b80c8;--lilac-dim:rgba(139,128,200,0.12);
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);
+  --red:#c94545;--red-dim:rgba(201,69,69,0.10);
+  --ink:#1e1812;--ink2:#2e2418;--brown:#5a4a3a;--muted:#8a7a6a;
+  --white:#faf9f6;--border:rgba(90,74,58,0.12);
+  --shadow:0 2px 12px rgba(42,32,24,0.07);--shadow-lg:0 12px 40px rgba(42,32,24,0.12);
+  --sidebar:240px;--topbar:56px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{height:var(--topbar);background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;z-index:50}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo-icon{width:30px;height:30px;background:var(--terra);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px}
+.logo-text{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--ink)}
+.topbar-center{display:flex;flex-direction:column}
+.topbar-title{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--ink)}
+.topbar-sub{font-size:11px;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s;text-decoration:none}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+.btn-primary{background:var(--terra);color:#fff}.btn-primary:hover{background:var(--terra2)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--brown)}.btn-ghost:hover{background:var(--sand2);color:var(--ink)}
+.btn-sage{background:var(--sage);color:#fff}.btn-sage:hover{background:#4e6a4e}
+.notif{width:34px;height:34px;border-radius:50%;background:var(--sand);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.notif svg{width:15px;height:15px;color:var(--brown)}
+.notif-pip{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--terra);border:1.5px solid var(--white)}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex:1;min-height:0}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.nav-sec{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);padding:10px 10px 4px;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--brown);border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s}
+.nav-item:hover{background:var(--sand);color:var(--ink)}
+.nav-item.active{background:var(--terra-dim);color:var(--terra);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.65}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--terra);color:#fff;font-size:9px;padding:2px 6px;border-radius:20px;font-weight:600}
+.sidebar-user{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* ── PAGE TABS ── */
+.page-tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;flex-shrink:0}
+.tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap;font-family:inherit}
+.tab.active{color:var(--terra);border-bottom-color:var(--terra)}
+.tab:hover:not(.active){color:var(--ink)}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+.section{display:none}.section.active{display:block}
+
+/* ── GRID ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--ink)}
+.card-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.card-action{font-size:11px;color:var(--terra);cursor:pointer;font-weight:500;border:none;background:none;font-family:inherit;transition:color .15s}
+.card-action:hover{color:var(--terra2)}
+
+/* ── STAT CARDS ── */
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.sc-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-icon svg{width:17px;height:17px}
+.i-terra{background:var(--terra-dim)}.i-terra svg{color:var(--terra)}
+.i-sage{background:var(--sage-dim)}.i-sage svg{color:var(--sage)}
+.i-lilac{background:var(--lilac-dim)}.i-lilac svg{color:var(--lilac)}
+.i-gold{background:var(--gold-dim)}.i-gold svg{color:var(--gold)}
+.i-red{background:var(--red-dim)}.i-red svg{color:var(--red)}
+.sc-chg{font-size:10px;font-weight:500;padding:2px 7px;border-radius:100px}
+.sc-up{background:var(--sage-dim);color:var(--sage)}
+.sc-dn{background:var(--red-dim);color:var(--red)}
+.sc-neu{background:var(--sand2);color:var(--muted)}
+.sc-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.sc-val{font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1}
+.sc-foot{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── IMOVEL CARDS ── */
+.imovel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.imovel-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;cursor:pointer}
+.imovel-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.imovel-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.imovel-emoji{font-size:28px;line-height:1;flex-shrink:0}
+.imovel-name{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--ink);line-height:1.25}
+.imovel-addr{font-size:11px;color:var(--muted);margin-top:3px}
+.imovel-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:100px;margin-top:5px}
+.ib-arrendado{background:var(--sage-dim);color:var(--sage)}
+.ib-vazio{background:var(--terra-dim);color:var(--terra)}
+.ib-proprio{background:var(--lilac-dim);color:var(--lilac)}
+.imovel-body{padding:14px 16px}
+.imovel-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.im-item{background:var(--sand);border-radius:8px;padding:8px 10px}
+.im-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.im-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink)}
+.im-val.pos{color:var(--sage)}.im-val.neg{color:var(--red)}
+.imovel-bar-wrap{margin-top:6px}
+.imovel-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+.imovel-bar{height:5px;background:var(--sand2);border-radius:3px;overflow:hidden}
+.imovel-fill{height:100%;border-radius:3px}
+.imovel-footer{padding:10px 16px;background:var(--sand);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.imovel-tenant{font-size:11px;color:var(--brown);display:flex;align-items:center;gap:5px}
+.imovel-next{font-size:11px;color:var(--muted)}
+.add-imovel-card{background:var(--sand);border:1.5px dashed var(--sand3);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px;cursor:pointer;transition:all .15s;min-height:240px}
+.add-imovel-card:hover{border-color:var(--terra);background:var(--terra-dim)}
+.add-imovel-card:hover .add-icon{background:var(--terra);color:#fff}
+.add-icon{width:40px;height:40px;border-radius:50%;background:var(--sand2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.add-icon svg{width:20px;height:20px;color:var(--muted)}
+.add-label{font-size:13px;font-weight:500;color:var(--muted)}
+.add-sub{font-size:11px;color:var(--sand3)}
+
+/* ── RENDA LIST ── */
+.renda-list{display:flex;flex-direction:column;gap:8px}
+.renda-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--sand);border-radius:11px;border-left:3px solid transparent;transition:background .15s;cursor:default}
+.renda-item:hover{background:var(--sand2)}
+.ri-pago{border-left-color:var(--sage)}
+.ri-pendente{border-left-color:var(--gold)}
+.ri-atrasado{border-left-color:var(--red)}
+.ri-agendado{border-left-color:var(--lilac)}
+.ri-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ri-imovel{font-size:12px;font-weight:500;color:var(--ink)}
+.ri-info{font-size:10px;color:var(--muted);margin-top:1px}
+.ri-amount{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;margin-left:auto;text-align:right}
+.ri-amount.pos{color:var(--sage)}.ri-amount.neg{color:var(--red)}
+.ri-date{font-size:10px;color:var(--muted);text-align:right;margin-top:2px}
+.status-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;margin-left:10px;flex-shrink:0}
+.sc-pago{background:var(--sage-dim);color:var(--sage)}
+.sc-pendente{background:var(--gold-dim);color:var(--gold)}
+.sc-atrasado{background:var(--red-dim);color:var(--red)}
+.sc-agendado{background:var(--lilac-dim);color:var(--lilac)}
+.ri-actions{display:flex;gap:5px;margin-left:6px}
+.ri-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ri-btn svg{width:12px;height:12px;color:var(--muted)}
+.ri-btn:hover{background:var(--sage);border-color:var(--sage)}.ri-btn:hover svg{color:#fff}
+.ri-btn.del:hover{background:var(--red);border-color:var(--red)}.ri-btn.del:hover svg{color:#fff}
+
+/* ── ANALYTICS ── */
+canvas{display:block;width:100%!important}
+.chart-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.litem{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ptabs{display:flex;gap:2px;background:var(--sand);border-radius:7px;padding:2px}
+.ptab{padding:4px 9px;border-radius:5px;font-size:10px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit}
+.ptab.active{background:#fff;color:var(--terra);box-shadow:0 1px 4px rgba(42,32,24,.09)}
+
+/* ── METRICS TABLE ── */
+.mtable{width:100%;border-collapse:collapse;font-size:12px}
+.mtable th{font-size:9px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;text-align:left}
+.mtable td{padding:10px 10px;border-bottom:1px solid rgba(90,74,58,.06);vertical-align:middle}
+.mtable tr:last-child td{border-bottom:none}
+.mtable tr:hover td{background:var(--sand)}
+.mticker{font-family:'DM Mono',monospace;font-size:11px;background:var(--sand);color:var(--brown);padding:2px 7px;border-radius:5px;font-weight:500}
+.mpos{color:var(--sage);font-weight:500;font-size:12px}
+.mneg{color:var(--red);font-weight:500;font-size:12px}
+.rating-bar{display:flex;align-items:center;gap:6px}
+.rbar{height:5px;background:var(--sand2);border-radius:3px;width:60px;overflow:hidden}
+.rfill{height:100%;border-radius:3px}
+
+/* ── CREDITO ── */
+.credito-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--sand);border-radius:10px;margin-bottom:7px;transition:background .15s}
+.credito-row:hover{background:var(--sand2)}
+.cr-bank{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.cr-imovel{font-size:13px;font-weight:500;color:var(--ink)}
+.cr-detail{font-size:10px;color:var(--muted);margin-top:1px}
+.cr-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--ink);text-align:right}
+.cr-chg{font-size:10px;text-align:right;margin-top:2px}
+.progress-wrap{margin-top:8px}
+.progress-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px}
+.progress-bar{height:5px;background:var(--sand2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--terra)}
+
+/* ── INE CALC ── */
+.ine-result{background:var(--sage-dim);border:1px solid rgba(95,126,95,.2);border-radius:10px;padding:14px;text-align:center;margin-top:14px}
+.ine-val{font-family:'Lora',serif;font-size:28px;font-weight:700;color:var(--sage);letter-spacing:-.02em}
+.ine-label{font-size:11px;color:var(--sage);margin-top:4px}
+.coef-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}
+.coef-table th{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:4px 8px;border-bottom:1px solid var(--border);font-weight:500;text-align:left}
+.coef-table td{padding:6px 8px;border-bottom:1px solid rgba(90,74,58,.06);font-family:'DM Mono',monospace;font-size:11px}
+.coef-table tr:last-child td{border-bottom:none}
+
+/* ── FORMS ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.form-input,.form-select{background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--ink);outline:none;width:100%;transition:border-color .15s}
+.form-input:focus,.form-select:focus{border-color:var(--terra);background:#fff}
+.form-section{font-size:11px;font-weight:600;color:var(--brown);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(30,24,18,.48);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:20px;padding:26px;width:520px;max-width:94vw;box-shadow:var(--shadow-lg);animation:modalIn .2s ease;max-height:90vh;overflow-y:auto}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--sand2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.modal-close:hover{background:var(--sand3)}
+.modal-close svg{width:14px;height:14px;color:var(--brown)}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.recur-opts{display:flex;gap:6px;flex-wrap:wrap}
+.recur-opt{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:none;color:var(--brown);transition:all .15s;font-family:inherit}
+.recur-opt.active,.recur-opt:hover{background:var(--terra);color:#fff;border-color:var(--terra)}
+
+/* ── ALERT STRIP ── */
+.alert-strip{background:var(--red-dim);border:1px solid rgba(201,69,69,.2);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.alert-strip svg{width:18px;height:18px;color:var(--red);flex-shrink:0}
+.as-text{font-size:12px;color:var(--red);font-weight:500}
+.as-sub{font-size:11px;color:var(--red);opacity:.75;margin-top:1px}
+
+/* ── VACANCY ── */
+.vacancy-months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:10px}
+.vm{height:24px;border-radius:4px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#fff}
+.vm:hover{opacity:.8}
+.vm.ocupado{background:var(--sage)}
+.vm.vazio{background:var(--sand3)}
+.vm.alerta{background:var(--terra)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--sand3);border-radius:2px}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease both}
+.fd1{animation-delay:.04s}.fd2{animation-delay:.08s}.fd3{animation-delay:.12s}.fd4{animation-delay:.16s}.fd5{animation-delay:.20s}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="#" class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <span class="logo-text">WealthSphere</span>
+  </a>
+  <div class="topbar-center">
+    <div class="topbar-title">Rendas & Imóveis</div>
+    <div class="topbar-sub">3 imóveis · €1.900/mês · Rentabilidade média 5.8%</div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" onclick="openModal('addRenda')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Registar Renda
+    </button>
+    <button class="btn btn-primary" onclick="openModal('addImovel')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Novo Imóvel
+    </button>
+    <div class="notif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <div class="notif-pip"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <nav class="nav">
+      <div class="nav-sec">Principal</div>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Income Tracker
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Simulador<span class="nav-badge">Pro</span>
+      </button>
+      <div class="nav-sec">Patrimônio</div>
+      <button class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Rendas & Imóveis
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Taxas & Mercados
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 2l-4 5-4-5"/></svg>CS2 & Steam
+      </button>
+      <div class="nav-sec">Comunidade</div>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Fórum<span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil
+      </button>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-av">D</div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--ink)">Diogo Duarte</div>
+        <div style="font-size:10px;color:var(--muted)">Lisboa 🇵🇹</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TABS -->
+    <div class="page-tabs">
+      <button class="tab active" onclick="showTab('imoveis',this)">🏠 Os meus Imóveis</button>
+      <button class="tab" onclick="showTab('rendas',this)">💰 Rendas</button>
+      <button class="tab" onclick="showTab('credito',this)">🏦 Crédito Habitação</button>
+      <button class="tab" onclick="showTab('analytics',this)">📊 Analytics</button>
+      <button class="tab" onclick="showTab('ine',this)">📋 Atualização INE</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ════════ TAB IMÓVEIS ════════ -->
+      <div class="section active" id="tab-imoveis">
+
+        <!-- ALERTA -->
+        <div class="alert-strip fu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <div class="as-text">1 renda em atraso — T0 Porto · Carlos M. · 4 dias de atraso</div>
+            <div class="as-sub">Renda de €350 deveria ter sido paga a 28 Mai. Considera contactar o inquilino.</div>
+          </div>
+          <button class="btn btn-ghost" style="margin-left:auto;font-size:11px;flex-shrink:0">Contactar</button>
+        </div>
+
+        <!-- STAT STRIP -->
+        <div class="grid-4 fu fd1">
+          <div class="stat-card">
+            <div class="sc-top"><div class="sc-icon i-terra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div><span class="sc-chg sc-up">3 imóveis</span></div>
+            <div class="sc-label">Valor portfólio</div>
+            <div class="sc-val">€342k</div>
+            <div class="sc-foot">↑ +€12k valorização anual</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-top"><div class="sc-icon i-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><span class="sc-chg sc-up">↑ Junho</span></div>
+            <div class="sc-label">Rendas / mês</div>
+            <div class="sc-val">€1.900</div>
+            <div class="sc-foot">€22.800 anuais brutos</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-top"><div class="sc-icon i-lilac"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="sc-chg sc-up">Líquida</span></div>
+            <div class="sc-label">Rentabilidade média</div>
+            <div class="sc-val">5.8%</div>
+            <div class="sc-foot">Após IRS, IMI e condomínio</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-top"><div class="sc-icon i-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="sc-chg sc-dn">Total mensal</span></div>
+            <div class="sc-label">Prestações crédito</div>
+            <div class="sc-val">€942</div>
+            <div class="sc-foot">Cashflow líquido: +€958/mês</div>
+          </div>
+        </div>
+
+        <!-- IMOVEL CARDS -->
+        <div class="imovel-grid fu fd2">
+
+          <!-- T2 Setúbal -->
+          <div class="imovel-card" onclick="openModal('imovelDetail')">
+            <div class="imovel-header">
+              <div class="imovel-emoji">🏠</div>
+              <div>
+                <div class="imovel-name">T2 — Setúbal</div>
+                <div class="imovel-addr">Rua das Flores 12, 2900-001</div>
+                <span class="imovel-badge ib-arrendado">● Arrendado</span>
+              </div>
+            </div>
+            <div class="imovel-body">
+              <div class="imovel-metrics">
+                <div class="im-item"><div class="im-label">Renda</div><div class="im-val pos">€700/mês</div></div>
+                <div class="im-item"><div class="im-label">Rent. líquida</div><div class="im-val pos">5.2%</div></div>
+                <div class="im-item"><div class="im-label">Valor atual</div><div class="im-val">€162k</div></div>
+                <div class="im-item"><div class="im-label">Prestação</div><div class="im-val neg">-€485/mês</div></div>
+              </div>
+              <div class="imovel-bar-wrap">
+                <div class="imovel-bar-label"><span>Capital pago</span><span>€38.4k / €162k</span></div>
+                <div class="imovel-bar"><div class="imovel-fill" style="width:24%;background:var(--terra)"></div></div>
+              </div>
+            </div>
+            <div class="imovel-footer">
+              <div class="imovel-tenant">👤 João Santos</div>
+              <div class="imovel-next">Próx. renda: 1 Jun</div>
+            </div>
+          </div>
+
+          <!-- T1 Lisboa -->
+          <div class="imovel-card" onclick="openModal('imovelDetail')">
+            <div class="imovel-header">
+              <div class="imovel-emoji">🏢</div>
+              <div>
+                <div class="imovel-name">T1 — Lisboa</div>
+                <div class="imovel-addr">Av. Liberdade 80, 1250-096</div>
+                <span class="imovel-badge ib-arrendado">● Arrendado</span>
+              </div>
+            </div>
+            <div class="imovel-body">
+              <div class="imovel-metrics">
+                <div class="im-item"><div class="im-label">Renda</div><div class="im-val pos">€1.200/mês</div></div>
+                <div class="im-item"><div class="im-label">Rent. líquida</div><div class="im-val pos">7.1%</div></div>
+                <div class="im-item"><div class="im-label">Valor atual</div><div class="im-val">€148k</div></div>
+                <div class="im-item"><div class="im-label">Prestação</div><div class="im-val neg">-€457/mês</div></div>
+              </div>
+              <div class="imovel-bar-wrap">
+                <div class="imovel-bar-label"><span>Capital pago</span><span>€52.1k / €148k</span></div>
+                <div class="imovel-bar"><div class="imovel-fill" style="width:35%;background:var(--sage)"></div></div>
+              </div>
+            </div>
+            <div class="imovel-footer">
+              <div class="imovel-tenant">👤 Maria Ferreira</div>
+              <div class="imovel-next">Próx. renda: 5 Jun</div>
+            </div>
+          </div>
+
+          <!-- T0 Porto ATRASADO -->
+          <div class="imovel-card" onclick="openModal('imovelDetail')" style="border-color:rgba(201,69,69,.3)">
+            <div class="imovel-header" style="background:var(--red-dim)">
+              <div class="imovel-emoji">🏗️</div>
+              <div>
+                <div class="imovel-name">T0 — Porto</div>
+                <div class="imovel-addr">Rua de Santa Catarina 201</div>
+                <span class="imovel-badge" style="background:var(--red-dim);color:var(--red)">⚠ Renda atrasada</span>
+              </div>
+            </div>
+            <div class="imovel-body">
+              <div class="imovel-metrics">
+                <div class="im-item"><div class="im-label">Renda</div><div class="im-val" style="color:var(--red)">€350 (atraso)</div></div>
+                <div class="im-item"><div class="im-label">Rent. líquida</div><div class="im-val pos">4.8%</div></div>
+                <div class="im-item"><div class="im-label">Valor atual</div><div class="im-val">€32k</div></div>
+                <div class="im-item"><div class="im-label">Sem crédito</div><div class="im-val" style="color:var(--muted)">—</div></div>
+              </div>
+              <div class="imovel-bar-wrap">
+                <div class="imovel-bar-label"><span>Proprietário livre</span><span>100% capital próprio</span></div>
+                <div class="imovel-bar"><div class="imovel-fill" style="width:100%;background:var(--lilac)"></div></div>
+              </div>
+            </div>
+            <div class="imovel-footer">
+              <div class="imovel-tenant" style="color:var(--red)">⚠ Carlos M. · 4d atraso</div>
+              <div class="imovel-next">Era: 28 Mai</div>
+            </div>
+          </div>
+
+          <!-- ADD -->
+          <div class="add-imovel-card" onclick="openModal('addImovel')">
+            <div class="add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <div class="add-label">Adicionar imóvel</div>
+            <div class="add-sub">Regista imóvel, renda e crédito</div>
+          </div>
+
+        </div>
+
+        <!-- OCUPACAO 12 MESES -->
+        <div class="card fu fd3">
+          <div class="card-hdr">
+            <div><div class="card-title">Taxa de Ocupação — 2025</div><div class="card-sub">Verde = ocupado · Cinza = vazio · Laranja = em negociação</div></div>
+            <span style="font-size:12px;font-weight:500;color:var(--sage)">91.7% ocupação média</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--brown);margin-bottom:6px">T2 Setúbal</div>
+              <div class="vacancy-months">
+                <div class="vm ocupado">J</div><div class="vm ocupado">F</div><div class="vm ocupado">M</div>
+                <div class="vm ocupado">A</div><div class="vm ocupado">M</div><div class="vm ocupado">J</div>
+                <div class="vm vazio">J</div><div class="vm vazio">A</div><div class="vm ocupado">S</div>
+                <div class="vm ocupado">O</div><div class="vm ocupado">N</div><div class="vm ocupado">D</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--brown);margin-bottom:6px">T1 Lisboa</div>
+              <div class="vacancy-months">
+                <div class="vm ocupado">J</div><div class="vm ocupado">F</div><div class="vm ocupado">M</div>
+                <div class="vm ocupado">A</div><div class="vm ocupado">M</div><div class="vm ocupado">J</div>
+                <div class="vm ocupado">J</div><div class="vm ocupado">A</div><div class="vm ocupado">S</div>
+                <div class="vm ocupado">O</div><div class="vm ocupado">N</div><div class="vm ocupado">D</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--brown);margin-bottom:6px">T0 Porto</div>
+              <div class="vacancy-months">
+                <div class="vm vazio">J</div><div class="vm alerta">F</div><div class="vm ocupado">M</div>
+                <div class="vm ocupado">A</div><div class="vm ocupado">M</div><div class="vm ocupado">J</div>
+                <div class="vm ocupado">J</div><div class="vm ocupado">A</div><div class="vm ocupado">S</div>
+                <div class="vm ocupado">O</div><div class="vm ocupado">N</div><div class="vm ocupado">D</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════ TAB RENDAS ════════ -->
+      <div class="section" id="tab-rendas">
+
+        <div class="grid-4 fu">
+          <div class="stat-card fd1"><div class="sc-top"><div class="sc-icon i-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg></div><span class="sc-chg sc-up">Junho</span></div><div class="sc-label">Recebido</div><div class="sc-val">€1.200</div><div class="sc-foot">T1 Lisboa pago</div></div>
+          <div class="stat-card fd2"><div class="sc-top"><div class="sc-icon i-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><span class="sc-chg sc-neu">Pendente</span></div><div class="sc-label">A receber</div><div class="sc-val">€700</div><div class="sc-foot">T2 Setúbal · 1 Jun</div></div>
+          <div class="stat-card fd3"><div class="sc-top"><div class="sc-icon i-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="sc-chg sc-dn">4 dias</span></div><div class="sc-label">Em atraso</div><div class="sc-val">€350</div><div class="sc-foot">T0 Porto · Carlos M.</div></div>
+          <div class="stat-card fd4"><div class="sc-top"><div class="sc-icon i-terra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><span class="sc-chg sc-up">+22.8k</span></div><div class="sc-label">Total 2025</div><div class="sc-val">€9.500</div><div class="sc-foot">Jan–Mai acumulado</div></div>
+        </div>
+
+        <div class="grid-2-1 fu fd2">
+          <div class="card">
+            <div class="card-hdr">
+              <div><div class="card-title">Histórico de Rendas</div><div class="card-sub">Todos os imóveis · 2025</div></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select class="form-select" style="font-size:11px;padding:5px 8px;width:auto">
+                  <option>Todos os imóveis</option>
+                  <option>T2 Setúbal</option>
+                  <option>T1 Lisboa</option>
+                  <option>T0 Porto</option>
+                </select>
+                <button class="btn btn-ghost" style="font-size:11px">Exportar CSV</button>
+              </div>
+            </div>
+            <div class="renda-list">
+
+              <div class="renda-item ri-atrasado">
+                <div class="ri-icon" style="background:var(--red-dim)">⚠️</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T0 Porto</div>
+                  <div class="ri-info">Carlos M. · Mensal · Era 28 Mai 2025</div>
+                </div>
+                <div class="ri-amount neg">€350</div>
+                <span class="status-chip sc-atrasado">⚠ Atrasado</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Marcar pago"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
+                  <button class="ri-btn" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ri-btn del" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                </div>
+              </div>
+
+              <div class="renda-item ri-pendente">
+                <div class="ri-icon" style="background:var(--gold-dim)">🏠</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T2 Setúbal</div>
+                  <div class="ri-info">João Santos · Mensal · 1 Jun 2025</div>
+                </div>
+                <div class="ri-amount pos">+€700</div>
+                <span class="status-chip sc-pendente">⏳ Pendente</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Marcar pago"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
+                  <button class="ri-btn" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                </div>
+              </div>
+
+              <div class="renda-item ri-pago">
+                <div class="ri-icon" style="background:var(--sage-dim)">🏢</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T1 Lisboa</div>
+                  <div class="ri-info">Maria Ferreira · Mensal · Pago 5 Mai 2025</div>
+                </div>
+                <div class="ri-amount pos">+€1.200</div>
+                <span class="status-chip sc-pago">✓ Pago</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Ver recibo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>
+                  <button class="ri-btn del" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                </div>
+              </div>
+
+              <div class="renda-item ri-pago">
+                <div class="ri-icon" style="background:var(--sage-dim)">🏠</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T2 Setúbal</div>
+                  <div class="ri-info">João Santos · Mensal · Pago 1 Mai 2025</div>
+                </div>
+                <div class="ri-amount pos">+€700</div>
+                <span class="status-chip sc-pago">✓ Pago</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Ver recibo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>
+                </div>
+              </div>
+
+              <div class="renda-item ri-pago">
+                <div class="ri-icon" style="background:var(--sage-dim)">🏗️</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T0 Porto</div>
+                  <div class="ri-info">Carlos M. · Mensal · Pago 2 Mai 2025</div>
+                </div>
+                <div class="ri-amount pos">+€350</div>
+                <span class="status-chip sc-pago">✓ Pago</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Ver recibo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>
+                </div>
+              </div>
+
+              <div class="renda-item ri-agendado">
+                <div class="ri-icon" style="background:var(--lilac-dim)">🏢</div>
+                <div style="flex:1;min-width:0">
+                  <div class="ri-imovel">T1 Lisboa</div>
+                  <div class="ri-info">Maria Ferreira · Mensal · 5 Jun 2025</div>
+                </div>
+                <div class="ri-amount pos">+€1.200</div>
+                <span class="status-chip sc-agendado">📅 Agendado</span>
+                <div class="ri-actions">
+                  <button class="ri-btn" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SIDEBAR RENDAS -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">Registar Renda</div></div>
+              <div class="form-row">
+                <div class="form-group"><div class="form-label">Imóvel</div><select class="form-select"><option>T2 Setúbal</option><option>T1 Lisboa</option><option>T0 Porto</option></select></div>
+                <div class="form-group"><div class="form-label">Inquilino</div><input class="form-input" placeholder="Nome" value="João Santos"></div>
+                <div class="form-group"><div class="form-label">Valor (€)</div><input class="form-input" type="number" value="700"></div>
+                <div class="form-group"><div class="form-label">Data</div><input class="form-input" type="date" value="2025-06-01"></div>
+                <div class="form-group full"><div class="form-label">Recorrência</div>
+                  <div class="recur-opts">
+                    <button class="recur-opt">Única</button>
+                    <button class="recur-opt active">Mensal</button>
+                    <button class="recur-opt">Trimestral</button>
+                    <button class="recur-opt">Anual</button>
+                  </div>
+                </div>
+                <div class="form-group full"><div class="form-label">Estado</div><select class="form-select"><option>Pago</option><option selected>Pendente</option><option>Agendado</option></select></div>
+                <div class="form-group full"><div class="form-label">Notas</div><input class="form-input" placeholder="Observações..."></div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center">Guardar Renda</button>
+            </div>
+
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">Resumo Junho</div></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Total esperado</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink)">€2.250</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sage-dim);border-radius:8px"><span style="font-size:12px;color:var(--sage)">Recebido</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--sage)">€1.200</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--gold-dim);border-radius:8px"><span style="font-size:12px;color:var(--gold)">Pendente</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--gold)">€700</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--red-dim);border-radius:8px"><span style="font-size:12px;color:var(--red)">Em atraso</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--red)">€350</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ TAB CRÉDITO ════════ -->
+      <div class="section" id="tab-credito">
+        <div class="grid-4 fu">
+          <div class="stat-card fd1"><div class="sc-top"><div class="sc-icon i-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div></div><div class="sc-label">Dívida total</div><div class="sc-val">€271.5k</div><div class="sc-foot">2 créditos ativos</div></div>
+          <div class="stat-card fd2"><div class="sc-top"><div class="sc-icon i-terra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div></div><div class="sc-label">Prestação mensal</div><div class="sc-val">€942</div><div class="sc-foot">CGD + BCP</div></div>
+          <div class="stat-card fd3"><div class="sc-top"><div class="sc-icon i-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div><div class="sc-label">Euribor 6M atual</div><div class="sc-val">2.61%</div><div class="sc-foot">↓ -0.08% vs mês anterior</div></div>
+          <div class="stat-card fd4"><div class="sc-top"><div class="sc-icon i-lilac"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div><div class="sc-label">Anos restantes</div><div class="sc-val">21.4</div><div class="sc-foot">Prazo médio ponderado</div></div>
+        </div>
+
+        <div class="card fu fd2" style="margin-bottom:16px">
+          <div class="card-hdr"><div class="card-title">Créditos Ativos</div><button class="card-action" onclick="openModal('addCredito')">+ Adicionar crédito</button></div>
+
+          <div class="credito-row">
+            <div class="cr-bank" style="background:#00a651">CGD</div>
+            <div style="flex:1;min-width:0">
+              <div class="cr-imovel">T2 Setúbal — CGD</div>
+              <div class="cr-detail">Euribor 6M + 0.75% · Início Jan 2020 · 25 anos · Variável</div>
+              <div class="progress-wrap">
+                <div class="progress-labels"><span>Capital pago: €38.4k</span><span>Em dívida: €123.6k</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:24%"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="cr-val">€485/mês</div>
+              <div class="cr-chg" style="color:var(--muted);font-size:11px">TAEG 3.41%</div>
+              <div class="cr-chg" style="color:var(--sage);font-size:11px">↓ Baixou €12 com Euribor</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-left:10px">
+              <button class="btn btn-ghost" style="font-size:11px" onclick="openModal('amortizacao')">Amortizar</button>
+              <button class="btn btn-ghost" style="font-size:11px">Ver tabela</button>
+            </div>
+          </div>
+
+          <div class="credito-row">
+            <div class="cr-bank" style="background:#e31837">BCP</div>
+            <div style="flex:1;min-width:0">
+              <div class="cr-imovel">T1 Lisboa — BCP</div>
+              <div class="cr-detail">Euribor 6M + 0.90% · Início Mar 2018 · 30 anos · Variável</div>
+              <div class="progress-wrap">
+                <div class="progress-labels"><span>Capital pago: €52.1k</span><span>Em dívida: €147.9k</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:26%;background:var(--sage)"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="cr-val">€457/mês</div>
+              <div class="cr-chg" style="color:var(--muted);font-size:11px">TAEG 3.56%</div>
+              <div class="cr-chg" style="color:var(--sage);font-size:11px">↓ Baixou €18 com Euribor</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-left:10px">
+              <button class="btn btn-ghost" style="font-size:11px" onclick="openModal('amortizacao')">Amortizar</button>
+              <button class="btn btn-ghost" style="font-size:11px">Ver tabela</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STRESS TEST -->
+        <div class="card fu fd3">
+          <div class="card-hdr"><div class="card-title">Stress Test — Impacto de subida Euribor</div><div class="card-sub">Simulação BCE: o que acontece à prestação se Euribor subir?</div></div>
+          <table class="mtable">
+            <thead><tr><th>Cenário Euribor</th><th>T2 Setúbal</th><th>T1 Lisboa</th><th>Total mensal</th><th>Variação</th><th>Rácio esforço</th></tr></thead>
+            <tbody>
+              <tr style="background:var(--sage-dim)"><td style="font-weight:500;color:var(--sage)">Atual (2.61%)</td><td style="font-family:'DM Mono',monospace">€485</td><td style="font-family:'DM Mono',monospace">€457</td><td style="font-family:'DM Mono',monospace;font-weight:600">€942</td><td class="mpos">Base</td><td class="mpos">28.5%</td></tr>
+              <tr><td style="font-weight:500">+0.5% → 3.11%</td><td style="font-family:'DM Mono',monospace">€499</td><td style="font-family:'DM Mono',monospace">€471</td><td style="font-family:'DM Mono',monospace;font-weight:600">€970</td><td style="color:var(--gold);font-size:12px">+€28</td><td style="color:var(--gold);font-size:12px">29.4%</td></tr>
+              <tr><td style="font-weight:500">+1.0% → 3.61%</td><td style="font-family:'DM Mono',monospace">€514</td><td style="font-family:'DM Mono',monospace">€486</td><td style="font-family:'DM Mono',monospace;font-weight:600">€1.000</td><td class="mneg">+€58</td><td class="mneg">30.3%</td></tr>
+              <tr><td style="font-weight:500">+2.0% → 4.61%</td><td style="font-family:'DM Mono',monospace">€543</td><td style="font-family:'DM Mono',monospace">€515</td><td style="font-family:'DM Mono',monospace;font-weight:600">€1.058</td><td class="mneg">+€116</td><td class="mneg">32.1%</td></tr>
+              <tr><td style="font-weight:500">+3.0% → 5.61% <span style="font-size:9px;color:var(--muted)">(BCE stress)</span></td><td style="font-family:'DM Mono',monospace">€573</td><td style="font-family:'DM Mono',monospace">€544</td><td style="font-family:'DM Mono',monospace;font-weight:600">€1.117</td><td class="mneg" style="color:var(--red)">+€175</td><td class="mneg" style="color:var(--red)">33.8%</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;padding:10px 12px;background:var(--sage-dim);border-radius:8px;font-size:11px;color:var(--sage)">
+            ✓ Mesmo no pior cenário (+3%), o rácio de esforço mantém-se abaixo do limite BdP de 35%. Situação financeira estável.
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ TAB ANALYTICS ════════ -->
+      <div class="section" id="tab-analytics">
+        <div class="grid-2-1 fu">
+          <div class="card">
+            <div class="card-hdr">
+              <div><div class="card-title">Rendas recebidas — 2025</div><div class="card-sub">Por imóvel, mensal</div></div>
+              <div class="ptabs">
+                <button class="ptab active" onclick="setPtab(this)">6M</button>
+                <button class="ptab" onclick="setPtab(this)">1A</button>
+                <button class="ptab" onclick="setPtab(this)">2A</button>
+              </div>
+            </div>
+            <canvas id="rendasChart" height="160"></canvas>
+            <div class="chart-legend">
+              <div class="litem"><div class="ldot" style="background:var(--sage)"></div>T1 Lisboa</div>
+              <div class="litem"><div class="ldot" style="background:var(--terra)"></div>T2 Setúbal</div>
+              <div class="litem"><div class="ldot" style="background:var(--lilac)"></div>T0 Porto</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Métricas por Imóvel</div></div>
+            <table class="mtable">
+              <thead><tr><th>Imóvel</th><th>Rent. bruta</th><th>Rent. líquida</th><th>Yield on Cost</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><span class="mticker">T1 LX</span></td>
+                  <td><div class="rating-bar"><div class="rbar"><div class="rfill" style="width:97%;background:var(--sage)"></div></div><span class="mpos">9.7%</span></div></td>
+                  <td class="mpos">7.1%</td>
+                  <td class="mpos">8.4%</td>
+                </tr>
+                <tr>
+                  <td><span class="mticker">T2 STB</span></td>
+                  <td><div class="rating-bar"><div class="rbar"><div class="rfill" style="width:52%;background:var(--terra)"></div></div><span style="font-size:12px;color:var(--terra)">5.2%</span></div></td>
+                  <td style="font-size:12px;font-weight:500;color:var(--terra)">3.8%</td>
+                  <td style="font-size:12px;font-weight:500;color:var(--terra)">4.1%</td>
+                </tr>
+                <tr>
+                  <td><span class="mticker">T0 PRT</span></td>
+                  <td><div class="rating-bar"><div class="rbar"><div class="rfill" style="width:65%;background:var(--lilac)"></div></div><span style="font-size:12px;color:var(--lilac)">13.1%</span></div></td>
+                  <td class="mpos">9.8%</td>
+                  <td class="mpos">13.1%</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="margin-top:14px;padding:12px;background:var(--sand);border-radius:10px">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Cashflow líquido mensal</div>
+              <div style="font-family:'Lora',serif;font-size:28px;font-weight:700;color:var(--sage)">+€958</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:3px">Rendas €1.900 − Prestações €942</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3 fu fd2">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">IRS Predial 2025</div><div class="card-sub">Estimativa fiscal</div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Rendimento bruto</span><span style="font-family:'DM Mono',monospace;font-size:12px">€22.800</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Deduções (35%)</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--sage)">-€3.420</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Base tributável</span><span style="font-family:'DM Mono',monospace;font-size:12px">€19.380</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--terra-dim);border-radius:8px"><span style="font-size:12px;font-weight:500;color:var(--terra)">IRS a pagar (28%)</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--terra)">€5.426</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">IMI Total 2025</div><div class="card-sub">Municípios PT</div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">T2 Setúbal (0.35%)</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">€567</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">T1 Lisboa (0.45%)</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">€666</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">T0 Porto (0.30%)</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">€96</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--red-dim);border-radius:8px"><span style="font-size:12px;font-weight:500;color:var(--red)">IMI Total</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--red)">€1.329</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Resultado Anual</div><div class="card-sub">Depois de todos os custos</div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Rendas brutas</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--sage)">+€22.800</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">Prestações crédito</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">-€11.304</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sand);border-radius:8px"><span style="font-size:12px;color:var(--ink)">IRS + IMI + Cond.</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">-€8.155</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--sage-dim);border-radius:8px"><span style="font-size:12px;font-weight:600;color:var(--sage)">Lucro líquido anual</span><span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--sage)">€3.341</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ TAB INE ════════ -->
+      <div class="section" id="tab-ine">
+        <div class="grid-1-2 fu">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Calculadora INE</div><div class="card-sub">Atualização de rendas</div></div>
+            <div class="form-group" style="margin-bottom:10px"><div class="form-label">Renda atual (€)</div><input class="form-input" type="number" id="rendaAtual" value="700" oninput="calcINE()"></div>
+            <div class="form-group" style="margin-bottom:10px"><div class="form-label">Ano de atualização</div><select class="form-select" id="anoINE" onchange="calcINE()"><option value="2025">2025 (+2.16%)</option><option value="2024">2024 (+6.94%)</option><option value="2023">2023 (+2.00%)</option></select></div>
+            <div class="form-group" style="margin-bottom:10px"><div class="form-label">Tipo de atualização</div>
+              <div class="recur-opts">
+                <button class="recur-opt active" onclick="setINEMode(this,'simples')">Simples (1 ano)</button>
+                <button class="recur-opt" onclick="setINEMode(this,'composta')">Composta (acumulada)</button>
+              </div>
+            </div>
+            <div class="ine-result" id="ineResult">
+              <div class="ine-val" id="ineNovaRenda">€715.12</div>
+              <div class="ine-label">Nova renda · Aumento de <span id="ineAumento">€15.12</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Coeficientes INE — Histórico</div><div class="card-sub">Portaria anual do Governo</div></div>
+            <table class="coef-table">
+              <thead><tr><th>Ano</th><th>Coeficiente</th><th>Renda €700 → Nova renda</th><th>Impacto anual</th></tr></thead>
+              <tbody>
+                <tr style="background:var(--terra-dim)"><td style="font-weight:600;color:var(--terra)">2025</td><td style="color:var(--terra);font-weight:600">+2.16%</td><td>€715.12</td><td style="color:var(--terra)">+€181.44</td></tr>
+                <tr><td style="font-weight:500">2024</td><td style="color:var(--sage)">+6.94%</td><td>€748.58</td><td style="color:var(--sage)">+€582.96</td></tr>
+                <tr><td style="font-weight:500">2023</td><td>+2.00%</td><td>€714.00</td><td>+€168.00</td></tr>
+                <tr><td style="font-weight:500">2022</td><td>+0.43%</td><td>€703.01</td><td>+€36.12</td></tr>
+                <tr><td style="font-weight:500">2021</td><td>+0.37%</td><td>€702.59</td><td>+€31.08</td></tr>
+                <tr><td style="font-weight:500">2020</td><td>+0.27%</td><td>€701.89</td><td>+€22.68</td></tr>
+                <tr><td style="font-weight:500">2019</td><td>+1.15%</td><td>€708.05</td><td>+€96.60</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:12px;padding:10px 12px;background:var(--sand);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.5">
+              📋 <strong style="color:var(--ink)">Como funciona:</strong> Portaria publicada anualmente pelo Governo. O senhorio pode aumentar a renda uma vez por ano, avisando o inquilino com 30 dias de antecedência. O inquilino pode rescindir em 30 dias sem penalização se o aumento for superior ao coeficiente.
+            </div>
+          </div>
+        </div>
+
+        <!-- MULTI-IMÓVEL INE -->
+        <div class="card fu fd2">
+          <div class="card-hdr"><div class="card-title">Impacto INE 2025 nos teus imóveis</div><div class="card-sub">Atualização automática com coeficiente 2.16%</div></div>
+          <table class="mtable">
+            <thead><tr><th>Imóvel</th><th>Renda atual</th><th>Nova renda (2025)</th><th>Aumento mensal</th><th>Aumento anual</th><th>Estado</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:500">T2 Setúbal</td><td style="font-family:'DM Mono',monospace">€700</td><td style="font-family:'DM Mono',monospace;color:var(--sage);font-weight:500">€715.12</td><td class="mpos">+€15.12</td><td class="mpos">+€181.44</td><td><span class="status-chip sc-agendado">📅 Avisar até 1 Dez</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px">Gerar aviso</button></td></tr>
+              <tr><td style="font-weight:500">T1 Lisboa</td><td style="font-family:'DM Mono',monospace">€1.200</td><td style="font-family:'DM Mono',monospace;color:var(--sage);font-weight:500">€1.225.92</td><td class="mpos">+€25.92</td><td class="mpos">+€311.04</td><td><span class="status-chip sc-pago">✓ Atualizado</span></td><td><span style="font-size:11px;color:var(--muted)">Feito em Jan 2025</span></td></tr>
+              <tr><td style="font-weight:500">T0 Porto</td><td style="font-family:'DM Mono',monospace">€350</td><td style="font-family:'DM Mono',monospace;color:var(--sage);font-weight:500">€357.56</td><td class="mpos">+€7.56</td><td class="mpos">+€90.72</td><td><span class="status-chip sc-pendente">⏳ Pendente</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px">Gerar aviso</button></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--sage-dim);border-radius:10px">
+            <div><div style="font-size:12px;font-weight:500;color:var(--sage)">Total ganho com atualizações INE 2025</div><div style="font-size:11px;color:var(--sage);opacity:.75">Soma dos 3 imóveis</div></div>
+            <div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--sage)">+€583.20/ano</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- MODAL ADD IMÓVEL -->
+<div class="modal-overlay" id="modal-addImovel" onclick="if(event.target===this)closeModal('addImovel')">
+  <div class="modal">
+    <div class="modal-title">Novo Imóvel
+      <button class="modal-close" onclick="closeModal('addImovel')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-section">Dados do imóvel</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Nome / Referência</div><input class="form-input" placeholder="Ex: T2 Setúbal"></div>
+      <div class="form-group"><div class="form-label">Tipo</div><select class="form-select"><option>Apartamento</option><option>Moradia</option><option>Estúdio</option><option>Comercial</option></select></div>
+      <div class="form-group full"><div class="form-label">Morada completa</div><input class="form-input" placeholder="Rua, nº, código postal, cidade"></div>
+      <div class="form-group"><div class="form-label">Área (m²)</div><input class="form-input" type="number" placeholder="65"></div>
+      <div class="form-group"><div class="form-label">Estado</div><select class="form-select"><option>Arrendado</option><option>Vazio</option><option>Uso próprio</option></select></div>
+      <div class="form-group"><div class="form-label">Preço de compra (€)</div><input class="form-input" type="number" placeholder="150000"></div>
+      <div class="form-group"><div class="form-label">Valor atual estimado (€)</div><input class="form-input" type="number" placeholder="162000"></div>
+      <div class="form-group"><div class="form-label">Data de compra</div><input class="form-input" type="date"></div>
+    </div>
+    <div class="form-section">Encargos mensais</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Condomínio (€/mês)</div><input class="form-input" type="number" placeholder="40"></div>
+      <div class="form-group"><div class="form-label">IMI anual (€)</div><input class="form-input" type="number" placeholder="567"></div>
+      <div class="form-group"><div class="form-label">Seguro multirriscos (€/ano)</div><input class="form-input" type="number" placeholder="180"></div>
+      <div class="form-group"><div class="form-label">Outras despesas (€/mês)</div><input class="form-input" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-section">Crédito habitação (opcional)</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Banco</div><select class="form-select"><option>Sem crédito</option><option>CGD</option><option>BCP</option><option>Santander</option><option>BPI</option><option>Novobanco</option></select></div>
+      <div class="form-group"><div class="form-label">Capital inicial (€)</div><input class="form-input" type="number" placeholder="130000"></div>
+      <div class="form-group"><div class="form-label">Spread (%)</div><input class="form-input" type="number" step="0.01" placeholder="0.75"></div>
+      <div class="form-group"><div class="form-label">Prazo (anos)</div><input class="form-input" type="number" placeholder="25"></div>
+      <div class="form-group"><div class="form-label">Data início</div><input class="form-input" type="date"></div>
+      <div class="form-group"><div class="form-label">Tipo taxa</div><select class="form-select"><option>Variável (Euribor)</option><option>Fixa</option><option>Mista</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeModal('addImovel')">Guardar Imóvel</button>
+      <button class="btn btn-ghost" onclick="closeModal('addImovel')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD RENDA -->
+<div class="modal-overlay" id="modal-addRenda" onclick="if(event.target===this)closeModal('addRenda')">
+  <div class="modal">
+    <div class="modal-title">Registar Renda
+      <button class="modal-close" onclick="closeModal('addRenda')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Imóvel</div><select class="form-select"><option>T2 Setúbal</option><option>T1 Lisboa</option><option>T0 Porto</option></select></div>
+      <div class="form-group"><div class="form-label">Inquilino</div><input class="form-input" placeholder="Nome do inquilino"></div>
+      <div class="form-group"><div class="form-label">Valor da renda (€)</div><input class="form-input" type="number" placeholder="700"></div>
+      <div class="form-group"><div class="form-label">Data</div><input class="form-input" type="date"></div>
+      <div class="form-group full"><div class="form-label">Recorrência</div>
+        <div class="recur-opts">
+          <button class="recur-opt">Única vez</button>
+          <button class="recur-opt active">Mensal</button>
+          <button class="recur-opt">Bimensal</button>
+          <button class="recur-opt">Trimestral</button>
+          <button class="recur-opt">Anual</button>
+        </div>
+      </div>
+      <div class="form-group"><div class="form-label">Estado</div><select class="form-select"><option>Pago</option><option>Pendente</option><option>Agendado</option></select></div>
+      <div class="form-group"><div class="form-label">Alertar (dias antes)</div><select class="form-select"><option>1 dia</option><option selected>3 dias</option><option>5 dias</option><option>7 dias</option></select></div>
+      <div class="form-group full"><div class="form-label">Notas</div><input class="form-input" placeholder="Observações opcionais..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeModal('addRenda')">Guardar Renda</button>
+      <button class="btn btn-ghost" onclick="closeModal('addRenda')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AMORTIZAÇÃO -->
+<div class="modal-overlay" id="modal-amortizacao" onclick="if(event.target===this)closeModal('amortizacao')">
+  <div class="modal">
+    <div class="modal-title">Amortização Antecipada
+      <button class="modal-close" onclick="closeModal('amortizacao')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Crédito</div><select class="form-select"><option>T2 Setúbal — CGD</option><option>T1 Lisboa — BCP</option></select></div>
+      <div class="form-group"><div class="form-label">Valor a amortizar (€)</div><input class="form-input" type="number" placeholder="5000" id="amortVal" oninput="calcAmort()"></div>
+      <div class="form-group full"><div class="form-label">Objetivo</div>
+        <div class="recur-opts">
+          <button class="recur-opt active" onclick="setAmortMode(this,'prestacao')">Reduzir prestação</button>
+          <button class="recur-opt" onclick="setAmortMode(this,'prazo')">Reduzir prazo</button>
+        </div>
+      </div>
+    </div>
+    <div id="amortResult" style="background:var(--sage-dim);border-radius:10px;padding:14px;margin-top:8px">
+      <div style="font-size:11px;color:var(--sage);margin-bottom:8px;font-weight:500">Resultado da simulação</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted)">Nova prestação</div><div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--sage);margin-top:3px">€472/mês</div></div>
+        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted)">Poupança total</div><div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--sage);margin-top:3px">€3.120</div></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-sage" style="flex:1;justify-content:center">Registar amortização</button>
+      <button class="btn btn-ghost" onclick="closeModal('amortizacao')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab navigation ──
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'analytics' && !window._chartDrawn) { drawRendasChart(); window._chartDrawn = true; }
+}
+
+// ── Modals ──
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+
+// ── Period tabs ──
+function setPtab(btn) {
+  btn.closest('.ptabs').querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Recur opts ──
+document.querySelectorAll('.recur-opts').forEach(wrap => {
+  wrap.querySelectorAll('.recur-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('.recur-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+
+// ── INE Calc ──
+let ineMode = 'simples';
+const coefs = { '2025': 2.16, '2024': 6.94, '2023': 2.00, '2022': 0.43, '2021': 0.37 };
+
+function setINEMode(btn, mode) {
+  document.querySelectorAll('#tab-ine .recur-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ineMode = mode;
+  calcINE();
+}
+
+function calcINE() {
+  const renda = parseFloat(document.getElementById('rendaAtual').value) || 0;
+  const ano = document.getElementById('anoINE').value;
+  const coef = coefs[ano] || 2.16;
+  let nova;
+  if (ineMode === 'composta') {
+    // accumulate from 2021
+    const anos = Object.keys(coefs).filter(a => a <= ano).sort();
+    nova = renda;
+    anos.forEach(a => { nova = nova * (1 + coefs[a] / 100); });
+  } else {
+    nova = renda * (1 + coef / 100);
+  }
+  const aumento = nova - renda;
+  document.getElementById('ineNovaRenda').textContent = '€' + nova.toFixed(2);
+  document.getElementById('ineAumento').textContent = '€' + aumento.toFixed(2);
+}
+
+// ── Amort mode ──
+function setAmortMode(btn, mode) {
+  btn.closest('.recur-opts').querySelectorAll('.recur-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Rendas Chart ──
+function drawRendasChart() {
+  const c = document.getElementById('rendasChart');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.offsetWidth, H = 160;
+  c.width = W * devicePixelRatio; c.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const pad = { t: 10, r: 10, b: 24, l: 48 };
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+  const ds = [
+    { d: [1200, 1200, 1200, 1200, 1200, 1200], c: '#5f7e5f' },
+    { d: [700, 700, 700, 700, 700, 0], c: '#c96a45' },
+    { d: [350, 0, 350, 350, 350, 0], c: '#8b80c8' },
+  ];
+  const allV = ds.flatMap(d => d.d);
+  const mx = Math.max(...allV) * 1.1;
+  const n = months.length;
+  const xOf = i => pad.l + (i / (n - 1)) * cW;
+  const yOf = v => pad.t + cH - (v / mx) * cH;
+
+  ctx.strokeStyle = 'rgba(90,74,58,0.07)'; ctx.lineWidth = 1;
+  [0, 500, 1000, 1500].forEach(v => {
+    if (v <= mx) {
+      const y = yOf(v);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(138,122,106,0.7)'; ctx.font = '9px DM Sans'; ctx.textAlign = 'right';
+      ctx.fillText('€' + v, pad.l - 4, y + 3);
+    }
+  });
+  months.forEach((m, i) => {
+    ctx.fillStyle = 'rgba(138,122,106,0.7)'; ctx.font = '9px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText(m, xOf(i), H - 4);
+  });
+  ds.forEach(({ d, c }) => {
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + cH);
+    grad.addColorStop(0, c + '30'); grad.addColorStop(1, c + '05');
+    ctx.beginPath(); d.forEach((v, i) => i ? ctx.lineTo(xOf(i), yOf(v)) : ctx.moveTo(xOf(i), yOf(v)));
+    ctx.lineTo(xOf(n - 1), pad.t + cH); ctx.lineTo(xOf(0), pad.t + cH); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); d.forEach((v, i) => i ? ctx.lineTo(xOf(i), yOf(v)) : ctx.moveTo(xOf(i), yOf(v)));
+    ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    d.forEach((v, i) => {
+      ctx.beginPath(); ctx.arc(xOf(i), yOf(v), 3, 0, Math.PI * 2);
+      ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+  });
+}
+
+window.addEventListener('resize', () => { if (window._chartDrawn) drawRendasChart(); });
+</script>
+</body>
+</html>
