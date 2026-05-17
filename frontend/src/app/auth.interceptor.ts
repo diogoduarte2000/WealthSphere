@@ -1,10 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = localStorage.getItem('wealthsphere_access_token');
-  console.log('Interceptor checking token for:', req.url, 'Token found:', !!token);
 
-  if (token) {
+  if (token && req.url.startsWith(environment.apiUrl)) {
     const cloned = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`

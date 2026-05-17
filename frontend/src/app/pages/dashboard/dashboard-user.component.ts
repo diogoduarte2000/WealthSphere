@@ -370,11 +370,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         this.userSteamName = user.steamName || '';
         this.userSteamAvatar = user.steamAvatar || '';
         
-        this.t212ApiKey = user.trading212ApiKey || '';
-        this.binanceKey = user.binanceApiKey || '';
-        this.binanceSecret = user.binanceApiSecret || '';
-        this.userT212Linked = !!user.trading212ApiKey;
-        this.userBinanceLinked = !!user.binanceApiKey;
+        this.t212ApiKey = '';
+        this.binanceKey = '';
+        this.binanceSecret = '';
+        this.userT212Linked = !!user.hasTrading212ApiKey;
+        this.userBinanceLinked = !!user.hasBinanceApiKey || !!user.hasBinanceApiSecret;
 
         if (user.financialProfile) {
           this.financialData = {

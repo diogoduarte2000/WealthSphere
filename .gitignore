@@ -32,6 +32,8 @@ build/
 
 # OS files
 .DS_Store
+backend.log
+backend.err
 Thumbs.db
 desktop.ini
 
