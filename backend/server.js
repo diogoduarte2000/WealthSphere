@@ -489,6 +489,7 @@ app.post('/api/users/me/real-estate', async (req, res) => {
       }
     }
 
+    user.markModified('realEstate');
     await user.save();
     res.json({ message: 'Imóveis atualizados', profile: user });
   } catch (err) {

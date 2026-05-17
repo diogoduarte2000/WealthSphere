@@ -120,19 +120,19 @@
               <span class="stat-change">Real</span>
             </div>
             <div class="stat-label">Rendas / mês</div>
-            <div class="stat-val">€{{ financialData.realEstateValue > 0 ? (financialData.realEstateValue * 0.005).toFixed(0) : '0' }}</div>
-            <div class="stat-sub">Estimado (0.5% yield)</div>
+            <div class="stat-val">€{{ totalRents.toLocaleString() }}</div>
+            <div class="stat-sub">Rendimento real acumulado</div>
           </div>
           <div class="stat-card fd3">
             <div class="stat-top">
               <div class="stat-icon si-lilac">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
-              <span class="stat-change">{{ financialData.etfPortfolio > 0 ? 'Ativo' : 'Vazio' }}</span>
+              <span class="stat-change">{{ totalETF > 0 ? 'Ativo' : 'Vazio' }}</span>
             </div>
             <div class="stat-label">Portfólio ETF</div>
-            <div class="stat-val">€{{ financialData.etfPortfolio.toLocaleString() }}</div>
-            <div class="stat-sub">{{ financialData.etfPortfolio > 0 ? 'Investimento diversificado' : 'Sem ativos registados' }}</div>
+            <div class="stat-val">€{{ totalETF.toLocaleString() }}</div>
+            <div class="stat-sub">{{ totalETF > 0 ? 'Trading 212 & ETF manual' : 'Sem ativos registados' }}</div>
           </div>
           <div class="stat-card fd4">
             <div class="stat-top">
@@ -170,9 +170,12 @@
                 <div class="card-subtitle">Net worth acumulado ao longo do tempo</div>
               </div>
               <div class="period-tabs">
+                <button class="period-tab" [class.active]="currentChartPeriod === '1d'" (click)="updateChart('1d')">1D</button>
+                <button class="period-tab" [class.active]="currentChartPeriod === '1w'" (click)="updateChart('1w')">1W</button>
                 <button class="period-tab" [class.active]="currentChartPeriod === '6m'" (click)="updateChart('6m')">6M</button>
                 <button class="period-tab" [class.active]="currentChartPeriod === '1a'" (click)="updateChart('1a')">1A</button>
                 <button class="period-tab" [class.active]="currentChartPeriod === '3a'" (click)="updateChart('3a')">3A</button>
+                <button class="period-tab" [class.active]="currentChartPeriod === 'max'" (click)="updateChart('max')">MAX</button>
               </div>
             </div>
             <canvas id="patrimonioChart" #patrimonioChart height="160"></canvas>
