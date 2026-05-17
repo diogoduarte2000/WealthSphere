@@ -739,12 +739,12 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       next: (res) => {
         item.price = res.price;
         // Proceed to next item after a short delay
-        setTimeout(() => this.loadSteamPricesSequential(index + 1), 300);
+        setTimeout(() => this.loadSteamPricesSequential(index + 1), 1500);
       },
       error: () => {
         item.price = 0;
         // Proceed to next item anyway
-        setTimeout(() => this.loadSteamPricesSequential(index + 1), 300);
+        setTimeout(() => this.loadSteamPricesSequential(index + 1), 1500);
       }
     });
   }
