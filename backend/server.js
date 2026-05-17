@@ -465,12 +465,19 @@ app.post('/api/users/me/real-estate', async (req, res) => {
     if (!user.realEstate) user.realEstate = [];
 
     if (action === 'addProperty') {
-      user.realEstate.push({
+      const newProp = {
         name: property.name,
-        dueDate: property.dueDate,
-        rentAmount: property.rentAmount,
-        expenses: []
-      });
+        dueDate: property.dueDate || 1,
+        rentAmount: property.rentAmount || 0,
+        typology: property.typology || 'T2',
+        location: property.location || '',
+        currentValue: property.currentValue || 0,
+        status: property.status || 'Arrendado',
+        contract: property.contract || {},
+        credit: property.credit || {},
+        expenses: property.expenses || []
+      };
+      user.realEstate.push(newProp);
     } else if (action === 'deleteProperty') {
       user.realEstate = user.realEstate.filter(r => r._id.toString() !== propertyId);
     } else if (action === 'addExpense') {
