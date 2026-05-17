@@ -11,7 +11,10 @@ export class ForumService {
   private apiUrl = `${environment.apiUrl}/forum`;
 
   private getHeaders() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('wealthsphere_access_token');
+    if (!token) {
+      return new HttpHeaders();
+    }
     return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 

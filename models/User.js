@@ -8,9 +8,14 @@ const userSchema = new mongoose.Schema({
   name: String, // Legacy support
   avatar: String,
   email: { type: String, unique: true, sparse: true },
-  password: { type: String }, // New field
+  password: { type: String, select: false }, // New field
   passwordHash: String, // Legacy support
   inventory: { type: Array, default: [] },
+  refreshTokens: {
+    type: [String],
+    default: [],
+    select: false
+  },
   financialProfile: {
     netWorth: { type: Number, default: 0 },
     monthlyIncome: { type: Number, default: 0 },
@@ -27,5 +32,28 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
+
+userSchema.methods.toPublicJSON = function toPublicJSON() {
+  return {
+    id: this._id,
+    steamId: this.steamId,
+    steamName: this.steamName,
+    steamAvatar: this.steamAvatar,
+    displayName: this.displayName || this.name || '',
+    name: this.displayName || this.name || '',
+    avatar: this.avatar,
+    email: this.email,
+    inventory: this.inventory,
+    financialProfile: this.financialProfile,
+    customSettings: this.customSettings,
+    realEstate: this.realEstate,
+    hasTrading212ApiKey: !!this.trading212ApiKey,
+    hasBinanceApiKey: !!this.binanceApiKey,
+    hasBinanceApiSecret: !!this.binanceApiSecret,
+    lastLogin: this.lastLogin,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt
+  };
+};
 
 module.exports = mongoose.model('User', userSchema);
