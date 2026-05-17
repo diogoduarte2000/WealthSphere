@@ -1,69 +1,97 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DemoService } from '../../services/demo.service';
+import { FormsModule } from '@angular/forms';
+import { ForumService } from '../../services/forum.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-forum',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './forum.component.html',
   styleUrl: './forum.component.css'
 })
 export class ForumComponent implements OnInit {
-  posts: any[] = [];
-  selectedPost: any = null;
-  comments: any[] = [];
-  activeTag: string = '';
+  private forumService = inject(ForumService);
 
-  constructor(private demoService: DemoService) {}
+  posts: any[] = [];
+  activeCategory: string = 'Todas';
+  showCreateModal: boolean = false;
+
+  newPost = {
+    title: '',
+    content: '',
+    category: 'Discussão',
+    game: 'CS2',
+    price: null
+  };
 
   ngOnInit() {
     this.loadPosts();
   }
 
   loadPosts() {
-    this.posts = this.demoService.getForumPosts();
+    this.forumService.getPosts().subscribe({
+      next: (res) => {
+        this.posts = res;
+      },
+      error: (err) => console.error('Erro ao carregar posts:', err)
+    });
   }
 
-  selectPost(post: any) {
-    this.selectedPost = post;
-    this.comments = this.demoService.getComments(post.id);
+  createPost() {
+    if (!this.newPost.title || !this.newPost.content) {
+      alert('Por favor preenche o título e o conteúdo.');
+      return;
+    }
+
+    this.forumService.createPost(this.newPost).subscribe({
+      next: (res) => {
+        this.loadPosts();
+        this.closeModal();
+        alert('Anúncio publicado com sucesso!');
+      },
+      error: (err) => {
+        alert('Erro ao publicar: ' + (err.error?.message || 'Token expirado'));
+      }
+    });
   }
 
-  filterByTag(tag: string) {
-    this.activeTag = this.activeTag === tag ? '' : tag;
-    if (this.activeTag) {
-      this.posts = this.demoService.getForumPosts().filter(post => 
-        post.tags.includes(this.activeTag)
-      );
-    } else {
-      this.loadPosts();
+  deletePost(id: string) {
+    if (confirm('Tens a certeza que queres remover este anúncio?')) {
+      this.forumService.deletePost(id).subscribe({
+        next: () => this.loadPosts(),
+        error: (err) => alert(err.error?.message || 'Erro ao apagar')
+      });
     }
   }
 
-  upvotePost(post: any) {
-    post.upvotes++;
+  filterByCategory(cat: string) {
+    this.activeCategory = cat;
   }
 
-  downvotePost(post: any) {
-    post.downvotes++;
+  getFilteredPosts() {
+    if (this.activeCategory === 'Todas') return this.posts;
+    return this.posts.filter(p => p.category === this.activeCategory);
   }
 
-  upvoteComment(comment: any) {
-    comment.upvotes++;
+  getRemainingDays(expiresAt: string): number {
+    const remaining = new Date(expiresAt).getTime() - new Date().getTime();
+    return Math.max(0, Math.ceil(remaining / (1000 * 60 * 60 * 24)));
   }
 
-  downvoteComment(comment: any) {
-    comment.downvotes++;
+  openModal() { this.showCreateModal = true; }
+  closeModal() { 
+    this.showCreateModal = false;
+    this.newPost = { title: '', content: '', category: 'Discussão', game: 'CS2', price: null };
   }
 
-  backToPosts() {
-    this.selectedPost = null;
-    this.comments = [];
-  }
-
-  getAllTags(): string[] {
-    const allTags = this.demoService.getForumPosts().flatMap(post => post.tags);
-    return [...new Set(allTags)];
+  getUserID(): string {
+    const token = localStorage.getItem('token');
+    if (!token) return '';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id;
+    } catch { return ''; }
   }
 }

@@ -51,17 +51,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Perfil
       </button>
-      <button class="nav-item" (click)="openModal()">
+      <button class="nav-item" [class.active]="currentPage === 'definicoes'" (click)="showPage('definicoes')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
         Definições
-        <span class="nav-lock">🔒</span>
       </button>
     </div>
 
     <div class="sidebar-user">
-      <div class="user-av" (click)="toggleUserMenu()" style="cursor:pointer; overflow:hidden;">
-        <img *ngIf="userAvatar" [src]="userAvatar" style="width:100%; height:100%; object-fit:cover;">
-        <span *ngIf="!userAvatar">{{ userInitial }}</span>
+      <div class="user-av" (click)="toggleUserMenu()" style="cursor:pointer;">
+        <span>{{ userInitial }}</span>
       </div>
       <div>
         <div class="user-name">{{ userName }}</div>
@@ -91,7 +89,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           <div class="notif-pip"></div>
         </div>
-        <button class="btn btn-primary" (click)="openModal()">+ Adicionar</button>
+        <button class="btn btn-primary" (click)="openFinancialModal()">+ Atualizar Dados</button>
       </div>
     </div>
 
@@ -108,56 +106,58 @@
               <div class="stat-icon si-terra">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change">{{ calculatedNetWorth > 0 ? '+100%' : '0.0%' }}</span>
             </div>
             <div class="stat-label">Net Worth</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-val">€{{ calculatedNetWorth.toLocaleString() }}</div>
+            <div class="stat-sub">Património total (excl. Voláteis)</div>
           </div>
           <div class="stat-card fd2">
             <div class="stat-top">
               <div class="stat-icon si-sage">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
               </div>
-              <span class="stat-change">0 imóveis</span>
+              <span class="stat-change">Real</span>
             </div>
             <div class="stat-label">Rendas / mês</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-val">€{{ financialData.realEstateValue > 0 ? (financialData.realEstateValue * 0.005).toFixed(0) : '0' }}</div>
+            <div class="stat-sub">Estimado (0.5% yield)</div>
           </div>
           <div class="stat-card fd3">
             <div class="stat-top">
               <div class="stat-icon si-lilac">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
-              <span class="stat-change">0.0%</span>
+              <span class="stat-change">{{ financialData.etfPortfolio > 0 ? 'Ativo' : 'Vazio' }}</span>
             </div>
             <div class="stat-label">Portfólio ETF</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">Sem ativos registados</div>
+            <div class="stat-val">€{{ financialData.etfPortfolio.toLocaleString() }}</div>
+            <div class="stat-sub">{{ financialData.etfPortfolio > 0 ? 'Investimento diversificado' : 'Sem ativos registados' }}</div>
           </div>
           <div class="stat-card fd4">
             <div class="stat-top">
               <div class="stat-icon si-gold">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 2l-4 5-4-5"/></svg>
               </div>
-              <span class="stat-change" *ngIf="steamInventory">{{ steamInventory.count > 0 ? '+100%' : '0%' }}</span>
+              <span class="stat-change" *ngIf="steamInventory">{{ steamInventory.count > 0 ? 'Live' : '0%' }}</span>
               <span class="stat-change" *ngIf="!steamInventory">0.0%</span>
             </div>
             <div class="stat-label">Inventário CS2</div>
-            <div class="stat-val">€{{ steamInventory ? '--' : '0' }}</div>
-            <div class="stat-sub">{{ steamInventory ? steamInventory.count + ' itens' : '0 itens' }}</div>
+            <div class="stat-val">€{{ steamInventoryTotalValue > 0 ? steamInventoryTotalValue.toFixed(2) : (steamInventory ? (steamInventory.count * 15.42).toFixed(0) : '0') }}</div>
+            <div class="stat-sub">{{ steamInventory ? steamInventory.count + ' itens (aprox)' : '0 itens' }}</div>
           </div>
           <div class="stat-card fd5">
             <div class="stat-top">
               <div class="stat-icon si-brown">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
               </div>
-              <span class="stat-change">€0</span>
+              <span class="stat-change" [ngClass]="(totalIncome - totalExpenses) >= 0 ? 'pos' : 'neg'">
+                €{{ (totalIncome - totalExpenses).toFixed(0) }}
+              </span>
             </div>
             <div class="stat-label">Poupança Mensal</div>
-            <div class="stat-val">€0</div>
-            <div class="stat-sub">-</div>
+            <div class="stat-val">€{{ (totalIncome - totalExpenses).toFixed(0) }}</div>
+            <div class="stat-sub">Rendimento Lìquido Livre</div>
           </div>
         </div>
 
@@ -222,12 +222,32 @@
                   <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sand2)" stroke-width="12"/>
                 </svg>
                 <div class="donut-label">
-                  <div class="donut-val">€0</div>
+                  <div class="donut-val">€{{ calculatedNetWorth.toLocaleString() }}</div>
                   <div class="donut-sub">total</div>
                 </div>
               </div>
               <div class="alloc-list">
-                <div class="alloc-item">
+                <div class="alloc-item" *ngIf="(t212Portfolio?.total || financialData.etfPortfolio) > 0">
+                  <div class="alloc-dot" style="background:var(--lilac)"></div>
+                  <div class="alloc-name">ETF</div>
+                  <div class="alloc-pct">{{ (((t212Portfolio?.total || financialData.etfPortfolio) / calculatedNetWorth) * 100).toFixed(0) }}%</div>
+                </div>
+                <div class="alloc-item" *ngIf="financialData.realEstateValue > 0">
+                  <div class="alloc-dot" style="background:var(--sage)"></div>
+                  <div class="alloc-name">Imóveis</div>
+                  <div class="alloc-pct">{{ ((financialData.realEstateValue / calculatedNetWorth) * 100).toFixed(0) }}%</div>
+                </div>
+                <div class="alloc-item" *ngIf="financialData.cryptoValue > 0">
+                  <div class="alloc-dot" style="background:var(--gold)"></div>
+                  <div class="alloc-name">Cripto</div>
+                  <div class="alloc-pct">{{ ((financialData.cryptoValue / calculatedNetWorth) * 100).toFixed(0) }}%</div>
+                </div>
+                <div class="alloc-item" *ngIf="financialData.netWorth > 0">
+                  <div class="alloc-dot" style="background:var(--terra)"></div>
+                  <div class="alloc-name">Liquidez</div>
+                  <div class="alloc-pct">{{ ((financialData.netWorth / calculatedNetWorth) * 100).toFixed(0) }}%</div>
+                </div>
+                <div class="alloc-item" *ngIf="calculatedNetWorth === 0">
                   <div class="alloc-dot" style="background:var(--sand3)"></div>
                   <div class="alloc-name">Sem ativos</div>
                   <div class="alloc-pct">0%</div>
@@ -321,19 +341,19 @@
         <div class="stats-row fade-up" style="grid-template-columns:repeat(4,1fr)">
           <div class="stat-card">
             <div class="stat-top"><div class="stat-icon si-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg></div><span class="stat-change up">+5%</span></div>
-            <div class="stat-label">Income Maio</div><div class="stat-val">€1.920</div><div class="stat-sub">Salário + Rendas</div>
+            <div class="stat-label">Rendimento Este Mês</div><div class="stat-val">€{{ totalIncome.toLocaleString() }}</div><div class="stat-sub">Salário + Rendas + Extras</div>
           </div>
           <div class="stat-card">
             <div class="stat-top"><div class="stat-icon si-terra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/></svg></div><span class="stat-change dn">-2%</span></div>
-            <div class="stat-label">Despesas Maio</div><div class="stat-val">€1.380</div><div class="stat-sub">de €1.500 orçado</div>
+            <div class="stat-label">Despesas Este Mês</div><div class="stat-val">€{{ totalExpenses.toLocaleString() }}</div><div class="stat-sub">de €1.500 orçado</div>
           </div>
           <div class="stat-card">
             <div class="stat-top"><div class="stat-icon si-lilac"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><span class="stat-change up">28%</span></div>
-            <div class="stat-label">Poupança</div><div class="stat-val">€540</div><div class="stat-sub">Meta: €500/mês</div>
+            <div class="stat-label">Poupança</div><div class="stat-val">€{{ totalSavings.toLocaleString() }}</div><div class="stat-sub">Meta: €500/mês</div>
           </div>
           <div class="stat-card">
             <div class="stat-top"><div class="stat-icon si-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="stat-change up">✓</span></div>
-            <div class="stat-label">Próx. Renda</div><div class="stat-val">€700</div><div class="stat-sub">1 Jun · T2 Setúbal</div>
+            <div class="stat-label">Próx. Renda</div><div class="stat-val">€{{ nextRentInfo.amount.toLocaleString() }}</div><div class="stat-sub">{{ nextRentInfo.desc }}</div>
           </div>
         </div>
 
@@ -341,13 +361,25 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Transações de Maio</div><span class="card-action">Exportar CSV</span></div>
             <div class="tx-list">
-              <div class="tx-item"><div class="tx-icon" style="background:var(--sage-dim)">💼</div><div><div class="tx-name">Salário</div><div class="tx-cat">Trabalho · Mensal</div></div><div><div class="tx-amount pos">+€1.200</div><div class="tx-date">30 Abr</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--sage-dim)">🏠</div><div><div class="tx-name">Renda T2 Setúbal</div><div class="tx-cat">Imóveis · Mensal</div></div><div><div class="tx-amount pos">+€700</div><div class="tx-date">1 Mai</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--sage-dim)">💻</div><div><div class="tx-name">Freelance — WebApp</div><div class="tx-cat">Projetos · Pontual</div></div><div><div class="tx-amount pos">+€20</div><div class="tx-date">12 Mai</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--terra-dim)">🛒</div><div><div class="tx-name">Supermercado</div><div class="tx-cat">Alimentação</div></div><div><div class="tx-amount neg">-€180</div><div class="tx-date">8 Mai</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--terra-dim)">🏡</div><div><div class="tx-name">Renda Casa</div><div class="tx-cat">Habitação · Mensal</div></div><div><div class="tx-amount neg">-€650</div><div class="tx-date">1 Mai</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--terra-dim)">⚡</div><div><div class="tx-name">Eletricidade + Internet</div><div class="tx-cat">Serviços</div></div><div><div class="tx-amount neg">-€85</div><div class="tx-date">5 Mai</div></div></div>
-              <div class="tx-item"><div class="tx-icon" style="background:var(--terra-dim)">🎮</div><div><div class="tx-name">Steam — CS2 Skin</div><div class="tx-cat">Lazer · Investimento</div></div><div><div class="tx-amount neg">-€28</div><div class="tx-date">10 Mai</div></div></div>
+              <div class="tx-item" *ngIf="customSettings.salary > 0"><div class="tx-icon" style="background:var(--sage-dim)">💼</div><div><div class="tx-name">Salário</div><div class="tx-cat">Trabalho · Mensal</div></div><div><div class="tx-amount pos">+€{{ customSettings.salary.toLocaleString() }}</div></div></div>
+              <div class="tx-item" *ngFor="let prop of realEstate"><div class="tx-icon" style="background:var(--sage-dim)">🏠</div><div><div class="tx-name">Renda {{ prop.name }}</div><div class="tx-cat">Imóveis · Mensal</div></div><div><div class="tx-amount pos">+€{{ prop.rentAmount.toLocaleString() }}</div></div></div>
+              <div class="tx-item" *ngIf="customSettings.freelance > 0"><div class="tx-icon" style="background:var(--sage-dim)">💻</div><div><div class="tx-name">Freelance</div><div class="tx-cat">Projetos</div></div><div><div class="tx-amount pos">+€{{ customSettings.freelance.toLocaleString() }}</div></div></div>
+              <div class="tx-item" *ngIf="customSettings.steamEarnings > 0"><div class="tx-icon" style="background:var(--sage-dim)">🎮</div><div><div class="tx-name">Ganhos Steam</div><div class="tx-cat">Jogos</div></div><div><div class="tx-amount pos">+€{{ customSettings.steamEarnings.toLocaleString() }}</div></div></div>
+              
+              <div class="tx-item" *ngIf="customSettings.supermarket > 0"><div class="tx-icon" style="background:var(--terra-dim)">🛒</div><div><div class="tx-name">Supermercado</div><div class="tx-cat">Alimentação</div></div><div><div class="tx-amount neg">-€{{ customSettings.supermarket.toLocaleString() }}</div></div></div>
+              <div class="tx-item" *ngIf="customSettings.electricity > 0"><div class="tx-icon" style="background:var(--terra-dim)">⚡</div><div><div class="tx-name">Eletricidade</div><div class="tx-cat">Serviços</div></div><div><div class="tx-amount neg">-€{{ customSettings.electricity.toLocaleString() }}</div></div></div>
+              
+              <ng-container *ngFor="let prop of realEstate">
+                <div class="tx-item" *ngFor="let exp of prop.expenses">
+                  <div class="tx-icon" style="background:var(--terra-dim)">🔧</div><div><div class="tx-name">Despesa: {{ exp.type }}</div><div class="tx-cat">{{ prop.name }}</div></div><div><div class="tx-amount neg">-€{{ exp.amount.toLocaleString() }}</div></div>
+                </div>
+              </ng-container>
+
+              <div *ngIf="t212Portfolio" class="tx-item" style="border-top: 1px dashed var(--border); margin-top: 8px; padding-top: 16px;">
+                <div class="tx-icon" style="background:var(--sage-dim)">📈</div>
+                <div><div class="tx-name">Trading 212 - Fundos Livres</div><div class="tx-cat">Investimentos · API</div></div>
+                <div><div class="tx-amount neu">€{{ t212Portfolio.free.toLocaleString() }}</div></div>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -420,25 +452,30 @@
       <!-- ======================== CS2 PAGE ======================== -->
       <div id="page-cs2" [style.display]="currentPage === 'cs2' ? 'block' : 'none'">
         
-        <!-- Steam Profile Banner -->
-        <div class="steam-banner fade-up" *ngIf="steamInventory">
+        <!-- Steam Profile Banner (Shown if Steam ID is linked) -->
+        <div class="steam-banner fade-up" *ngIf="userSteamId">
           <div class="sb-avatar">
-            <img [src]="userAvatar" *ngIf="userAvatar">
-            <span *ngIf="!userAvatar">🎮</span>
+            <img [src]="userSteamAvatar" *ngIf="userSteamAvatar">
+            <span *ngIf="!userSteamAvatar">🎮</span>
           </div>
           <div>
-            <div class="sb-name">{{ userName }}</div>
-            <div class="sb-id">Steam ID: {{ steamInventory.items[0]?.name ? 'Conectado' : 'A carregar...' }}</div>
+            <div class="sb-name">{{ userSteamName || userName }}</div>
+            <div class="sb-id">Steam ID: {{ userSteamId }}</div>
           </div>
           <div class="sb-divider"></div>
-          <div class="sb-stats">
-            <div class="sb-stat"><div class="sb-val">€{{ (steamInventory.count * 15.42).toFixed(0) }}</div><div class="sb-label">Valor estimado</div></div>
+          <div class="sb-stats" *ngIf="steamInventory">
+            <div class="sb-stat"><div class="sb-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="sb-label">Valor estimado</div></div>
             <div class="sb-stat"><div class="sb-val">{{ steamInventory.count }}</div><div class="sb-label">Itens CS2</div></div>
             <div class="sb-stat"><div class="sb-val" style="color:var(--sage)">+€47</div><div class="sb-label">Ganho 30d</div></div>
             <div class="sb-stat"><div class="sb-val">+7.5%</div><div class="sb-label">ROI médio</div></div>
           </div>
+          <div class="sb-stats" *ngIf="!steamInventory && !steamLoading">
+            <div style="font-size: 11px; color: var(--muted);">Clica em sincronizar para ver os dados.</div>
+          </div>
           <div style="display:flex; flex-direction: column; gap: 4px; margin-left: 16px;">
-            <button class="btn btn-ghost" (click)="loadSteamInventory()">🔄 Sincronizar</button>
+            <button class="btn btn-ghost" (click)="loadSteamInventory()" [disabled]="steamLoading">
+              {{ steamLoading ? '⌛ Sincronizando...' : '🔄 Sincronizar' }}
+            </button>
             <button class="btn btn-ghost" style="color: var(--terra); font-size: 10px;" (click)="unlinkSteam()">🔓 Desassociar</button>
           </div>
         </div>
@@ -457,10 +494,10 @@
         <div *ngIf="currentSteamTab === 'inventario'">
           <div class="stat-strip fade-up fd2">
             <div class="scard"><div class="scard-label">Total investido</div><div class="scard-val">€581</div><div class="scard-chg neu">compras totais</div></div>
-            <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ (steamInventory?.count * 15.42).toFixed(0) }}</div><div class="scard-chg pos">+€43 lucro</div></div>
+            <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="scard-chg pos">mercado steam</div></div>
             <div class="scard"><div class="scard-label">Maior item</div><div class="scard-val">€412</div><div class="scard-chg neu">M4A4 Howl</div></div>
             <div class="scard"><div class="scard-label">Melhor ROI</div><div class="scard-val">+22%</div><div class="scard-chg pos">AK-47 Redline</div></div>
-            <div class="scard"><div class="scard-label">Comissão Steam</div><div class="scard-val">€93.6</div><div class="scard-chg neg">15% taxa</div></div>
+            <div class="scard"><div class="scard-label">Comissão Steam</div><div class="scard-val">€{{ (steamInventoryTotalValue * 0.15).toFixed(2) }}</div><div class="scard-chg neg">15% taxa</div></div>
           </div>
 
           <div class="card fade-up fd3">
@@ -472,14 +509,44 @@
             </div>
 
             <div *ngIf="steamLoading" style="padding: 60px; text-align: center; color: var(--muted);">
-              Sincronizando inventário...
+              <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
+              Sincronizando o teu inventário da Steam...
             </div>
 
-            <div *ngIf="!steamLoading && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--white); border-radius: 12px; border: 1px dashed var(--border);">
-              Ainda não ligaste a tua conta Steam.
-              <button class="btn btn-primary" style="margin-top: 20px; display: block; margin-left: auto; margin-right: auto;" (click)="loginWithSteam()">Ligar via Steam</button>
+            <!-- Error State -->
+            <div *ngIf="!steamLoading && steamError" style="padding: 60px; text-align: center; background: var(--sand); border-radius: 12px; margin: 20px;">
+              <div style="font-size: 32px; margin-bottom: 16px;">⚠️</div>
+              <div style="font-weight: 600; color: var(--ink); margin-bottom: 8px;">Erro na Sincronização</div>
+              <div style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+                {{ steamError }}
+                <br>
+                <small *ngIf="steamError.includes('private') || steamError.includes('403')">
+                  Verifica se o teu inventário Steam está definido como <b>Público</b>.
+                </small>
+              </div>
+              <button class="btn btn-primary" (click)="loadSteamInventory()">Tentar Novamente</button>
             </div>
 
+            <!-- Unlinked State (Only if no Steam ID is present) -->
+            <div *ngIf="!steamLoading && !userSteamId" style="padding: 60px; text-align: center; color: var(--muted); background: var(--white); border-radius: 12px; border: 1px dashed var(--border);">
+              <div style="font-size: 32px; margin-bottom: 16px;">🎮</div>
+              <div style="font-weight: 600; color: var(--ink); margin-bottom: 8px;">Conecta a tua conta Steam</div>
+              <div style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">
+                Precisamos do teu Steam ID para mostrar o teu inventário de CS2.
+              </div>
+              <button class="btn btn-primary" style="display: inline-block;" (click)="loginWithSteam()">Ligar via Steam</button>
+            </div>
+
+            <!-- No Items State (If linked but no items found) -->
+            <div *ngIf="!steamLoading && userSteamId && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted);">
+              A carregar inventário...
+            </div>
+
+            <style>
+              @media (min-width: 1200px) {
+                .skin-grid { grid-template-columns: repeat(4, 1fr) !important; }
+              }
+            </style>
             <div class="skin-grid" *ngIf="!steamLoading && steamInventory">
               <div class="skin-card" *ngFor="let item of steamInventory.items">
                 <div class="skin-top">
@@ -492,7 +559,12 @@
                   <div class="float-bar"><div class="float-indicator" [style.left.%]="(item.name.length % 100)"></div></div>
                 </div>
                 <div class="skin-bottom">
-                  <div><div class="skin-price">€{{ (item.name.length * 1.5).toFixed(2) }}</div></div>
+                  <div>
+                    <div class="skin-price">
+                      <span *ngIf="item.price !== null">€{{ item.price.toFixed(2) }}</span>
+                      <span *ngIf="item.price === null" style="font-size: 10px; color: var(--muted);">⌛ a calcular...</span>
+                    </div>
+                  </div>
                   <div class="skin-chg pos">↑ +5.6%</div>
                 </div>
               </div>
@@ -502,20 +574,37 @@
 
         <!-- Section: Mercado -->
         <div *ngIf="currentSteamTab === 'mercado'" class="fade-up">
-          <div class="grid-2-1">
+          <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="font-size: 14px; font-weight: 600; color: var(--ink)">Top 10 Mais Vendidos</div>
+            <div style="display:flex; gap: 8px;">
+              <select class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" (change)="selectMarketGame($event)">
+                <option value="cs2">Counter-Strike 2</option>
+                <option value="dota2">Dota 2</option>
+                <option value="rust">Rust</option>
+                <option value="tf2">Team Fortress 2</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="grid-2-1" style="grid-template-columns: 2fr 1fr;">
             <div class="card">
               <div class="card-header">
-                <div><div class="card-title">Tendência de Preços CS2</div><div class="card-subtitle">Steam Market · Últimos 6 meses</div></div>
+                <div><div class="card-title">Tendência de Mercado (Live)</div><div class="card-subtitle">Volume de negociação e preço médio · Tempo Real</div></div>
               </div>
-              <canvas #trendChart height="160"></canvas>
+              <!-- Gráfico muito maior -->
+              <div style="height: 400px; width: 100%;">
+                <canvas #trendChart height="400"></canvas>
+              </div>
             </div>
+            
             <div class="card">
-              <div class="card-header"><div class="card-title">Mais Negociadas Hoje</div></div>
+              <div class="card-header"><div class="card-title">Top 10 — {{ selectedMarketGameName || 'CS2' }}</div></div>
               <div class="market-list">
-                <div class="market-row"><div class="mr-icon">🔫</div><div class="mr-name">AK-47 | Redline FT</div><div class="mr-val">€33.20</div></div>
-                <div class="market-row"><div class="mr-icon">🔵</div><div class="mr-name">AWP | Asiimov FT</div><div class="mr-val">€58.40</div></div>
-                <div class="market-row"><div class="mr-icon">🟠</div><div class="mr-name">Karambit | Fade FN</div><div class="mr-val">€1.840</div></div>
-                <div class="market-row"><div class="mr-icon">📦</div><div class="mr-name">Revolution Case</div><div class="mr-val">€0.87</div></div>
+                <div class="market-row" *ngFor="let item of top10Items; let i = index">
+                  <div class="mr-icon">{{ i + 1 }}</div>
+                  <div class="mr-name">{{ item.name }}</div>
+                  <div class="mr-val" style="color: var(--sage)">{{ item.price }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -523,39 +612,51 @@
 
         <!-- Section: ROI -->
         <div *ngIf="currentSteamTab === 'roi'" class="fade-up">
-          <div class="grid-2-1">
+          <div class="grid-2-1" style="grid-template-columns: 2fr 1fr;">
             <div class="card">
-              <div class="card-header"><div class="card-title">Calculadora de ROI — Skin</div></div>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+              <div class="card-header"><div class="card-title">Calculadora de ROI Universal</div><div class="card-subtitle">Calcula o retorno de qualquer item (Skins, Crypto, ETFs)</div></div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
                 <div>
-                  <div class="scard-label">Skin</div>
-                  <select class="btn btn-ghost" style="width:100%;text-align:left" (change)="onRoiItemChange(roiSelect.value)" #roiSelect>
-                    <option value="33.20,27.20">AK-47 | Redline FT</option>
-                    <option value="58.40,52.00">AWP | Asiimov FT</option>
-                    <option value="412.00,390.00">M4A4 | Howl MW</option>
-                  </select>
+                  <div class="scard-label">Ativo / Item</div>
+                  <input type="text" class="btn btn-ghost" style="width:100%; text-align: left; background: var(--sand); border: 1px solid var(--border);" placeholder="Ex: AK-47, BTC..." [(ngModel)]="roiCalc.itemName">
                 </div>
                 <div>
-                  <div class="scard-label">Preço Compra</div>
-                  <input type="number" class="btn btn-ghost" style="width:100%" [(ngModel)]="roiCalc.buyPrice" (input)="calcROI()">
+                  <div class="scard-label">Preço Compra (€)</div>
+                  <input type="number" class="btn btn-ghost" style="width:100%; background: var(--sand); border: 1px solid var(--border);" [(ngModel)]="roiCalc.buyPrice" (input)="calcROI()">
                 </div>
                 <div>
-                  <div class="scard-label">Preço Atual</div>
-                  <input type="number" class="btn btn-ghost" style="width:100%" [(ngModel)]="roiCalc.sellPrice" (input)="calcROI()">
+                  <div class="scard-label">Preço Atual (€)</div>
+                  <input type="number" class="btn btn-ghost" style="width:100%; background: var(--sand); border: 1px solid var(--border);" [(ngModel)]="roiCalc.sellPrice" (input)="calcROI()">
+                </div>
+                <div>
+                  <div class="scard-label">Quantidade</div>
+                  <input type="number" class="btn btn-ghost" style="width:100%; background: var(--sand); border: 1px solid var(--border);" [(ngModel)]="roiCalc.qty" (input)="calcROI()">
                 </div>
               </div>
-              <div class="roi-grid">
-                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.lucro >= 0" [class.neg]="roiCalc.results.lucro < 0">€{{ roiCalc.results.lucro.toFixed(2) }}</div><div class="roi-item-label">Lucro bruto</div></div>
-                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.liquido >= 0" [class.neg]="roiCalc.results.liquido < 0">€{{ roiCalc.results.liquido.toFixed(2) }}</div><div class="roi-item-label">Lucro líq. (Steam)</div></div>
-                <div class="roi-item"><div class="roi-item-val" [class.pos]="roiCalc.results.roi >= 0" [class.neg]="roiCalc.results.roi < 0">{{ roiCalc.results.roi.toFixed(1) }}%</div><div class="roi-item-label">ROI total</div></div>
-                <div class="roi-item"><div class="roi-item-val">{{ roiCalc.results.dias }} dias</div><div class="roi-item-label">Tempo detido</div></div>
+              <div class="roi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
+                  <div class="roi-item-val" [class.pos]="roiCalc.results.lucro >= 0" [class.neg]="roiCalc.results.lucro < 0" style="font-size: 20px; font-weight: 700;">€{{ (roiCalc.results.lucro).toFixed(2) }}</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Bruto</div>
+                </div>
+                <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
+                  <div class="roi-item-val" [class.pos]="roiCalc.results.liquido >= 0" [class.neg]="roiCalc.results.liquido < 0" style="font-size: 20px; font-weight: 700;">€{{ (roiCalc.results.liquido).toFixed(2) }}</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Líquido</div>
+                </div>
+                <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
+                  <div class="roi-item-val" [class.pos]="roiCalc.results.roi >= 0" [class.neg]="roiCalc.results.roi < 0" style="font-size: 20px; font-weight: 700;">{{ roiCalc.results.roi.toFixed(1) }}%</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">ROI</div>
+                </div>
+                <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
+                  <div class="roi-item-val" style="font-size: 20px; font-weight: 700;">30 dias</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Prazos Médios</div>
+                </div>
               </div>
             </div>
             <div class="card">
-               <div class="card-header"><div class="card-title">ROI do Portfólio</div></div>
-               <div class="roi-big">
-                 <div class="roi-number pos">+7.5%</div>
-                 <div class="roi-label">ROI médio ponderado</div>
+               <div class="card-header"><div class="card-title">Resumo do Património</div></div>
+               <div class="roi-big" style="padding: 40px 20px; text-align: center;">
+                 <div class="roi-number pos" style="font-size: 48px; font-weight: 800;">+18.4%</div>
+                 <div class="roi-label" style="color: var(--muted); margin-top: 8px;">Performance Cruzada (YTD)</div>
                </div>
             </div>
           </div>
@@ -563,53 +664,114 @@
 
         <!-- Section: Caixas -->
         <div *ngIf="currentSteamTab === 'caixas'" class="fade-up">
-          <div class="grid-2">
-            <div class="case-grid">
-              <div class="case-card" [class.active]="caseSim.selected.name === 'Revolution Case'" (click)="selectCase('Revolution Case','€0.87',1.42)">
-                <div class="case-top"><div class="case-icon">📦</div><div><div class="case-name">Revolution Case</div><div class="case-price">€0.87 + €2.19 chave</div></div></div>
-                <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.42</span></div>
+          <!-- Filtros de Categoria -->
+          <div style="display:flex; gap: 8px; margin-bottom: 20px;">
+            <button class="btn" [class.btn-primary]="caseCategory === 'cases'" [class.btn-ghost]="caseCategory !== 'cases'" (click)="setCaseCategory('cases')">📦 Caixas de Armas</button>
+            <button class="btn" [class.btn-primary]="caseCategory === 'capsules'" [class.btn-ghost]="caseCategory !== 'capsules'" (click)="setCaseCategory('capsules')">💊 Cápsulas de Stickers</button>
+            <button class="btn" [class.btn-primary]="caseCategory === 'terminals'" [class.btn-ghost]="caseCategory !== 'terminals'" (click)="setCaseCategory('terminals')">💻 Terminais & Armory</button>
+          </div>
+
+          <div class="grid-2-1" style="grid-template-columns: 1fr 1.5fr;">
+            <div class="case-grid" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Itens Dinâmicos baseados na Categoria -->
+              <div *ngIf="caseCategory === 'cases'">
+                <div class="case-card" [class.active]="caseSim.selected.name === 'Kilowatt Case'" (click)="selectCase('Kilowatt Case','€1.20',1.85)">
+                  <div class="case-top"><div class="case-icon">⚡</div><div><div class="case-name">Kilowatt Case</div><div class="case-price">€1.20 + €2.19</div></div></div>
+                </div>
+                <div class="case-card" style="margin-top: 10px;" [class.active]="caseSim.selected.name === 'Revolution Case'" (click)="selectCase('Revolution Case','€0.87',1.42)">
+                  <div class="case-top"><div class="case-icon">📦</div><div><div class="case-name">Revolution Case</div><div class="case-price">€0.87 + €2.19</div></div></div>
+                </div>
               </div>
-              <div class="case-card" [class.active]="caseSim.selected.name === 'Recoil Case'" (click)="selectCase('Recoil Case','€0.64',1.18)">
-                <div class="case-top"><div class="case-icon">🎯</div><div><div class="case-name">Recoil Case</div><div class="case-price">€0.64 + €2.19 chave</div></div></div>
-                <div class="ev-box"><span class="ev-label">EV por abertura</span><span class="ev-val">≈ €1.18</span></div>
+
+              <div *ngIf="caseCategory === 'capsules'">
+                <div class="case-card" [class.active]="caseSim.selected.name === 'Paris 2023 Legends'" (click)="selectCase('Paris 2023 Legends','€0.24',0.12)">
+                  <div class="case-top"><div class="case-icon">🏅</div><div><div class="case-name">Paris 2023 Legends</div><div class="case-price">€0.24</div></div></div>
+                </div>
+                <div class="case-card" style="margin-top: 10px;" [class.active]="caseSim.selected.name === 'Stockholm 2021'" (click)="selectCase('Stockholm 2021','€4.20',2.10)">
+                  <div class="case-top"><div class="case-icon">💎</div><div><div class="case-name">Stockholm 2021 Challengers</div><div class="case-price">€4.20</div></div></div>
+                </div>
+              </div>
+
+              <div *ngIf="caseCategory === 'terminals'">
+                <div class="case-card" [class.active]="caseSim.selected.name === 'Armory Pass Item'" (click)="selectCase('Armory Pass Item','€1.50',0.90)">
+                  <div class="case-top"><div class="case-icon">🔑</div><div><div class="case-name">Armory Pass (1 Crédito)</div><div class="case-price">€1.50</div></div></div>
+                </div>
+                <div class="case-card" style="margin-top: 10px;" [class.active]="caseSim.selected.name === 'Gallery Case Terminal'" (click)="selectCase('Gallery Case Terminal','€3.00',1.80)">
+                  <div class="case-top"><div class="case-icon">🖼️</div><div><div class="case-name">Gallery Terminal</div><div class="case-price">€3.00</div></div></div>
+                </div>
               </div>
             </div>
+
             <div class="card">
               <div class="card-header"><div class="card-title">Simulador: {{ caseSim.selected.name }}</div></div>
-              <div style="background:var(--sand);border-radius:10px;padding:14px;margin-bottom:12px">
-                <div class="scard-label">Custo total</div>
-                <div style="font-size:24px;font-weight:700">€{{ caseSim.selected.cost }}</div>
+              <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                <div style="flex:1; background:var(--sand);border-radius:12px;padding:20px">
+                  <div class="scard-label">Custo por Unidade</div>
+                  <div style="font-size:32px;font-weight:700">{{ caseSim.selected.cost }}</div>
+                </div>
+                <div style="flex:1; background:var(--sand);border-radius:12px;padding:20px">
+                  <div class="scard-label">Valor Médio de Retorno</div>
+                  <div style="font-size:32px;font-weight:700" class="neg">{{ caseSim.selected.ev }}</div>
+                </div>
               </div>
-              <div style="background:var(--sand);border-radius:10px;padding:14px;margin-bottom:12px">
-                <div class="scard-label">Valor esperado (EV)</div>
-                <div style="font-size:24px;font-weight:700" class="neg">≈ €{{ caseSim.selected.ev }}</div>
+              
+              <div style="background:var(--sand); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Probabilidade por Raridade</div>
+                <div style="display:flex; flex-direction: column; gap: 8px;">
+                  <div style="display:flex; justify-content: space-between; font-size: 12px;"><span>Azul (Mil-spec)</span><span>79.92%</span></div>
+                  <div style="height: 4px; background: #ddd; border-radius: 2px;"><div style="width: 79.92%; height: 100%; background: #4a90e2; border-radius: 2px;"></div></div>
+                  <div style="display:flex; justify-content: space-between; font-size: 12px;"><span>Roxo (Restricted)</span><span>15.98%</span></div>
+                  <div style="height: 4px; background: #ddd; border-radius: 2px;"><div style="width: 15.98%; height: 100%; background: #8847ff; border-radius: 2px;"></div></div>
+                  <div style="display:flex; justify-content: space-between; font-size: 12px;"><span>Vermelho (Covert)</span><span>0.64%</span></div>
+                  <div style="height: 4px; background: #ddd; border-radius: 2px;"><div style="width: 0.64%; height: 100%; background: #eb4b4b; border-radius: 2px;"></div></div>
+                </div>
               </div>
-              <div class="alert-strip" style="background:var(--terra-dim);color:var(--terra);border:1px solid var(--terra);padding: 10px; border-radius: 8px;">
-                <div style="font-size:12px">Vender a caixa é mais rentável. Perda esperada por tentativa.</div>
+
+              <div class="alert-strip" style="background:var(--terra-dim);color:var(--terra);border:1px solid var(--terra);padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size:13px"><b>Aviso:</b> Abrir caixas é matematicamente desvantajoso. O retorno médio (ROI) é de aproximadamente 58%. Recomendamos investir diretamente nos itens desejados.</div>
               </div>
-              <div style="margin-top:16px">
-                <button class="btn btn-ghost" (click)="simAberturas(10)">Simular ×10</button>
-                <div *ngIf="caseSim.simResult" [innerHTML]="caseSim.simResult" style="margin-top:10px;padding:12px;background:var(--sand);border-radius:9px;font-size:12px"></div>
+              
+              <!-- BOTÕES DE SIMULAÇÃO -->
+              <div style="display:flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-ghost" style="flex:1; padding: 14px;" (click)="simAberturas(10)">Simular ×10</button>
+                <button class="btn btn-primary" style="flex:2; padding: 14px;" (click)="simAberturas(50)">Simular Abertura de 50 Caixas</button>
               </div>
+
+              <div *ngIf="caseSim.simResult" [innerHTML]="caseSim.simResult" style="margin-top:20px;padding:20px;background:var(--sand);border-radius:12px;font-size:13px; line-height: 1.6; border: 1px solid var(--border);"></div>
             </div>
           </div>
         </div>
 
         <!-- Section: Watchlist -->
         <div *ngIf="currentSteamTab === 'watchlist'" class="fade-up">
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div style="flex:1"><div class="card-title">Procurar & Acompanhar</div><div class="card-subtitle">Adiciona skins ou itens de qualquer jogo à tua lista de monitorização</div></div>
+              <div style="flex:1; display:flex; gap: 10px;">
+                <input type="text" class="btn btn-ghost" style="flex:1; text-align: left; background: var(--sand);" placeholder="Pesquisar item (ex: AK-47, Knife, Case...)" [(ngModel)]="wlSearchQuery">
+                <button class="btn btn-primary" (click)="addToWatchlist()">Adicionar</button>
+              </div>
+            </div>
+          </div>
+
           <div class="card">
             <div class="card-header"><div class="card-title">A minha Watchlist</div></div>
-            <div class="wl-item">
-              <div class="wl-emoji">🗡️</div>
-              <div class="wl-info"><div class="wl-name">Karambit | Fade FN</div><div class="wl-target">Target: ≤ €1.700 · Atual: €1.840</div></div>
-              <div class="wl-current"><div class="wl-price">€1.840</div><div class="wl-diff neg">€140 acima</div></div>
-              <button class="wl-alert">🔔</button>
-            </div>
-            <div class="wl-item">
-              <div class="wl-emoji">🔵</div>
-              <div class="wl-info"><div class="wl-name">AWP | Dragon Lore FT</div><div class="wl-target">Target: ≤ €2.000 · Atual: €1.980</div></div>
-              <div class="wl-current"><div class="wl-price" style="color:var(--sage)">€1.980</div><div class="wl-diff pos">✓ Atingido!</div></div>
-              <button class="wl-alert" style="background:var(--sage);color:white">✓</button>
+            <div class="wl-item" *ngFor="let item of watchlistItems">
+              <div class="wl-emoji">{{ item.emoji }}</div>
+              <div class="wl-info">
+                <div class="wl-name">{{ item.name }}</div>
+                <div class="wl-target">Target: ≤ {{ item.target }} · Atual: {{ item.current }}</div>
+              </div>
+              <div class="wl-current">
+                <div class="wl-price" [style.color]="item.isHit ? 'var(--sage)' : 'var(--ink)'">{{ item.current }}</div>
+                <div class="wl-diff" [class.pos]="item.isHit" [class.neg]="!item.isHit">{{ item.isHit ? '✓ Atingido!' : item.diff + ' acima' }}</div>
+              </div>
+              <div style="display:flex; gap: 8px;">
+                <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 11px;" (click)="openWatchlistChart(item)">📊 Ver Gráfico</button>
+                <button class="wl-alert" [style.background]="item.isHit ? 'var(--sage)' : 'var(--sand)'" [style.color]="item.isHit ? 'white' : 'var(--ink)'">
+                  {{ item.isHit ? '✓' : '🔔' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -617,16 +779,27 @@
         <!-- Section: Comparativo -->
         <div *ngIf="currentSteamTab === 'comparativo'" class="fade-up">
           <div class="card">
-            <div class="card-header"><div><div class="card-title">Skin vs Ativos Tradicionais</div><div class="card-subtitle">Simulação de €120 investidos</div></div></div>
-            <canvas #compareChart height="140"></canvas>
-            <table class="cmp-table" style="margin-top:20px">
-              <thead><tr><th>Ativo</th><th>Lucro €</th><th>ROI</th><th>Risco</th></tr></thead>
-              <tbody>
-                <tr><td>Bitcoin</td><td class="pos">+€78</td><td class="pos">+65%</td><td>🔴 Alto</td></tr>
-                <tr class="cmp-winner"><td>🏆 CS2 Skins</td><td class="pos">+€24</td><td class="pos">+20%</td><td>🟡 Médio</td></tr>
-                <tr><td>VWCE (ETF)</td><td class="pos">+€14</td><td class="pos">+11.7%</td><td>🟢 Baixo</td></tr>
-              </tbody>
-            </table>
+            <div class="card-header"><div><div class="card-title">Performance: Skin vs Outros Ativos</div><div class="card-subtitle">Análise de rentabilidade cruzada em várias plataformas</div></div></div>
+            <div style="height: 450px; width: 100%;">
+              <canvas #compareChart height="450"></canvas>
+            </div>
+            <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+              <div style="padding: 16px; background: var(--sand); border-radius: 12px; border-left: 4px solid var(--terra)">
+                <div style="font-size: 11px; color: var(--muted)">Plataforma Líder (Lucro)</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--ink)">CS2 Inventory</div>
+                <div style="font-size: 14px; color: var(--sage)">+€47 (Skins)</div>
+              </div>
+              <div style="padding: 16px; background: var(--sand); border-radius: 12px; border-left: 4px solid var(--sage)">
+                <div style="font-size: 11px; color: var(--muted)">Plataforma Secundária (Lucro)</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--ink)">Binance API</div>
+                <div style="font-size: 14px; color: var(--sage)">+€12 (Crypto)</div>
+              </div>
+              <div style="padding: 16px; background: var(--sand); border-radius: 12px; border-left: 4px solid #4a90e2">
+                <div style="font-size: 11px; color: var(--muted)">Retorno Médio Anualizado</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--ink)">+15.4%</div>
+                <div style="font-size: 14px; color: var(--muted)">Consolidado</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -691,12 +864,84 @@
       </div>
 
       <!-- Other pages placeholder -->
-      <div id="page-rendas" [style.display]="currentPage === 'rendas' ? 'block' : 'none'">
-        <div class="card fade-up" style="padding:48px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">🏠</div>
-          <div class="card-title" style="margin-bottom:8px;font-size:20px">Rendas & Imóveis</div>
-          <div style="color:var(--muted);margin-bottom:24px">Gere os teus imóveis, rendas e crédito habitação. Em desenvolvimento para a demo.</div>
-          <button class="btn btn-primary" (click)="openModal()">Criar conta para aceder</button>
+      <div id="page-rendas" [style.display]="(currentPage === 'rendas' || currentPage === 'add-renda') ? 'block' : 'none'">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" class="fade-up" *ngIf="currentPage === 'rendas'">
+          <div><h2 style="margin:0">Os meus Imóveis</h2><p style="color:var(--muted);margin:0;font-size:13px">Gere as tuas propriedades, inquilinos e despesas.</p></div>
+          <button class="btn btn-primary" (click)="currentPage = 'add-renda'">+ Novo Imóvel</button>
+        </div>
+
+        <div class="grid-2 fade-up">
+          <!-- Property List -->
+          <div *ngFor="let prop of realEstate" class="card" style="padding: 24px">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 16px;">
+              <div style="display:flex; align-items:center; gap: 12px;">
+                <div style="font-size:32px">🏠</div>
+                <div>
+                  <div style="font-size:18px; font-weight:700">{{ prop.name }}</div>
+                  <div style="font-size:13px; color:var(--muted)">Dia de pagamento: {{ prop.dueDate }} de cada mês</div>
+                </div>
+              </div>
+              <button class="btn btn-ghost" style="color:var(--terra); padding: 8px" (click)="deleteRealEstateProperty(prop._id)">🗑️</button>
+            </div>
+            
+            <div class="stat-card" style="background:var(--sage-dim); border:1px solid rgba(95, 126, 95, 0.2); padding: 16px; margin-bottom: 16px;">
+              <div style="font-size:11px; color:var(--sage); font-weight:600; text-transform:uppercase">Renda Mensal</div>
+              <div style="font-size:24px; font-weight:700; color:var(--sage)">€{{ prop.rentAmount }}</div>
+            </div>
+
+            <div style="font-weight:600; margin-bottom: 12px; font-size:14px">Despesas do Imóvel</div>
+            <div *ngIf="prop.expenses && prop.expenses.length === 0" style="font-size:12px; color:var(--muted); margin-bottom: 16px;">Sem despesas registadas.</div>
+            
+            <div *ngFor="let exp of prop.expenses" style="display:flex; justify-content: space-between; padding: 10px; background:var(--sand); border-radius: 8px; margin-bottom: 8px; align-items:center">
+              <div>
+                <div style="font-weight:600; font-size:13px">{{ exp.type }}</div>
+                <div style="font-size:11px; color:var(--muted)">{{ exp.date | date:'shortDate' }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 12px">
+                <div style="color:var(--terra); font-weight:600">-€{{ exp.amount }}</div>
+                <button class="btn btn-ghost" style="padding:4px" (click)="deleteRealEstateExpense(prop._id, exp._id)">✕</button>
+              </div>
+            </div>
+
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border)">
+              <div style="font-size:13px; font-weight:600; margin-bottom: 8px;">Adicionar Despesa</div>
+              <div style="display:flex; gap: 8px">
+                <select [(ngModel)]="newExpense.type" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); flex:1" (change)="newExpense.propertyId = prop._id">
+                  <option value="" disabled>Tipo...</option>
+                  <option value="Seguro">Seguro</option>
+                  <option value="Condomínio">Condomínio</option>
+                  <option value="Obras Adicionais">Obras Adicionais</option>
+                  <option value="IMI">IMI</option>
+                  <option value="Outros">Outros</option>
+                </select>
+                <input type="number" [(ngModel)]="newExpense.amount" placeholder="€" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); width: 80px" (change)="newExpense.propertyId = prop._id">
+                <button class="btn btn-primary" (click)="addRealEstateExpense()" [disabled]="newExpense.propertyId !== prop._id">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Property Form -->
+          <div class="card" style="padding: 24px" *ngIf="currentPage === 'add-renda' || realEstate.length === 0">
+            <div style="font-size:18px; font-weight:700; margin-bottom: 16px">Adicionar Novo Imóvel</div>
+            <div style="display:flex; flex-direction:column; gap: 12px">
+              <label class="field">
+                <span>Nome / Morada do Imóvel</span>
+                <input type="text" [(ngModel)]="newProperty.name" placeholder="Ex: T2 Setúbal" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
+              </label>
+              <label class="field">
+                <span>Renda Mensal (€)</span>
+                <input type="number" [(ngModel)]="newProperty.rentAmount" placeholder="Ex: 700" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
+              </label>
+              <label class="field">
+                <span>Dia de Vencimento da Renda (Seleciona a data no calendário)</span>
+                <input type="date" [(ngModel)]="newPropertyDateStr" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
+              </label>
+              <div style="display:flex; gap: 12px; margin-top: 12px">
+                <button class="btn btn-ghost" style="flex:1" (click)="currentPage = 'rendas'" *ngIf="realEstate.length > 0">Cancelar</button>
+                <button class="btn btn-primary" style="flex:2" (click)="addRealEstateProperty()">Guardar Imóvel</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div id="page-simulador" [style.display]="currentPage === 'simulador' ? 'block' : 'none'">
@@ -917,9 +1162,8 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Informações da Conta</div></div>
             <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:10px">
-              <div class="sb-avatar" style="width:64px;height:64px;font-size:24px">
-                <img [src]="userAvatar" *ngIf="userAvatar">
-                <span *ngIf="!userAvatar">{{ userInitial }}</span>
+              <div class="sb-avatar" style="width:64px;height:64px;font-size:24px;display:flex;align-items:center;justify-content:center;background:var(--sand);color:var(--terra);border-radius:12px;">
+                <span>{{ userInitial }}</span>
               </div>
               <div>
                 <div style="font-size:18px;font-weight:700;color:var(--ink)">{{ userName }}</div>
@@ -929,13 +1173,16 @@
             <div style="display:flex;flex-direction:column;gap:12px">
               <label class="field">
                 <span>Nome de Exibição</span>
-                <input type="text" class="btn btn-ghost" style="width:100%;text-align:left" [value]="userName" disabled>
+                <div style="display:flex;gap:8px">
+                  <input type="text" class="btn btn-ghost" style="flex:1;text-align:left;background:white" [value]="userName" readonly (click)="openNameModal()">
+                  <button class="btn btn-ghost" style="padding:8px" (click)="openNameModal()">✏️</button>
+                </div>
               </label>
               <label class="field">
                 <span>Email Principal</span>
-                <input type="email" class="btn btn-ghost" style="width:100%;text-align:left" [value]="userEmail" disabled>
+                <input type="email" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);cursor:not-allowed" [value]="userEmail" readonly>
               </label>
-              <button class="btn btn-primary" style="margin-top:10px" disabled>Atualizar Perfil</button>
+              <button class="btn btn-primary" style="margin-top:10px" (click)="openNameModal()">Atualizar Perfil</button>
             </div>
           </div>
 
@@ -966,22 +1213,98 @@
               </div>
             </div>
 
-            <!-- Trading 212 (Future) -->
-            <div style="background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;opacity:0.6">
+            <!-- Trading 212 -->
+            <div style="background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px">
               <div style="display:flex;align-items:center;gap:12px">
                 <div style="font-size:24px">📈</div>
                 <div style="flex:1">
                   <div style="font-size:14px;font-weight:600;color:var(--ink)">Trading 212</div>
-                  <div style="font-size:11px;color:var(--muted)">Em breve</div>
+                  <div style="font-size:11px;color:var(--muted)">{{ userT212Linked ? 'Conectado via API Key' : 'Sincroniza o teu portfólio de ações' }}</div>
                 </div>
-                <button class="btn btn-ghost" disabled>Ligar</button>
+                <div *ngIf="userT212Linked" style="padding:4px 8px;background:var(--sage-dim);color:var(--sage);border-radius:100px;font-size:10px;font-weight:600;margin-right:8px">ATIVO</div>
+                <button class="btn btn-ghost" (click)="openT212Modal()">{{ userT212Linked ? 'Editar' : 'Ligar' }}</button>
+              </div>
+            </div>
+
+            <!-- Binance -->
+            <div style="background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="font-size:24px">₿</div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;color:var(--ink)">Binance</div>
+                  <div style="font-size:11px;color:var(--muted)">{{ userBinanceLinked ? 'Conectado via API Key' : 'Sincroniza o teu saldo cripto' }}</div>
+                </div>
+                <div *ngIf="userBinanceLinked" style="padding:4px 8px;background:var(--sage-dim);color:var(--sage);border-radius:100px;font-size:10px;font-weight:600;margin-right:8px">ATIVO</div>
+                <button class="btn btn-ghost" (click)="openBinanceModal()">{{ userBinanceLinked ? 'Editar' : 'Ligar' }}</button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- ======================== DEFINIÇÕES PAGE ======================== -->
+      <div id="page-definicoes" [style.display]="currentPage === 'definicoes' ? 'block' : 'none'">
+        <div class="grid-2 fade-up">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Definições de Rendimentos e Despesas</div></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:20px">Os valores introduzidos aqui serão usados para os cálculos dinâmicos no Income Tracker.</p>
+            
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <label class="field">
+                <span>Salário Mensal (€)</span>
+                <input type="number" [(ngModel)]="customSettings.salary" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);">
+              </label>
+              <label class="field">
+                <span>Trabalhos Freelance (Média Mensal €)</span>
+                <input type="number" [(ngModel)]="customSettings.freelance" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);">
+              </label>
+              <label class="field">
+                <span>Ganhos Steam (Média Mensal €)</span>
+                <input type="number" [(ngModel)]="customSettings.steamEarnings" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);">
+              </label>
+              <hr style="border:0;border-top:1px solid var(--border);margin:8px 0;">
+              <label class="field">
+                <span>Despesas de Supermercado (€)</span>
+                <input type="number" [(ngModel)]="customSettings.supermarket" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);">
+              </label>
+              <label class="field">
+                <span>Despesas de Eletricidade/Serviços (€)</span>
+                <input type="number" [(ngModel)]="customSettings.electricity" class="btn btn-ghost" style="width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);">
+              </label>
+
+              <button class="btn btn-primary" style="margin-top:10px" (click)="saveCustomSettings()" [disabled]="savingSettings">
+                {{ savingSettings ? 'A guardar...' : 'Guardar Definições' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
+    <!-- Watchlist Chart Modal -->
+    <div class="modal-overlay" *ngIf="wlChartModalOpen" (click)="closeWlChart()">
+      <div class="modal-card" style="max-width: 900px; width: 90%;" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">Histórico de Preço: {{ selectedWlItem?.name }}</div>
+            <div class="modal-subtitle">Preço atual: {{ selectedWlItem?.current }} · Variação 24h: <span class="pos">+2.4%</span></div>
+          </div>
+          <button class="btn btn-ghost" (click)="closeWlChart()">✕</button>
+        </div>
+        
+        <!-- Timeframe Selectors -->
+        <div style="display: flex; gap: 8px; margin-bottom: 24px; padding: 4px; background: var(--sand); border-radius: 12px; width: fit-content;">
+          <button *ngFor="let t of ['24h', '1s', '1m', '3m', '6m', '1a', '3a']" 
+                  class="btn" 
+                  [class.btn-primary]="selectedWlTimeframe === t"
+                  [class.btn-ghost]="selectedWlTimeframe !== t"
+                  style="padding: 6px 16px; font-size: 11px; border: none;"
+                  (click)="setWlTimeframe(t)">
+            {{ t }}
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -995,7 +1318,7 @@
     <div style="margin: 24px 0; text-align: center;">
       <button type="button" class="steam-button" (click)="loginWithSteam()" style="width:100%">
         <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px; margin-right:8px;">
-          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 6.637 5.373 12 12 12 6.637 0 12-5.373 12-12 0-6.637-5.373-12-12-12zm4.33 13.911c-.347 1.054-1.22 1.834-2.27 2.054l-2.06 4.122c-.106.213-.314.347-.533.347h-.01c-.22 0-.43-.134-.536-.347l-2.053-4.116c-1.045-.22-1.914-1-2.26-1.954l-4.14-2.07c-.214-.107-.347-.315-.347-.534v-.01c0-.22.133-.427.346-.533l4.134-2.067c.346-1.053 1.218-1.833 2.268-2.053l2.056-4.112c.107-.213.315-.347.534-.347h.01c.22 0 .427.134.533.347l2.067 4.134c1.053.346 1.833 1.218 2.053 2.268l4.112 2.056c.213.107.347.315.347.534v.01c0 .22-.134.427-.347.533l-4.134 2.067z"/>
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 6.637 5.373 12 12 12 6.637 0 12-5.373 12-12 0-6.637-5.373-12-12-12zm4.33 13.911c-.347 1.054-1.22 1.834-2.27 2.054l-2.06 4.122c-.106.213-.314.347-.533.347h-.01c-.22 0-.43-.134-.536-.347l-2.053-4.116c-1.045-.22-1.914-1-2.26-1.954l-4.14-2.07c-.214-.107-.347-.315-.347-.534v-.01c0-.22.133-.427.346-.533l4.134-2.067c.346-1.053 1.218-1.833 2.268-2.053l2.056-4.112c.107-.213.315-.347.534-.347h.01c.22 0 .427.134.533.347l2.067 4.134c1.053.346 1.833 1.218 2.053 2.268l4.112 2.056c.213.107.347.315.347.534v-.01c0 .22-.134.427-.347.533l-4.134 2.067z"/>
         </svg>
         Sign in through STEAM
       </button>
@@ -1003,6 +1326,130 @@
 
     <div class="modal-actions">
       <button class="btn btn-ghost" (click)="closeModal()" style="flex:1">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCIAL DATA MODAL -->
+<div class="modal-overlay" [class.open]="financialModalOpen" (click)="closeFinancialModal()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <div class="modal-icon">💰</div>
+    <div class="modal-title">Atualizar Património</div>
+    <div class="modal-text">Atualiza os teus valores para recalcularmos a tua evolução e metas.</div>
+    
+    <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; text-align: left;">
+      <label class="field">
+        <span>Dinheiro no Banco (Liquidez) €</span>
+        <input type="number" [(ngModel)]="financialData.netWorth" placeholder="Ex: 5000">
+      </label>
+      <label class="field">
+        <span>Portfólio ETF €</span>
+        <input type="number" [(ngModel)]="financialData.etfPortfolio" placeholder="Ex: 10000">
+      </label>
+      <label class="field">
+        <span>Valor Imóveis €</span>
+        <input type="number" [(ngModel)]="financialData.realEstateValue" placeholder="Ex: 150000">
+      </label>
+      <label class="field">
+        <span>Cripto & Outros €</span>
+        <input type="number" [(ngModel)]="financialData.cryptoValue" placeholder="Ex: 2000">
+      </label>
+      <label class="field">
+        <span>Receita Mensal (Net) €</span>
+        <input type="number" [(ngModel)]="financialData.monthlyIncome" placeholder="Ex: 2500">
+      </label>
+      <label class="field">
+        <span>Despesas Mensais €</span>
+        <input type="number" [(ngModel)]="financialData.monthlyExpenses" placeholder="Ex: 1500">
+      </label>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
+      <button class="btn btn-ghost" (click)="closeFinancialModal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" (click)="saveFinancialData()" [disabled]="savingFinancial" style="flex:2">
+        {{ savingFinancial ? 'A guardar...' : 'Guardar Alterações' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NAME EDIT MODAL -->
+<div class="modal-overlay" [class.open]="nameModalOpen" (click)="closeNameModal()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 400px;">
+    <div class="modal-icon">👤</div>
+    <div class="modal-title">Editar Nome</div>
+    <div class="modal-text">Como gostarias de ser chamado no WealthSphere?</div>
+    
+    <div class="modal-form" style="margin-top: 24px; text-align: left;">
+      <label class="field">
+        <span>Nome de Exibição</span>
+        <input type="text" [(ngModel)]="newDisplayName" placeholder="Teu nome aqui..." style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+      </label>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
+      <button class="btn btn-ghost" (click)="closeNameModal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" (click)="saveName()" [disabled]="savingName || newDisplayName.trim() === ''" style="flex:2">
+        {{ savingName ? 'A guardar...' : 'Guardar Nome' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TRADING 212 MODAL -->
+<div class="modal-overlay" [class.open]="t212ModalOpen" (click)="closeT212Modal()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <div class="modal-icon">📈</div>
+    <div class="modal-title">Ligar Trading 212</div>
+    <div class="modal-text">
+      Introduz a tua API Key para sincronizarmos os teus investimentos. 
+      Podes gerar uma em <a href="https://live.trading212.com/settings/api-management" target="_blank" style="color:var(--terra)">Definições > API</a>.
+    </div>
+    
+    <div class="modal-form" style="margin-top: 24px; text-align: left;">
+      <label class="field">
+        <span>Trading 212 API Key</span>
+        <input type="password" [(ngModel)]="t212ApiKey" placeholder="v1.eyJhbGciOi..." style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+      </label>
+      <p style="font-size:11px; color:var(--muted); margin-top:8px">
+        Nota: Recomendamos usar uma key com permissões apenas de <b>leitura</b> para maior segurança.
+      </p>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
+      <button class="btn btn-ghost" (click)="closeT212Modal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" (click)="saveT212()" [disabled]="savingApis || !t212ApiKey.trim()" style="flex:2">
+        {{ savingApis ? 'A conectar...' : 'Ligar Conta' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- BINANCE MODAL -->
+<div class="modal-overlay" [class.open]="binanceModalOpen" (click)="closeBinanceModal()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <div class="modal-icon">₿</div>
+    <div class="modal-title">Ligar Binance</div>
+    <div class="modal-text">
+      Introduz as tuas credenciais de API da Binance (Read-Only) para acompanhar o teu portfólio cripto.
+    </div>
+    
+    <div class="modal-form" style="margin-top: 24px; text-align: left; display: flex; flex-direction: column; gap: 16px;">
+      <label class="field">
+        <span>Binance API Key</span>
+        <input type="text" [(ngModel)]="binanceKey" placeholder="Inserir API Key" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+      </label>
+      <label class="field">
+        <span>Binance API Secret</span>
+        <input type="password" [(ngModel)]="binanceSecret" placeholder="Inserir API Secret" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+      </label>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
+      <button class="btn btn-ghost" (click)="closeBinanceModal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" (click)="saveBinance()" [disabled]="savingApis || !binanceKey.trim() || !binanceSecret.trim()" style="flex:2">
+        {{ savingApis ? 'A conectar...' : 'Ligar Binance' }}
+      </button>
     </div>
   </div>
 </div>
