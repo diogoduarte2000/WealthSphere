@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, select: false }, // New field
   passwordHash: String, // Legacy support
   inventory: { type: Array, default: [] },
+  trading212ApiKey: { type: String, select: false },
+  binanceApiKey: { type: String, select: false },
+  binanceApiSecret: { type: String, select: false },
   refreshTokens: {
     type: [String],
     default: [],
@@ -30,6 +33,50 @@ const userSchema = new mongoose.Schema({
       realEstateValue: Number
     }]
   },
+  customSettings: {
+    salary: { type: Number, default: 0 },
+    freelance: { type: Number, default: 0 },
+    supermarket: { type: Number, default: 0 },
+    electricity: { type: Number, default: 0 },
+    steamEarnings: { type: Number, default: 0 }
+  },
+  realEstate: [{
+    name: String,
+    dueDate: Number,
+    rentAmount: Number,
+    expenses: [{
+      type: { type: String },
+      amount: Number,
+      date: { type: Date, default: Date.now }
+    }],
+    typology: String,
+    location: String,
+    currentValue: Number,
+    status: { type: String, default: 'Arrendado' },
+    contract: {
+      tenant: String,
+      startDate: Date,
+      endDate: Date,
+      rentAmount: Number,
+      dueDate: Number,
+      frequency: { type: String, default: 'Mensal' }
+    },
+    payments: [{
+      amount: Number,
+      dueDate: Date,
+      paidDate: Date,
+      status: { type: String, default: 'Agendado' }
+    }],
+    credit: {
+      bank: String,
+      outstandingCapital: Number,
+      capitalPaid: Number,
+      monthlyPayment: Number,
+      spread: Number,
+      term: Number,
+      startDate: Date
+    }
+  }],
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 

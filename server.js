@@ -24,7 +24,15 @@ const PORT = process.env.PORT || 5000;
 const ForumPost = mongoose.models.ForumPost || mongoose.model('ForumPost', ForumPostSchema);
 const steamPriceCache = new Map();
 const steamInventoryCache = new Map();
+const steamFloatCache = new Map();
 const trading212Cache = new Map();
+
+function setBoundedCache(cache, key, value, maxEntries = 1000) {
+  if (!cache.has(key) && cache.size >= maxEntries) {
+    cache.delete(cache.keys().next().value);
+  }
+  cache.set(key, value);
+}
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -121,6 +129,132 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+function parseMarketPrice(priceStr) {
+  const cleaned = String(priceStr || '').replace(/&nbsp;/g, '').replace(/\s/g, '').replace(/[^\d.,]/g, '');
+  if (!cleaned) return null;
+
+  const normalized = cleaned.includes(',')
+    ? cleaned.replace(/\./g, '').replace(',', '.')
+    : cleaned;
+  const value = Number.parseFloat(normalized);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function extractSteamHistory(listingHtml) {
+  const matches = [...String(listingHtml).matchAll(/time\\+":(\d+),\\+"price_median\\+":([0-9.]+)/g)];
+  return matches
+    .map((match) => ({ time: Number(match[1]), price: Number(match[2]) }))
+    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.price) && point.price > 0);
+}
+
+function calculateChange24h(history) {
+  if (!Array.isArray(history) || history.length < 2) return null;
+  const latest = history[history.length - 1];
+  const targetTime = latest.time - 24 * 60 * 60;
+  const previous = [...history].reverse().find((point) => point.time <= targetTime) || history[0];
+  if (!previous?.price) return null;
+  return ((latest.price - previous.price) / previous.price) * 100;
+}
+
+async function fetchSteamListingSnapshot(name) {
+  const listingUrl = `https://steamcommunity.com/market/listings/730/${encodeURIComponent(name)}`;
+  const response = await axios.get(listingUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept-Language': 'en-US,en;q=0.9'
+    },
+    responseType: 'text',
+    timeout: 10000
+  });
+
+  const html = String(response.data || '');
+  const saleMatch = html.match(/for sale starting at[\s\S]{0,500}?>([^<>]*\d+[,.]\d+[^<>]*)<\/span>/i);
+  const history = extractSteamHistory(html);
+  const latestHistoryPrice = history.length ? history[history.length - 1].price : null;
+
+  return {
+    price: parseMarketPrice(saleMatch?.[1]) ?? latestHistoryPrice,
+    change24h: calculateChange24h(history),
+    source: saleMatch ? 'steam-listing' : 'steam-history'
+  };
+}
+
+function getInspectLink(desc, asset, ownerSteamId) {
+  const action = Array.isArray(desc?.actions)
+    ? desc.actions.find((candidate) => String(candidate.link || '').includes('csgo_econ_action_preview'))
+    : null;
+  if (!action?.link) return null;
+
+  return action.link
+    .replace('%owner_steamid%', ownerSteamId)
+    .replace('%assetid%', asset.assetid)
+    .replace('%contextid%', asset.contextid || '2');
+}
+
+function getRarity(desc) {
+  const rarityTag = Array.isArray(desc?.tags)
+    ? desc.tags.find((tag) => tag.category === 'Rarity')
+    : null;
+  return rarityTag?.localized_tag_name || rarityTag?.internal_name || '';
+}
+
+function getRarityRank(desc) {
+  const rarityTag = Array.isArray(desc?.tags)
+    ? desc.tags.find((tag) => tag.category === 'Rarity')
+    : null;
+  const internalName = String(rarityTag?.internal_name || '');
+  const ranks = [
+    ['Contraband', 9],
+    ['Ancient', 8],
+    ['Legendary', 7],
+    ['Mythical', 6],
+    ['Rare', 5],
+    ['Uncommon', 4],
+    ['Common', 3],
+    ['Default', 1]
+  ];
+  return ranks.find(([name]) => internalName.includes(name))?.[1] || 0;
+}
+
+function buildTrading212AuthHeaders(user) {
+  return { Authorization: user.trading212ApiKey };
+}
+
+async function fetchTrading212Resource(baseUrl, pathName, headers) {
+  try {
+    const response = await axios.get(`${baseUrl}${pathName}`, { headers, timeout: 10000 });
+    return response.data;
+  } catch (err) {
+    if (pathName === '/equity/positions' && err.response && [404, 405].includes(err.response.status)) {
+      const response = await axios.get(`${baseUrl}/equity/portfolio`, { headers, timeout: 10000 });
+      return response.data;
+    }
+    if (pathName === '/equity/account/summary' && err.response && [404, 405].includes(err.response.status)) {
+      const response = await axios.get(`${baseUrl}/equity/account/cash`, { headers, timeout: 10000 });
+      return response.data;
+    }
+    throw err;
+  }
+}
+
+function calculateTrading212Total(positions, summary) {
+  const explicitTotal = Number(summary?.total ?? summary?.totalValue ?? summary?.portfolioValue ?? summary?.accountValue);
+  if (Number.isFinite(explicitTotal) && explicitTotal > 0) {
+    return explicitTotal;
+  }
+
+  const openPositions = Array.isArray(positions) ? positions : [];
+  const positionsTotal = openPositions.reduce((sum, position) => {
+    const quantity = Number(position.quantity ?? 0);
+    const price = Number(position.currentPrice ?? position.averagePrice ?? 0);
+    const value = Number(position.value ?? position.currentValue ?? position.marketValue);
+    return sum + (Number.isFinite(value) ? value : quantity * price);
+  }, 0);
+
+  const cash = Number(summary?.free ?? summary?.cash ?? summary?.availableCash ?? 0);
+  return positionsTotal + (Number.isFinite(cash) ? cash : 0);
+}
+
 function createAccessToken(user) {
   return jwt.sign(
     {
@@ -173,7 +307,7 @@ async function authenticateRequest(req) {
     throw error;
   }
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey +binanceApiSecret');
   if (!user) {
     const error = new Error('User not found');
     error.statusCode = 401;
@@ -639,30 +773,16 @@ app.get('/api/external/steam/price', async (req, res) => {
 
   const cached = steamPriceCache.get(name);
   if (cached && Date.now() - cached.timestamp < 15 * 60 * 1000) {
-    return res.json({ price: cached.price });
+    return res.json(cached.payload);
   }
 
   try {
-    const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(name)}`;
-    const response = await axios.get(priceUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      },
-      timeout: 5000
-    });
-
-    if (response.data && response.data.success) {
-      const priceStr = response.data.lowest_price || response.data.median_price || '0';
-      const rawPrice = parseFloat(String(priceStr).replace(/[^0-9,.]/g, '').replace(',', '.'));
-      const price = rawPrice > 0 ? rawPrice / 1.15 : 0;
-      steamPriceCache.set(name, { price, timestamp: Date.now() });
-      return res.json({ price });
-    }
-
-    res.json({ price: 0 });
+    const payload = await fetchSteamListingSnapshot(name);
+    setBoundedCache(steamPriceCache, name, { payload, timestamp: Date.now() }, 2000);
+    return res.json(payload);
   } catch (err) {
     console.error('Steam Price Error for', name, ':', err.message);
-    res.json({ price: 0 });
+    res.json({ price: null, change24h: null, source: 'unavailable' });
   }
 });
 
@@ -689,29 +809,72 @@ app.get('/api/external/steam/inventory', async (req, res) => {
     });
 
     const descriptions = Array.isArray(response.data?.descriptions) ? response.data.descriptions : [];
-    const items = descriptions.map((desc) => ({
-      name: desc.market_hash_name,
-      icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
-      color: desc.name_color || 'ffffff',
-      type: desc.type || 'Item',
-      tradable: desc.tradable,
-      price: null
-    }));
+    const assets = Array.isArray(response.data?.assets) ? response.data.assets : [];
+    const descriptionsByAsset = new Map(descriptions.map((desc) => [`${desc.classid}_${desc.instanceid}`, desc]));
+    const items = assets.map((asset) => {
+      const desc = descriptionsByAsset.get(`${asset.classid}_${asset.instanceid}`) || {};
+      return {
+        assetId: asset.assetid,
+        name: desc.market_hash_name,
+        icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+        color: desc.name_color || 'ffffff',
+        type: desc.type || 'Item',
+        rarity: getRarity(desc),
+        rarityRank: getRarityRank(desc),
+        tradable: desc.tradable,
+        inspectLink: getInspectLink(desc, asset, user.steamId),
+        float: null,
+        change24h: null,
+        price: null
+      };
+    }).filter((item) => item.name);
 
     const payload = {
       count: response.data.total_inventory_count || items.length,
       items: items.slice(0, 100)
     };
 
-    steamInventoryCache.set(user.steamId, {
+    setBoundedCache(steamInventoryCache, user.steamId, {
       timestamp: Date.now(),
       payload
-    });
+    }, 500);
 
     res.json(payload);
   } catch (err) {
     console.error('Steam Inventory Error:', err.message);
     res.status(500).json({ message: 'Failed to fetch Steam inventory' });
+  }
+});
+
+app.get('/api/external/steam/float', async (req, res) => {
+  const { inspectLink } = req.query;
+  if (!inspectLink) return res.status(400).json({ message: 'Missing inspect link' });
+
+  const cacheKey = hashToken(String(inspectLink));
+  const cached = steamFloatCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+    return res.json(cached.payload);
+  }
+
+  try {
+    const response = await axios.get('https://api.csfloat.com/', {
+      params: { url: inspectLink },
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 10000
+    });
+    const itemInfo = response.data?.iteminfo || response.data;
+    const payload = {
+      float: typeof itemInfo?.floatvalue === 'number' ? itemInfo.floatvalue : null,
+      paintSeed: itemInfo?.paintseed ?? null,
+      paintIndex: itemInfo?.paintindex ?? null,
+      source: 'csfloat'
+    };
+
+    setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
+    res.json(payload);
+  } catch (err) {
+    console.error('Steam Float Error:', err.response?.data || err.message);
+    res.json({ float: null, paintSeed: null, paintIndex: null, source: 'unavailable' });
   }
 });
 
@@ -728,36 +891,45 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
       return res.json(cached.payload);
     }
 
-    let response;
+    const headers = buildTrading212AuthHeaders(user);
+    let data = null;
+    let environmentName = 'live';
+
     try {
-      response = await axios.get('https://live.trading212.com/api/v0/equity/account/cash', {
-        headers: { Authorization: user.trading212ApiKey },
-        timeout: 10000
-      });
+      const baseUrl = 'https://live.trading212.com/api/v0';
+      const positions = await fetchTrading212Resource(baseUrl, '/equity/positions', headers);
+      const summary = await fetchTrading212Resource(baseUrl, '/equity/account/summary', headers);
+      data = { positions, summary };
     } catch (liveErr) {
       if (liveErr.response && (liveErr.response.status === 401 || liveErr.response.status === 403)) {
-        response = await axios.get('https://demo.trading212.com/api/v0/equity/account/cash', {
-          headers: { Authorization: user.trading212ApiKey },
-          timeout: 10000
-        });
+        const baseUrl = 'https://demo.trading212.com/api/v0';
+        const positions = await fetchTrading212Resource(baseUrl, '/equity/positions', headers);
+        const summary = await fetchTrading212Resource(baseUrl, '/equity/account/summary', headers);
+        data = { positions, summary };
+        environmentName = 'demo';
       } else {
         throw liveErr;
       }
     }
 
-    if (!response || !response.data) {
+    if (!data) {
       return res.json({ success: false });
     }
 
     const payload = {
       success: true,
-      data: response.data
+      data: {
+        environment: environmentName,
+        total: calculateTrading212Total(data.positions, data.summary),
+        positions: data.positions,
+        summary: data.summary
+      }
     };
 
-    trading212Cache.set(String(user._id), {
+    setBoundedCache(trading212Cache, String(user._id), {
       timestamp: Date.now(),
       payload
-    });
+    }, 500);
 
     res.json(payload);
   } catch (err) {
