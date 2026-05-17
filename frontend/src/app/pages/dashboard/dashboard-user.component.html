@@ -866,50 +866,98 @@
         </div>
       </div>
 
-      <!-- Other pages placeholder -->
+      <!-- ═══ RENDAS & IMÓVEIS ═══ -->
       <div id="page-rendas" [style.display]="(currentPage === 'rendas' || currentPage === 'add-renda') ? 'block' : 'none'">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" class="fade-up" *ngIf="currentPage === 'rendas'">
-          <div><h2 style="margin:0">Os meus Imóveis</h2><p style="color:var(--muted);margin:0;font-size:13px">Gere as tuas propriedades, inquilinos e despesas.</p></div>
-          <button class="btn btn-primary" (click)="currentPage = 'add-renda'">+ Novo Imóvel</button>
+
+        <!-- TABS INTERNAS -->
+        <div class="page-tabs" style="margin-bottom:24px">
+          <button class="page-tab" [class.active]="currentRendasTab==='imoveis'" (click)="currentRendasTab='imoveis'">🏠 Imóveis</button>
+          <button class="page-tab" [class.active]="currentRendasTab==='rendas-list'" (click)="currentRendasTab='rendas-list'">💰 Rendas</button>
+          <button class="page-tab" [class.active]="currentRendasTab==='credito'" (click)="currentRendasTab='credito'">🏦 Crédito</button>
+          <button class="page-tab" [class.active]="currentRendasTab==='analytics'" (click)="currentRendasTab='analytics'">📊 Analytics</button>
+          <button class="page-tab" [class.active]="currentRendasTab==='ine'" (click)="currentRendasTab='ine'">📋 INE</button>
         </div>
 
-        <div class="grid-2 fade-up">
-          <!-- Property List -->
-          <div *ngFor="let prop of realEstate" class="card" style="padding: 24px">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 16px;">
-              <div style="display:flex; align-items:center; gap: 12px;">
-                <div style="font-size:32px">🏠</div>
+        <!-- ══ TAB IMÓVEIS ══ -->
+        <div *ngIf="currentRendasTab==='imoveis'">
+
+          <!-- STAT STRIP -->
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+            <div class="stat-card">
+              <div class="stat-top"><div class="stat-icon si-terra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div><span class="stat-change up">{{ realEstate.length }} imóveis</span></div>
+              <div class="stat-label">Valor portfólio</div>
+              <div class="stat-val">€{{ totalPropertyValue | number:'1.0-0' }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><div class="stat-icon si-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+              <div class="stat-label">Rendas / mês</div>
+              <div class="stat-val">€{{ totalRents | number:'1.0-0' }}</div>
+              <div class="stat-sub">€{{ totalRents * 12 | number:'1.0-0' }} anuais brutos</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><div class="stat-icon si-lilac"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div>
+              <div class="stat-label">Rentabilidade média</div>
+              <div class="stat-val">{{ avgYield }}%</div>
+              <div class="stat-sub">Após despesas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><div class="stat-icon" style="background:var(--gold-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold)"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div></div>
+              <div class="stat-label">Prestações crédito</div>
+              <div class="stat-val">€{{ totalCreditPayments | number:'1.0-0' }}</div>
+              <div class="stat-sub">Cashflow: +€{{ totalRents - totalCreditPayments | number:'1.0-0' }}/mês</div>
+            </div>
+          </div>
+
+          <!-- IMOVEL CARDS -->
+          <div class="imovel-grid fade-up">
+            <div class="imovel-card" *ngFor="let prop of realEstate">
+              <div class="imovel-header">
+                <div class="imovel-emoji">🏠</div>
                 <div>
-                  <div style="font-size:18px; font-weight:700">{{ prop.name }}</div>
-                  <div style="font-size:13px; color:var(--muted)">Dia de pagamento: {{ prop.dueDate }} de cada mês</div>
+                  <div class="imovel-name">{{ prop.name }}</div>
+                  <div class="imovel-addr">{{ prop.location || 'Sem morada definida' }}</div>
+                  <span class="imovel-badge" [ngClass]="{'ib-arrendado': prop.status==='Arrendado', 'ib-vazio': prop.status==='Vazio', 'ib-proprio': prop.status==='Próprio'}">● {{ prop.status || 'Arrendado' }}</span>
                 </div>
               </div>
-              <button class="btn btn-ghost" style="color:var(--terra); padding: 8px" (click)="deleteRealEstateProperty(prop._id)">🗑️</button>
-            </div>
-            
-            <div class="stat-card" style="background:var(--sage-dim); border:1px solid rgba(95, 126, 95, 0.2); padding: 16px; margin-bottom: 16px;">
-              <div style="font-size:11px; color:var(--sage); font-weight:600; text-transform:uppercase">Renda Mensal</div>
-              <div style="font-size:24px; font-weight:700; color:var(--sage)">€{{ prop.rentAmount }}</div>
-            </div>
-
-            <div style="font-weight:600; margin-bottom: 12px; font-size:14px">Despesas do Imóvel</div>
-            <div *ngIf="prop.expenses && prop.expenses.length === 0" style="font-size:12px; color:var(--muted); margin-bottom: 16px;">Sem despesas registadas.</div>
-            
-            <div *ngFor="let exp of prop.expenses" style="display:flex; justify-content: space-between; padding: 10px; background:var(--sand); border-radius: 8px; margin-bottom: 8px; align-items:center">
-              <div>
-                <div style="font-weight:600; font-size:13px">{{ exp.type }}</div>
-                <div style="font-size:11px; color:var(--muted)">{{ exp.date | date:'shortDate' }}</div>
+              <div class="imovel-body">
+                <div class="imovel-metrics">
+                  <div class="im-item"><div class="im-label">Renda</div><div class="im-val pos">€{{ prop.rentAmount || 0 }}/mês</div></div>
+                  <div class="im-item"><div class="im-label">Rent. bruta</div><div class="im-val pos">{{ getRentYield(prop) }}%</div></div>
+                  <div class="im-item"><div class="im-label">Valor atual</div><div class="im-val">€{{ (prop.currentValue || 0) | number:'1.0-0' }}</div></div>
+                  <div class="im-item"><div class="im-label">Prestação</div><div class="im-val neg">{{ prop.credit?.monthlyPayment ? '-€' + prop.credit.monthlyPayment + '/mês' : '—' }}</div></div>
+                </div>
               </div>
-              <div style="display:flex; align-items:center; gap: 12px">
-                <div style="color:var(--terra); font-weight:600">-€{{ exp.amount }}</div>
-                <button class="btn btn-ghost" style="padding:4px" (click)="deleteRealEstateExpense(prop._id, exp._id)">✕</button>
+              <div class="imovel-footer">
+                <div class="imovel-tenant">👤 {{ prop.contract?.tenant || 'Sem inquilino' }}</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" (click)="currentPage='add-renda'">✏️</button>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--terra)" (click)="deleteRealEstateProperty(prop._id)">🗑️</button>
+                </div>
               </div>
             </div>
 
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border)">
-              <div style="font-size:13px; font-weight:600; margin-bottom: 8px;">Adicionar Despesa</div>
-              <div style="display:flex; gap: 8px">
-                <select [(ngModel)]="getPropertyExpense(prop._id).type" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); flex:1">
+            <!-- ADD CARD -->
+            <div class="add-imovel-card" (click)="currentPage='add-renda'">
+              <div class="add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div class="add-label">Adicionar imóvel</div>
+              <div class="add-sub">Regista imóvel, renda e crédito</div>
+            </div>
+          </div>
+
+          <!-- DESPESAS POR IMOVEL -->
+          <div class="card fade-up" style="margin-top:18px" *ngFor="let prop of realEstate">
+            <div class="card-header">
+              <div><div class="card-title">Despesas — {{ prop.name }}</div></div>
+            </div>
+            <div *ngIf="!prop.expenses || prop.expenses.length === 0" style="font-size:12px;color:var(--muted);padding:8px 0">Sem despesas registadas.</div>
+            <div *ngFor="let exp of prop.expenses" style="display:flex;justify-content:space-between;padding:10px;background:var(--sand);border-radius:8px;margin-bottom:6px;align-items:center">
+              <div><div style="font-weight:600;font-size:13px">{{ exp.type }}</div><div style="font-size:11px;color:var(--muted)">{{ exp.date | date:'shortDate' }}</div></div>
+              <div style="display:flex;align-items:center;gap:10px"><div style="color:var(--terra);font-weight:600">-€{{ exp.amount }}</div><button class="btn btn-ghost" style="padding:4px" (click)="deleteRealEstateExpense(prop._id, exp._id)">✕</button></div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:600;margin-bottom:8px">Adicionar Despesa</div>
+              <div style="display:flex;gap:8px">
+                <select [(ngModel)]="getPropertyExpense(prop._id).type" class="form-select" style="flex:1;font-size:12px;padding:6px 8px">
                   <option value="" disabled>Tipo...</option>
                   <option value="Seguro">Seguro</option>
                   <option value="Condomínio">Condomínio</option>
@@ -917,35 +965,133 @@
                   <option value="IMI">IMI</option>
                   <option value="Outros">Outros</option>
                 </select>
-                <input type="number" [(ngModel)]="getPropertyExpense(prop._id).amount" placeholder="€" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); width: 80px">
-                <button class="btn btn-primary" (click)="addRealEstateExpense(prop._id)" [disabled]="!getPropertyExpense(prop._id).type || getPropertyExpense(prop._id).amount <= 0">+</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Add Property Form -->
-          <div class="card" style="padding: 24px" *ngIf="currentPage === 'add-renda' || realEstate.length === 0">
-            <div style="font-size:18px; font-weight:700; margin-bottom: 16px">Adicionar Novo Imóvel</div>
-            <div style="display:flex; flex-direction:column; gap: 12px">
-              <label class="field">
-                <span>Nome / Morada do Imóvel</span>
-                <input type="text" [(ngModel)]="newProperty.name" placeholder="Ex: T2 Setúbal" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
-              </label>
-              <label class="field">
-                <span>Renda Mensal (€)</span>
-                <input type="number" [(ngModel)]="newProperty.rentAmount" placeholder="Ex: 700" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
-              </label>
-              <label class="field">
-                <span>Dia de Vencimento da Renda (Seleciona a data no calendário)</span>
-                <input type="date" [(ngModel)]="newPropertyDateStr" class="btn btn-ghost" style="width:100%; text-align:left; background:var(--sand); border:1px solid var(--border)">
-              </label>
-              <div style="display:flex; gap: 12px; margin-top: 12px">
-                <button class="btn btn-ghost" style="flex:1" (click)="currentPage = 'rendas'" *ngIf="realEstate.length > 0">Cancelar</button>
-                <button class="btn btn-primary" style="flex:2" (click)="addRealEstateProperty()">Guardar Imóvel</button>
+                <input type="number" [(ngModel)]="getPropertyExpense(prop._id).amount" placeholder="€" class="form-input" style="width:80px;font-size:12px;padding:6px 8px">
+                <button class="btn btn-primary" style="padding:6px 12px" (click)="addRealEstateExpense(prop._id)" [disabled]="!getPropertyExpense(prop._id).type || getPropertyExpense(prop._id).amount <= 0">+</button>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- ══ TAB RENDAS LIST ══ -->
+        <div *ngIf="currentRendasTab==='rendas-list'">
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+            <div class="stat-card"><div class="stat-label">Total Rendas/mês</div><div class="stat-val">€{{ totalRents | number:'1.0-0' }}</div></div>
+            <div class="stat-card"><div class="stat-label">Recebido este mês</div><div class="stat-val" style="color:var(--sage)">€0</div><div class="stat-sub">Nenhuma renda confirmada</div></div>
+            <div class="stat-card"><div class="stat-label">Pendente</div><div class="stat-val" style="color:var(--gold)">€{{ totalRents | number:'1.0-0' }}</div></div>
+            <div class="stat-card"><div class="stat-label">Em atraso</div><div class="stat-val" style="color:var(--terra)">€0</div></div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-header"><div><div class="card-title">Histórico de Rendas</div><div class="card-subtitle">Todos os imóveis</div></div></div>
+            <div class="renda-list" *ngIf="realEstate.length > 0">
+              <div class="renda-item ri-pendente" *ngFor="let prop of realEstate">
+                <div class="ri-icon" style="background:var(--gold-dim)">🏠</div>
+                <div style="flex:1;min-width:0"><div class="ri-imovel">{{ prop.name }}</div><div class="ri-info">Mensal · Dia {{ prop.dueDate }}</div></div>
+                <div class="ri-amount pos">+€{{ prop.rentAmount }}</div>
+                <span class="status-chip sc-pendente">⏳ Pendente</span>
+              </div>
+            </div>
+            <div *ngIf="realEstate.length === 0" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Sem imóveis registados. Adiciona um imóvel primeiro.</div>
+          </div>
+        </div>
+
+        <!-- ══ TAB CRÉDITO ══ -->
+        <div *ngIf="currentRendasTab==='credito'">
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+            <div class="stat-card"><div class="stat-label">Dívida total</div><div class="stat-val">€{{ totalDebt | number:'1.0-0' }}</div></div>
+            <div class="stat-card"><div class="stat-label">Prestação mensal</div><div class="stat-val">€{{ totalCreditPayments | number:'1.0-0' }}</div></div>
+            <div class="stat-card"><div class="stat-label">Euribor 6M</div><div class="stat-val">2.61%</div></div>
+            <div class="stat-card"><div class="stat-label">Cashflow líquido</div><div class="stat-val" style="color:var(--sage)">+€{{ totalRents - totalCreditPayments | number:'1.0-0' }}</div></div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-header"><div class="card-title">Créditos Ativos</div></div>
+            <div *ngFor="let prop of realEstate">
+              <div class="credito-row" *ngIf="prop.credit?.bank">
+                <div class="cr-bank" style="background:#00a651">{{ prop.credit.bank?.substring(0,3) || '—' }}</div>
+                <div style="flex:1;min-width:0">
+                  <div class="cr-imovel">{{ prop.name }} — {{ prop.credit.bank }}</div>
+                  <div class="cr-detail">Spread {{ prop.credit.spread || 0 }}% · {{ prop.credit.term || 0 }} anos</div>
+                  <div class="progress-wrap"><div class="progress-labels"><span>Capital pago: €{{ prop.credit.capitalPaid || 0 | number:'1.0-0' }}</span><span>Em dívida: €{{ prop.credit.outstandingCapital || 0 | number:'1.0-0' }}</span></div><div class="progress-bar"><div class="progress-fill" [style.width.%]="getCapitalPaidPct(prop)"></div></div></div>
+                </div>
+                <div><div class="cr-val">€{{ prop.credit.monthlyPayment }}/mês</div></div>
+              </div>
+            </div>
+            <div *ngIf="!hasAnyCredit()" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Nenhum crédito registado.</div>
+          </div>
+        </div>
+
+        <!-- ══ TAB ANALYTICS ══ -->
+        <div *ngIf="currentRendasTab==='analytics'">
+          <div class="card fade-up" style="margin-bottom:18px">
+            <div class="card-header"><div><div class="card-title">Métricas por Imóvel</div></div></div>
+            <table class="port-table">
+              <thead><tr><th>Imóvel</th><th>Renda</th><th>Valor</th><th>Rent. bruta</th><th>Prestação</th><th>Cashflow</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let prop of realEstate">
+                  <td><span class="ticker">{{ prop.name }}</span></td>
+                  <td style="color:var(--sage);font-weight:500">€{{ prop.rentAmount || 0 }}</td>
+                  <td>€{{ (prop.currentValue || 0) | number:'1.0-0' }}</td>
+                  <td style="color:var(--sage)">{{ getRentYield(prop) }}%</td>
+                  <td style="color:var(--terra)">€{{ prop.credit?.monthlyPayment || 0 }}</td>
+                  <td style="font-weight:600" [style.color]="(prop.rentAmount || 0) - (prop.credit?.monthlyPayment || 0) >= 0 ? 'var(--sage)' : 'var(--terra)'">€{{ (prop.rentAmount || 0) - (prop.credit?.monthlyPayment || 0) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="realEstate.length === 0" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Sem dados.</div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-header"><div><div class="card-title">Resumo Financeiro</div></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+              <div style="background:var(--sand);border-radius:10px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Rendimento bruto anual</div><div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--ink)">€{{ totalRents * 12 | number:'1.0-0' }}</div></div>
+              <div style="background:var(--sage-dim);border-radius:10px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--sage);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Cashflow líquido mensal</div><div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--sage)">+€{{ totalRents - totalCreditPayments | number:'1.0-0' }}</div></div>
+              <div style="background:var(--terra-dim);border-radius:10px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--terra);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Prestações anuais</div><div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--terra)">€{{ totalCreditPayments * 12 | number:'1.0-0' }}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ TAB INE ══ -->
+        <div *ngIf="currentRendasTab==='ine'">
+          <div class="card fade-up">
+            <div class="card-header"><div><div class="card-title">Calculadora de Atualização INE</div><div class="card-subtitle">Simula a atualização legal da renda pelo coeficiente INE</div></div></div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div class="form-group"><div class="form-label">Renda atual (€)</div><input class="form-input" type="number" [(ngModel)]="ineRendaAtual" placeholder="700"></div>
+              <div class="form-group"><div class="form-label">Ano de referência</div><select class="form-select" [(ngModel)]="ineAno"><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select></div>
+            </div>
+            <button class="btn btn-primary" (click)="calcINE()">Calcular Nova Renda</button>
+            <div class="ine-result" *ngIf="ineNovaRenda > 0" style="background:var(--sage-dim);border:1px solid rgba(95,126,95,.2);border-radius:10px;padding:14px;text-align:center;margin-top:14px">
+              <div style="font-family:'Lora',serif;font-size:28px;font-weight:700;color:var(--sage)">€{{ ineNovaRenda | number:'1.2-2' }}</div>
+              <div style="font-size:11px;color:var(--sage);margin-top:4px">Aumento: +€{{ ineAumento | number:'1.2-2' }}/mês</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADD PROPERTY FORM -->
+        <div class="card fade-up" style="padding:24px;margin-top:18px" *ngIf="currentPage === 'add-renda'">
+          <div style="font-size:18px;font-weight:700;margin-bottom:16px">Adicionar Novo Imóvel</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group"><div class="form-label">Nome / Morada</div><input type="text" [(ngModel)]="newProperty.name" placeholder="Ex: T2 Setúbal" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Tipologia</div><select [(ngModel)]="newProperty.typology" class="form-select"><option value="T0">T0</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="T4+">T4+</option></select></div>
+              <div class="form-group"><div class="form-label">Localização</div><input type="text" [(ngModel)]="newProperty.location" placeholder="Ex: Setúbal" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Valor Atual (€)</div><input type="number" [(ngModel)]="newProperty.currentValue" placeholder="Ex: 150000" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Renda Mensal (€)</div><input type="number" [(ngModel)]="newProperty.rentAmount" placeholder="Ex: 700" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Dia Vencimento</div><input type="date" [(ngModel)]="newPropertyDateStr" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Estado</div><select [(ngModel)]="newProperty.status" class="form-select"><option value="Arrendado">Arrendado</option><option value="Vazio">Vazio</option><option value="Próprio">Próprio</option></select></div>
+              <div class="form-group"><div class="form-label">Inquilino</div><input type="text" [(ngModel)]="newProperty.tenant" placeholder="Nome do inquilino" class="form-input"></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">Crédito (opcional)</div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group"><div class="form-label">Banco</div><input type="text" [(ngModel)]="newProperty.creditBank" placeholder="Ex: CGD" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Prestação mensal (€)</div><input type="number" [(ngModel)]="newProperty.creditPayment" placeholder="Ex: 485" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Capital em dívida (€)</div><input type="number" [(ngModel)]="newProperty.creditDebt" placeholder="Ex: 120000" class="form-input"></div>
+              <div class="form-group"><div class="form-label">Spread (%)</div><input type="number" [(ngModel)]="newProperty.creditSpread" placeholder="Ex: 0.75" class="form-input" step="0.01"></div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:12px">
+              <button class="btn btn-ghost" style="flex:1" (click)="currentPage='rendas'" *ngIf="realEstate.length > 0">Cancelar</button>
+              <button class="btn btn-primary" style="flex:2" (click)="addRealEstateProperty()">Guardar Imóvel</button>
+            </div>
+          </div>
+        </div>
+
       </div>
       <div id="page-simulador" [style.display]="currentPage === 'simulador' ? 'block' : 'none'">
         

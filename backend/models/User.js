@@ -43,7 +43,35 @@ const userSchema = new mongoose.Schema({
       type: { type: String }, // e.g., 'Seguro', 'Obras'
       amount: Number,
       date: { type: Date, default: Date.now }
-    }]
+    }],
+    // Novos campos baseados na especificação
+    typology: String,
+    location: String,
+    currentValue: Number,
+    status: { type: String, default: 'Arrendado' }, // Arrendado, Vazio, Próprio
+    contract: {
+      tenant: String,
+      startDate: Date,
+      endDate: Date,
+      rentAmount: Number, // renda_base
+      dueDate: Number,
+      frequency: { type: String, default: 'Mensal' }
+    },
+    payments: [{
+      amount: Number,
+      dueDate: Date,
+      paidDate: Date,
+      status: { type: String, default: 'Agendado' } // Pago, Pendente, Atrasado, Agendado
+    }],
+    credit: {
+      bank: String,
+      outstandingCapital: Number,
+      capitalPaid: Number,
+      monthlyPayment: Number,
+      spread: Number,
+      term: Number,
+      startDate: Date
+    }
   }],
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });

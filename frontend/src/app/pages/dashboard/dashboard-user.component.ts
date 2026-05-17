@@ -29,6 +29,9 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   userSteamName: string = '';
   userSteamAvatar: string = '';
 
+  // New Variables for Rendas Internal Tabs
+  currentRendasTab: string = 'imoveis';
+
   titles: { [key: string]: [string, string] } = {
     dashboard: ['Dashboard', 'Domingo, 10 de Maio · Euribor 6M: 3.02% ↓'],
     income: ['Income Tracker', 'Maio 2025 · €1.920 de receitas'],
@@ -73,9 +76,52 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   savingSettings: boolean = false;
   
-  newProperty = { name: '', dueDate: 1, rentAmount: 0 };
+  newProperty: any = { name: '', dueDate: 1, rentAmount: 0, typology: 'T2', location: '', currentValue: 0, status: 'Arrendado', tenant: '', creditBank: '', creditPayment: 0, creditDebt: 0, creditSpread: 0 };
   newPropertyDateStr: string = new Date().toISOString().split('T')[0];
   propertyExpenses: { [propertyId: string]: { type: string, amount: number } } = {};
+
+  // INE Calculator
+  ineRendaAtual: number = 0;
+  ineAno: string = '2025';
+  ineNovaRenda: number = 0;
+  ineAumento: number = 0;
+
+  get totalRents(): number {
+    return this.realEstate.reduce((sum: number, p: any) => sum + (p.rentAmount || 0), 0);
+  }
+  get totalPropertyValue(): number {
+    return this.realEstate.reduce((sum: number, p: any) => sum + (p.currentValue || 0), 0);
+  }
+  get totalCreditPayments(): number {
+    return this.realEstate.reduce((sum: number, p: any) => sum + (p.credit?.monthlyPayment || 0), 0);
+  }
+  get totalDebt(): number {
+    return this.realEstate.reduce((sum: number, p: any) => sum + (p.credit?.outstandingCapital || 0), 0);
+  }
+  get avgYield(): string {
+    const yields = this.realEstate.filter((p: any) => p.currentValue > 0).map((p: any) => ((p.rentAmount || 0) * 12 / p.currentValue) * 100);
+    if (yields.length === 0) return '0.0';
+    return (yields.reduce((a: number, b: number) => a + b, 0) / yields.length).toFixed(1);
+  }
+  getRentYield(prop: any): string {
+    if (!prop.currentValue || prop.currentValue === 0) return '0.0';
+    return (((prop.rentAmount || 0) * 12 / prop.currentValue) * 100).toFixed(1);
+  }
+  getCapitalPaidPct(prop: any): number {
+    if (!prop.credit) return 0;
+    const total = (prop.credit.capitalPaid || 0) + (prop.credit.outstandingCapital || 0);
+    if (total === 0) return 0;
+    return (prop.credit.capitalPaid || 0) / total * 100;
+  }
+  hasAnyCredit(): boolean {
+    return this.realEstate.some((p: any) => p.credit?.bank);
+  }
+  calcINE() {
+    const coefs: any = { '2025': 2.16, '2024': 6.94, '2023': 2.00 };
+    const coef = coefs[this.ineAno] || 2.16;
+    this.ineNovaRenda = this.ineRendaAtual * (1 + coef / 100);
+    this.ineAumento = this.ineNovaRenda - this.ineRendaAtual;
+  }
 
   getPropertyExpense(propertyId: string) {
     if (!this.propertyExpenses[propertyId]) {
@@ -402,10 +448,32 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       }
     }
 
-    this.userService.updateRealEstate({ action: 'addProperty', property: this.newProperty }).subscribe({
+    // Build property with credit sub-object
+    const propToSend: any = {
+      name: this.newProperty.name,
+      dueDate: this.newProperty.dueDate,
+      rentAmount: this.newProperty.rentAmount,
+      typology: this.newProperty.typology,
+      location: this.newProperty.location,
+      currentValue: this.newProperty.currentValue,
+      status: this.newProperty.status,
+      contract: { tenant: this.newProperty.tenant, dueDate: this.newProperty.dueDate, frequency: 'Mensal' },
+      expenses: []
+    };
+    if (this.newProperty.creditBank) {
+      propToSend.credit = {
+        bank: this.newProperty.creditBank,
+        monthlyPayment: this.newProperty.creditPayment || 0,
+        outstandingCapital: this.newProperty.creditDebt || 0,
+        capitalPaid: 0,
+        spread: this.newProperty.creditSpread || 0
+      };
+    }
+    this.userService.updateRealEstate({ action: 'addProperty', property: propToSend }).subscribe({
       next: (res) => {
-        this.newProperty = { name: '', dueDate: 1, rentAmount: 0 };
+        this.newProperty = { name: '', dueDate: 1, rentAmount: 0, typology: 'T2', location: '', currentValue: 0, status: 'Arrendado', tenant: '', creditBank: '', creditPayment: 0, creditDebt: 0, creditSpread: 0 };
         this.newPropertyDateStr = new Date().toISOString().split('T')[0];
+        this.currentPage = 'rendas';
         this.loadProfile();
       }
     });
