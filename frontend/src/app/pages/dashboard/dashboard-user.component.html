@@ -500,7 +500,7 @@
             <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="scard-chg pos">mercado steam</div></div>
             <div class="scard"><div class="scard-label">Maior item</div><div class="scard-val">€412</div><div class="scard-chg neu">M4A4 Howl</div></div>
             <div class="scard"><div class="scard-label">Melhor ROI</div><div class="scard-val">+22%</div><div class="scard-chg pos">AK-47 Redline</div></div>
-            <div class="scard"><div class="scard-label">Comissão Steam</div><div class="scard-val">€{{ (steamInventoryTotalValue * 0.15).toFixed(2) }}</div><div class="scard-chg neg">15% taxa</div></div>
+            <div class="scard"><div class="scard-label">Comissão Retida</div><div class="scard-val">€{{ ((steamInventoryTotalValue * 1.15) - steamInventoryTotalValue).toFixed(2) }}</div><div class="scard-chg neg">Já deduzida (15%)</div></div>
           </div>
 
           <div class="card fade-up fd3">
