@@ -75,7 +75,14 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   
   newProperty = { name: '', dueDate: 1, rentAmount: 0 };
   newPropertyDateStr: string = new Date().toISOString().split('T')[0];
-  newExpense = { propertyId: '', type: '', amount: 0, date: new Date().toISOString().split('T')[0] };
+  propertyExpenses: { [propertyId: string]: { type: string, amount: number } } = {};
+
+  getPropertyExpense(propertyId: string) {
+    if (!this.propertyExpenses[propertyId]) {
+      this.propertyExpenses[propertyId] = { type: '', amount: 0 };
+    }
+    return this.propertyExpenses[propertyId];
+  }
 
   financialModalOpen: boolean = false;
   nameModalOpen: boolean = false;
@@ -413,11 +420,20 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     });
   }
 
-  addRealEstateExpense() {
-    if (!this.newExpense.propertyId || !this.newExpense.type || this.newExpense.amount <= 0) return;
-    this.userService.updateRealEstate({ action: 'addExpense', propertyId: this.newExpense.propertyId, expense: this.newExpense }).subscribe({
+  addRealEstateExpense(propertyId: string) {
+    const expenseData = this.getPropertyExpense(propertyId);
+    if (!expenseData.type || expenseData.amount <= 0) return;
+
+    const payload = {
+      propertyId,
+      type: expenseData.type,
+      amount: expenseData.amount,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    this.userService.updateRealEstate({ action: 'addExpense', propertyId, expense: payload }).subscribe({
       next: (res) => {
-        this.newExpense = { propertyId: '', type: '', amount: 0, date: new Date().toISOString().split('T')[0] };
+        this.propertyExpenses[propertyId] = { type: '', amount: 0 };
         this.loadProfile();
       }
     });

@@ -909,7 +909,7 @@
             <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border)">
               <div style="font-size:13px; font-weight:600; margin-bottom: 8px;">Adicionar Despesa</div>
               <div style="display:flex; gap: 8px">
-                <select [(ngModel)]="newExpense.type" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); flex:1" (change)="newExpense.propertyId = prop._id">
+                <select [(ngModel)]="getPropertyExpense(prop._id).type" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); flex:1">
                   <option value="" disabled>Tipo...</option>
                   <option value="Seguro">Seguro</option>
                   <option value="Condomínio">Condomínio</option>
@@ -917,8 +917,8 @@
                   <option value="IMI">IMI</option>
                   <option value="Outros">Outros</option>
                 </select>
-                <input type="number" [(ngModel)]="newExpense.amount" placeholder="€" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); width: 80px" (change)="newExpense.propertyId = prop._id">
-                <button class="btn btn-primary" (click)="addRealEstateExpense()" [disabled]="newExpense.propertyId !== prop._id">+</button>
+                <input type="number" [(ngModel)]="getPropertyExpense(prop._id).amount" placeholder="€" class="btn btn-ghost" style="background:var(--sand); border:1px solid var(--border); width: 80px">
+                <button class="btn btn-primary" (click)="addRealEstateExpense(prop._id)" [disabled]="!getPropertyExpense(prop._id).type || getPropertyExpense(prop._id).amount <= 0">+</button>
               </div>
             </div>
           </div>
