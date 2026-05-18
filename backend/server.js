@@ -290,9 +290,10 @@ app.post('/api/users/unlink-steam', async (req, res) => {
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
   const token = authHeader.split(' ')[1];
   try {
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id || decoded.sub;
     const user = await User.findByIdAndUpdate(
-      id, 
+      userId, 
       { 
         $unset: { 
           steamId: "", 
@@ -345,24 +346,31 @@ app.patch('/api/users/me/external-apis', async (req, res) => {
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
   const token = authHeader.split(' ')[1];
   try {
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
-    const { trading212ApiKey, binanceApiKey, binanceApiSecret } = req.body;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id || decoded.sub;
+    console.log('External-APIs: decoded token for user:', userId);
+    const { trading212ApiKey, binanceApiKey } = req.body;
     
     const updateData = {};
     if (trading212ApiKey !== undefined) updateData.trading212ApiKey = trading212ApiKey;
     if (binanceApiKey !== undefined) updateData.binanceApiKey = binanceApiKey;
-    if (binanceApiSecret !== undefined) updateData.binanceApiSecret = binanceApiSecret;
 
     const user = await User.findByIdAndUpdate(
-      id, 
+      userId, 
       { $set: updateData },
       { new: true }
     ).select('-password -passwordHash');
 
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ message: 'APIs atualizadas', profile: user });
+    
+    const userObj = user.toObject();
+    userObj.hasTrading212ApiKey = !!user.trading212ApiKey;
+    userObj.hasBinanceApiKey = !!user.binanceApiKey;
+    
+    res.json({ message: 'APIs atualizadas', profile: userObj });
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    console.error('External-APIs error:', err.message);
+    res.status(401).json({ message: err.name === 'TokenExpiredError' ? 'Token expirado. Faz login novamente.' : 'Invalid token' });
   }
 });
 
@@ -515,9 +523,16 @@ app.get('/api/users/me', async (req, res) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password -passwordHash');
+    const userId = decoded.id || decoded.sub;
+    const user = await User.findById(userId).select('-password -passwordHash');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ profile: user });
+    
+    // Convert to object and add computed properties
+    const userObj = user.toObject();
+    userObj.hasTrading212ApiKey = !!user.trading212ApiKey;
+    userObj.hasBinanceApiKey = !!user.binanceApiKey;
+    
+    res.json({ profile: userObj });
   } catch (err) {
     console.error('JWT Verification Error:', err.message);
     res.status(401).json({ message: 'Invalid token' });
@@ -621,7 +636,8 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const userId = decoded.id || decoded.sub;
+    const user = await User.findById(userId);
     
     if (!user || !user.trading212ApiKey) {
       return res.status(400).json({ message: 'User has no Trading 212 API Key linked' });

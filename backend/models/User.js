@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
   inventory: { type: Array, default: [] },
   trading212ApiKey: { type: String },
   binanceApiKey: { type: String },
-  binanceApiSecret: { type: String },
   financialProfile: {
     netWorth: { type: Number, default: 0 },
     monthlyIncome: { type: Number, default: 0 },

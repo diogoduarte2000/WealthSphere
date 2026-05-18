@@ -496,18 +496,22 @@
         <!-- Section: Inventário -->
         <div *ngIf="currentSteamTab === 'inventario'">
           <div class="stat-strip fade-up fd2">
-            <div class="scard"><div class="scard-label">Total investido</div><div class="scard-val">€581</div><div class="scard-chg neu">compras totais</div></div>
+            <div class="scard"><div class="scard-label">Itens no Inventário</div><div class="scard-val">{{ steamInventory?.count || 0 }}</div><div class="scard-chg neu">sincronizados</div></div>
             <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="scard-chg pos">mercado steam</div></div>
-            <div class="scard"><div class="scard-label">Maior item</div><div class="scard-val">€412</div><div class="scard-chg neu">M4A4 Howl</div></div>
-            <div class="scard"><div class="scard-label">Melhor ROI</div><div class="scard-val">+22%</div><div class="scard-chg pos">AK-47 Redline</div></div>
-            <div class="scard"><div class="scard-label">Comissão Retida</div><div class="scard-val">€{{ ((steamInventoryTotalValue * 1.15) - steamInventoryTotalValue).toFixed(2) }}</div><div class="scard-chg neg">Já deduzida (15%)</div></div>
+            <div class="scard" *ngIf="biggestSteamItem"><div class="scard-label">Maior item</div><div class="scard-val">€{{ (biggestSteamItem.price || 0).toFixed(2) }}</div><div class="scard-chg neu" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">{{ biggestSteamItem.name }}</div></div>
+            <div class="scard" *ngIf="!biggestSteamItem"><div class="scard-label">Maior item</div><div class="scard-val">€0.00</div><div class="scard-chg neu">-</div></div>
+            <div class="scard"><div class="scard-label">Comissão Retida</div><div class="scard-val">€{{ ((steamInventoryTotalValue * 0.15)).toFixed(2) }}</div><div class="scard-chg neg">Taxa Steam (15%)</div></div>
           </div>
 
           <div class="card fade-up fd3">
             <div class="card-header">
               <div><div class="card-title">O meu Inventário CS2</div><div class="card-subtitle">Sincronizado da Steam</div></div>
               <div style="display:flex;gap:8px">
-                <button class="btn btn-ghost" style="font-size:11px" (click)="openModal()">Configurar Steam ID</button>
+                <select class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px; height: 32px; border: 1px solid var(--border); border-radius: 6px;" [(ngModel)]="steamSortOption">
+                  <option value="value_desc">Maior Valor</option>
+                  <option value="value_asc">Menor Valor</option>
+                  <option value="rarity">Raridade</option>
+                </select>
               </div>
             </div>
 
@@ -551,24 +555,22 @@
               }
             </style>
             <div class="skin-grid" *ngIf="!steamLoading && steamInventory">
-              <div class="skin-card" *ngFor="let item of steamInventory.items">
+              <div class="skin-card" *ngFor="let item of sortedSteamInventory" (click)="openSkinModal(item)" style="cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;">
                 <div class="skin-top">
                   <div class="skin-emoji"><img [src]="item.icon"></div>
                 </div>
                 <div class="skin-name" [style.color]="'#' + item.color">{{ item.name }}</div>
                 <div class="skin-wear">{{ item.type }}</div>
-                <div class="float-wrap">
-                  <div class="skin-float">Float: 0.{{ (item.name.length % 99).toString().padStart(2,'0') }}</div>
-                  <div class="float-bar"><div class="float-indicator" [style.left.%]="(item.name.length % 100)"></div></div>
-                </div>
-                <div class="skin-bottom">
+                <div class="skin-bottom" style="margin-top: 12px;">
                   <div>
                     <div class="skin-price">
                       <span *ngIf="item.price !== null">€{{ item.price.toFixed(2) }}</span>
                       <span *ngIf="item.price === null" style="font-size: 10px; color: var(--muted);">⌛ a calcular...</span>
                     </div>
                   </div>
-                  <div class="skin-chg pos">↑ +5.6%</div>
+                  <div class="skin-chg" [class.pos]="item.mockVariation > 0" [class.neg]="item.mockVariation < 0" [class.neu]="item.mockVariation === 0" *ngIf="item.mockVariation !== undefined">
+                    {{ item.mockVariation > 0 ? '↑ +' : (item.mockVariation < 0 ? '↓ ' : '') }}{{ item.mockVariation.toFixed(1) }}%
+                  </div>
                 </div>
               </div>
             </div>
@@ -1580,7 +1582,7 @@
     <div class="modal-icon">₿</div>
     <div class="modal-title">Ligar Binance</div>
     <div class="modal-text">
-      Introduz as tuas credenciais de API da Binance (Read-Only) para acompanhar o teu portfólio cripto.
+      Introduz a tua API Key da Binance (Read-Only) para acompanhar o teu portfólio cripto.
     </div>
     
     <div class="modal-form" style="margin-top: 24px; text-align: left; display: flex; flex-direction: column; gap: 16px;">
@@ -1588,15 +1590,11 @@
         <span>Binance API Key</span>
         <input type="text" [(ngModel)]="binanceKey" placeholder="Inserir API Key" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
       </label>
-      <label class="field">
-        <span>Binance API Secret</span>
-        <input type="password" [(ngModel)]="binanceSecret" placeholder="Inserir API Secret" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-      </label>
     </div>
 
     <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
       <button class="btn btn-ghost" (click)="closeBinanceModal()" style="flex:1">Cancelar</button>
-      <button class="btn btn-primary" (click)="saveBinance()" [disabled]="savingApis || !binanceKey.trim() || !binanceSecret.trim()" style="flex:2">
+      <button class="btn btn-primary" (click)="saveBinance()" [disabled]="savingApis || !binanceKey.trim()" style="flex:2">
         {{ savingApis ? 'A conectar...' : 'Ligar Binance' }}
       </button>
     </div>
