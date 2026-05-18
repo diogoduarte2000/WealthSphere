@@ -307,7 +307,7 @@ async function authenticateRequest(req) {
     throw error;
   }
 
-  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey +binanceApiSecret');
+  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey');
   if (!user) {
     const error = new Error('User not found');
     error.statusCode = 401;
@@ -571,12 +571,11 @@ app.patch('/api/users/me', async (req, res) => {
 app.patch('/api/users/me/external-apis', async (req, res) => {
   try {
     const { user } = await authenticateRequest(req);
-    const { steamId, trading212ApiKey, binanceApiKey, binanceApiSecret } = req.body;
+    const { steamId, trading212ApiKey, binanceApiKey } = req.body;
 
     if (steamId !== undefined) user.steamId = steamId || undefined;
     if (trading212ApiKey !== undefined) user.trading212ApiKey = trading212ApiKey || undefined;
     if (binanceApiKey !== undefined) user.binanceApiKey = binanceApiKey || undefined;
-    if (binanceApiSecret !== undefined) user.binanceApiSecret = binanceApiSecret || undefined;
 
     user.lastLogin = new Date();
     await user.save();

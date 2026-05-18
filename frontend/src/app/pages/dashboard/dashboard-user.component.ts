@@ -142,7 +142,6 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   newDisplayName: string = '';
   t212ApiKey: string = '';
   binanceKey: string = '';
-  binanceSecret: string = '';
 
   userT212Linked: boolean = false;
   userBinanceLinked: boolean = false;
@@ -182,6 +181,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   steamLoading: boolean = false;
   steamError: string = '';
   currentSteamTab: string = 'inventario';
+  steamSortOption: string = 'value_desc';
+  
+  // Skin Modal
+  selectedSkin: any = null;
+  skinModalOpen: boolean = false;
 
   // ROI Calculator
   roiCalc = {
@@ -372,9 +376,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         
         this.t212ApiKey = '';
         this.binanceKey = '';
-        this.binanceSecret = '';
         this.userT212Linked = !!user.hasTrading212ApiKey;
-        this.userBinanceLinked = !!user.hasBinanceApiKey || !!user.hasBinanceApiSecret;
+        this.userBinanceLinked = !!user.hasBinanceApiKey;
 
         if (user.financialProfile) {
           this.financialData = {
@@ -735,11 +738,10 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   saveBinance() {
-    if (!this.binanceKey.trim() || !this.binanceSecret.trim()) return;
+    if (!this.binanceKey.trim()) return;
     this.savingApis = true;
     this.userService.updateExternalApis({ 
-      binanceApiKey: this.binanceKey, 
-      binanceApiSecret: this.binanceSecret 
+      binanceApiKey: this.binanceKey
     }).subscribe({
       next: (res) => {
         this.savingApis = false;
@@ -774,6 +776,18 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.steamLoading = true;
     this.userService.getSteamInventory().subscribe({
       next: (res) => {
+        if (res.items) {
+          res.items.forEach((item: any) => {
+            const hash = item.name.split('').reduce((a: number, b: string) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+            
+            // Simulate stable 24h price variation (-8.5% to +12.5%) for all items
+            const varHash = Math.abs(hash + 42);
+            item.mockVariation = ((varHash % 210) / 10) - 8.5;
+            
+            // Simulate daily volume for investors info
+            item.mockVolume = (Math.abs(hash + 100) % 500) + 15;
+          });
+        }
         this.steamInventory = res;
         this.steamLoading = false;
         this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
@@ -812,11 +826,56 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     });
   }
 
+  get sortedSteamInventory() {
+    if (!this.steamInventory || !this.steamInventory.items) return [];
+    let items = [...this.steamInventory.items];
+    if (this.steamSortOption === 'value_desc') {
+      items.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (this.steamSortOption === 'value_asc') {
+      items.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (this.steamSortOption === 'rarity') {
+      // Ordenação simples por raridade baseada na cor (ex: Vermelho > Rosa > Roxo > Azul)
+      const rarityWeight: {[key: string]: number} = {
+        'eb4b4b': 5, // Covert (Red)
+        'd32ce6': 4, // Classified (Pink)
+        '8847ff': 3, // Restricted (Purple)
+        '4b69ff': 2, // Mil-Spec (Blue)
+        '5e98d9': 1, // Industrial (Light Blue)
+        'b0c3d9': 0  // Consumer (White)
+      };
+      items.sort((a, b) => {
+        const wA = rarityWeight[a.color?.toLowerCase()] || 0;
+        const wB = rarityWeight[b.color?.toLowerCase()] || 0;
+        return wB - wA;
+      });
+    }
+    return items;
+  }
+
   get steamInventoryTotalValue() {
     if (!this.steamInventory || !this.steamInventory.items) return 0;
     return this.steamInventory.items.reduce((acc: number, item: any) => acc + (item.price || 0), 0);
   }
 
+  get biggestSteamItem() {
+    if (!this.steamInventory || !this.steamInventory.items || this.steamInventory.items.length === 0) return null;
+    let items = [...this.steamInventory.items];
+    items.sort((a, b) => (b.price || 0) - (a.price || 0));
+    return items[0];
+  }
+
+  // --- Skin Modal Methods ---
+  openSkinModal(skin: any) {
+    this.selectedSkin = skin;
+    this.skinModalOpen = true;
+  }
+
+  closeSkinModal() {
+    this.skinModalOpen = false;
+    this.selectedSkin = null;
+  }
+
+  // --- Real Estate Methods ---
   ngAfterViewInit() {
     if (this.chartCanvas) {
       setTimeout(() => this.drawPatrimonioChart(this.data[this.currentChartPeriod]), 100);
