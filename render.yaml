@@ -9,11 +9,17 @@ services:
         value: 3000
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: STEAM_API_KEY
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SERVER_URL
         value: https://wealthsphere-backend.onrender.com
       - key: FRONTEND_URL
         value: https://wealth-sphere-eblw8c1kq-diogosilvanoduarte-3890s-projects.vercel.app
-      - key: SESSION_SECRET
-        generateValue: true
-      - key: STEAM_API_KEY
-        sync: false
+      - key: CLIENT_ORIGIN
+        value: https://wealthsphere.vercel.app,https://wealth-sphere-eblw8c1kq-diogosilvanoduarte-3890s-projects.vercel.app
