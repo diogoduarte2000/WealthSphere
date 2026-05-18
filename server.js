@@ -42,7 +42,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Middleware
 app.set('trust proxy', 1);
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : 'http://localhost:4200',
+  origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : 'http://localhost:4200', 
   credentials: true
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -993,6 +993,24 @@ app.delete('/api/forum/:id', async (req, res) => {
   } catch (err) {
     res.status(err.statusCode || 401).json({ message: err.message || 'Erro ao apagar' });
   }
+});
+
+app.get('/api', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    service: 'WealthSphere Backend API',
+    version: '11',
+    endpoints: [
+      '/api/health',
+      '/api/auth/steam',
+      '/api/users/me',
+      '/api/external/steam/price',
+      '/api/external/steam/inventory',
+      '/api/external/steam/float',
+      '/api/external/trading212/portfolio',
+      '/api/forum'
+    ]
+  });
 });
 
 app.get('/api/health', (req, res) => {
