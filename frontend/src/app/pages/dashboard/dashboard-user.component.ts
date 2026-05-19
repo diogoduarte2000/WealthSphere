@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 import { FormsModule } from '@angular/forms';
 
@@ -792,8 +793,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         this.steamLoading = false;
         this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
         
-        // Fetch prices sequentially to avoid overwhelming the server/Steam
-        this.loadSteamPricesSequential(0);
+        // Fetch prices in parallel for better performance
+        this.loadSteamPricesParallel();
       },
       error: (err) => {
         this.steamError = err.error?.message || 'Erro ao ligar à Steam';
@@ -802,8 +803,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private loadSteamPricesSequential(index: number) {
-    if (!this.steamInventory || !this.steamInventory.items || index >= this.steamInventory.items.length) {
+  private loadSteamPricesParallel() {
+    if (!this.steamInventory || !this.steamInventory.items || this.steamInventory.items.length === 0) {
       this.generateChartData();
       if (this.currentPage === 'dashboard') {
         this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
@@ -811,17 +812,33 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const item = this.steamInventory.items[index];
-    this.userService.getSteamItemPrice(item.name).subscribe({
-      next: (res) => {
-        item.price = res.price;
-        // Proceed to next item after a short delay
-        setTimeout(() => this.loadSteamPricesSequential(index + 1), 1500);
+    // Create observable array for all items
+    const priceObservables = this.steamInventory.items.map((item: any) =>
+      this.userService.getSteamItemPrice(item.name)
+    );
+
+    // Execute all requests in parallel
+    (forkJoin(priceObservables) as any).subscribe({
+      next: (results: any[]) => {
+        results.forEach((res, index) => {
+          if (this.steamInventory.items[index]) {
+            this.steamInventory.items[index].price = res.price || 0;
+          }
+        });
+        this.generateChartData();
+        if (this.currentPage === 'dashboard') {
+          this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
+        }
       },
       error: () => {
-        item.price = 0;
-        // Proceed to next item anyway
-        setTimeout(() => this.loadSteamPricesSequential(index + 1), 1500);
+        // If parallel fails, mark all as 0
+        this.steamInventory.items.forEach((item: any) => {
+          item.price = 0;
+        });
+        this.generateChartData();
+        if (this.currentPage === 'dashboard') {
+          this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
+        }
       }
     });
   }
