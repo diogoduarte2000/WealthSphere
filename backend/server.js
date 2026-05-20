@@ -590,8 +590,11 @@ app.get('/api/external/steam/inventory', async (req, res) => {
     const user = await User.findById(decoded.id);
     
     if (!user || !user.steamId) {
+      console.log('Steam inventory request failed: User has no Steam ID linked');
       return res.status(400).json({ message: 'User has no Steam ID linked' });
     }
+
+    console.log('Fetching Steam inventory for user:', user.email, 'Steam ID:', user.steamId);
 
     // Voltar à API Community mas com Headers de Browser (evita bloqueios)
     const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/730/2?l=portuguese&count=2000`;
@@ -606,56 +609,84 @@ app.get('/api/external/steam/inventory', async (req, res) => {
     });
 
     if (!response.data || !response.data.descriptions) {
-      console.log('No descriptions found in Steam response');
+      console.log('No descriptions found in Steam response for user:', user.email);
       return res.json({ count: 0, items: [] });
     }
 
-    // Buscar preços para cada item (com delay para evitar rate limit)
+    console.log('Found', response.data.descriptions.length, 'items in Steam inventory for user:', user.email);
+
+    // Buscar preços para cada item usando Steam API com delays longos para evitar rate limit
     const items = [];
-    const descriptions = response.data.descriptions.slice(0, 50); // Limitar a 50 itens para evitar timeout
+    const descriptions = response.data.descriptions.slice(0, 30); // Limitar a 30 itens
+    
+    console.log('Fetching prices for', descriptions.length, 'items using Steam API with 2s delay');
     
     for (const desc of descriptions) {
-      try {
-        // Buscar preço da Steam Market API
-        const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(desc.market_hash_name)}`;
-        const priceResponse = await axios.get(priceUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          },
-          timeout: 3000
-        });
-
-        let price = 0;
-        if (priceResponse.data && priceResponse.data.success) {
-          const priceStr = priceResponse.data.lowest_price || priceResponse.data.median_price || "0";
-          const rawPrice = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
-          // Valor líquido (deduzindo a comissão de 15% da Steam)
-          price = rawPrice > 0 ? (rawPrice / 1.15) : 0;
-        }
-
+      // Skip non-tradable items like medals, badges, etc.
+      if (!desc.tradable || desc.type && (desc.type.includes('Medal') || desc.type.includes('Badge') || desc.type.includes('Coin') || desc.type.includes('Sealed Graffiti') || desc.type.includes('Charm'))) {
+        console.log('Skipping non-tradable item:', desc.market_hash_name, 'Type:', desc.type);
         items.push({
           name: desc.market_hash_name,
           icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
           color: desc.name_color || 'ffffff',
           type: desc.type || 'Item',
-          tradable: desc.tradable,
-          price: price
-        });
-
-        // Delay de 100ms entre requests para evitar rate limit
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (priceErr) {
-        // Se falhar ao buscar preço, adiciona item com preço 0
-        items.push({
-          name: desc.market_hash_name,
-          icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
-          color: desc.name_color || 'ffffff',
-          type: desc.type || 'Item',
-          tradable: desc.tradable,
+          tradable: false,
           price: 0
         });
+        continue;
       }
+
+      let price = 0;
+      
+      // Check cache first
+      if (steamPriceCache.has(desc.market_hash_name)) {
+        const cached = steamPriceCache.get(desc.market_hash_name);
+        if (Date.now() - cached.timestamp < 30 * 60 * 1000) { // 30 minutos de cache
+          console.log('Using cached price for:', desc.market_hash_name, '-', cached.price);
+          price = cached.price;
+        }
+      }
+
+      // If not in cache or expired, fetch from Steam API
+      if (price === 0) {
+        try {
+          const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(desc.market_hash_name)}`;
+          const priceResponse = await axios.get(priceUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            },
+            timeout: 5000
+          });
+
+          if (priceResponse.data && priceResponse.data.success) {
+            const priceStr = priceResponse.data.lowest_price || priceResponse.data.median_price || "0";
+            const rawPrice = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+            price = rawPrice > 0 ? rawPrice : 0;
+            console.log('Fetched price for:', desc.market_hash_name, '-', price);
+            steamPriceCache.set(desc.market_hash_name, { price, timestamp: Date.now() });
+          } else {
+            console.log('Steam API returned success=false for:', desc.market_hash_name);
+          }
+
+          // Delay de 2 segundos entre requests para evitar rate limit
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (priceErr) {
+          console.error('Steam API error for item:', desc.market_hash_name, '-', priceErr.message);
+          price = 0;
+        }
+      }
+
+      items.push({
+        name: desc.market_hash_name,
+        icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+        color: desc.name_color || 'ffffff',
+        type: desc.type || 'Item',
+        tradable: desc.tradable,
+        price: price
+      });
     }
+
+    console.log('Successfully fetched', items.length, 'items with prices for user:', user.email);
 
     res.json({
       count: response.data.total_inventory_count || items.length,
@@ -681,12 +712,15 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
       return res.status(400).json({ message: 'User has no Trading 212 API Key linked' });
     }
 
+    console.log('Fetching Trading 212 portfolio for user:', user.email);
+
     let response;
     try {
       response = await axios.get('https://live.trading212.com/api/v0/equity/account/cash', {
         headers: { 'Authorization': user.trading212ApiKey },
         timeout: 10000
       });
+      console.log('Live T212 API success for user:', user.email);
     } catch (liveErr) {
       // Se falhar com 401 ou 403, pode ser uma chave de conta Prática (Demo)
       if (liveErr.response && (liveErr.response.status === 401 || liveErr.response.status === 403)) {
@@ -695,12 +729,15 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
           headers: { 'Authorization': user.trading212ApiKey },
           timeout: 10000
         });
+        console.log('Demo T212 API success for user:', user.email);
       } else {
+        console.error('Live T212 API error (not 401/403):', liveErr.message);
         throw liveErr;
       }
     }
 
     if (!response || !response.data) {
+      console.log('No response data from T212 API');
       return res.json({ success: false });
     }
 
