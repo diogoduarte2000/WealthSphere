@@ -545,8 +545,10 @@
             </div>
 
             <!-- No Items State (If linked but no items found) -->
-            <div *ngIf="!steamLoading && userSteamId && !steamInventory && !steamError" style="padding: 60px; text-align: center; color: var(--muted);">
-              A carregar inventário...
+            <div *ngIf="!steamLoading && userSteamId && (!steamInventory || steamInventory.items?.length === 0) && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--sand); border-radius: 12px; margin-top: 20px;">
+              <div style="font-size: 32px; margin-bottom: 16px;">🎒</div>
+              <div style="font-weight: 600; color: var(--ink); margin-bottom: 8px;">Inventário Vazio</div>
+              <div style="font-size: 13px; color: var(--muted);">Não foram encontrados itens de CS2 no teu inventário Steam.</div>
             </div>
 
             <style>
@@ -554,7 +556,7 @@
                 .skin-grid { grid-template-columns: repeat(4, 1fr) !important; }
               }
             </style>
-            <div class="skin-grid" *ngIf="!steamLoading && steamInventory">
+            <div class="skin-grid" *ngIf="!steamLoading && steamInventory && steamInventory.items?.length > 0">
               <div class="skin-card" *ngFor="let item of sortedSteamInventory" (click)="openSkinModal(item)" style="cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;">
                 <div class="skin-top">
                   <div class="skin-emoji"><img [src]="item.icon"></div>

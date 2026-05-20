@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const axios = require\\('axios'\\); axios.get\\('https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=AK-47%20%7C%20Redline%20%28Field-Tested%29', { timeout: 10000 }\\).then\\(r => console.log\\(JSON.stringify\\(r.data, null, 2\\)\\)\\).catch\\(e => console.error\\('Error:', e.message, e.response?.data\\)\\)\")"
+    ]
+  }
+}
