@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 
 import { FormsModule } from '@angular/forms';
 
@@ -791,54 +790,16 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         }
         this.steamInventory = res;
         this.steamLoading = false;
-        this.titles['cs2'] = ['CS2 & Steam', `Inventário sincronizado · ${res.count} itens` || 'Erro ao sincronizar'];
         
-        // Fetch prices in parallel for better performance
-        this.loadSteamPricesParallel();
+        // Backend já retorna preços automaticamente, não precisa buscar no frontend
+        this.generateChartData();
+        if (this.currentPage === 'dashboard') {
+          this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
+        }
       },
       error: (err) => {
         this.steamError = err.error?.message || 'Erro ao ligar à Steam';
         this.steamLoading = false;
-      }
-    });
-  }
-
-  private loadSteamPricesParallel() {
-    if (!this.steamInventory || !this.steamInventory.items || this.steamInventory.items.length === 0) {
-      this.generateChartData();
-      if (this.currentPage === 'dashboard') {
-        this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
-      }
-      return;
-    }
-
-    // Create observable array for all items
-    const priceObservables = this.steamInventory.items.map((item: any) =>
-      this.userService.getSteamItemPrice(item.name)
-    );
-
-    // Execute all requests in parallel
-    (forkJoin(priceObservables) as any).subscribe({
-      next: (results: any[]) => {
-        results.forEach((res, index) => {
-          if (this.steamInventory.items[index]) {
-            this.steamInventory.items[index].price = res.price || 0;
-          }
-        });
-        this.generateChartData();
-        if (this.currentPage === 'dashboard') {
-          this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
-        }
-      },
-      error: () => {
-        // If parallel fails, mark all as 0
-        this.steamInventory.items.forEach((item: any) => {
-          item.price = 0;
-        });
-        this.generateChartData();
-        if (this.currentPage === 'dashboard') {
-          this.drawPatrimonioChart(this.data[this.currentChartPeriod]);
-        }
       }
     });
   }
