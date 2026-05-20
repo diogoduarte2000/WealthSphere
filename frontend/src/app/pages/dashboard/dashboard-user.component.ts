@@ -776,6 +776,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.steamLoading = true;
     this.userService.getSteamInventory().subscribe({
       next: (res) => {
+        console.log('Steam inventory response:', res);
         if (res.items) {
           res.items.forEach((item: any) => {
             const hash = item.name.split('').reduce((a: number, b: string) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
@@ -790,6 +791,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         }
         this.steamInventory = res;
         this.steamLoading = false;
+        console.log('Steam inventory set:', this.steamInventory);
         
         // Backend já retorna preços automaticamente, não precisa buscar no frontend
         this.generateChartData();
@@ -798,6 +800,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         }
       },
       error: (err) => {
+        console.error('Steam inventory error:', err);
         this.steamError = err.error?.message || 'Erro ao ligar à Steam';
         this.steamLoading = false;
       }
