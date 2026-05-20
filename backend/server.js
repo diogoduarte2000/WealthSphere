@@ -610,18 +610,56 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       return res.json({ count: 0, items: [] });
     }
 
-    const items = response.data.descriptions.map(desc => ({
-      name: desc.market_hash_name,
-      icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
-      color: desc.name_color || 'ffffff',
-      type: desc.type || 'Item',
-      tradable: desc.tradable,
-      price: null // Será carregado dinamicamente no frontend
-    }));
+    // Buscar preços para cada item (com delay para evitar rate limit)
+    const items = [];
+    const descriptions = response.data.descriptions.slice(0, 50); // Limitar a 50 itens para evitar timeout
+    
+    for (const desc of descriptions) {
+      try {
+        // Buscar preço da Steam Market API
+        const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(desc.market_hash_name)}`;
+        const priceResponse = await axios.get(priceUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          timeout: 3000
+        });
+
+        let price = 0;
+        if (priceResponse.data && priceResponse.data.success) {
+          const priceStr = priceResponse.data.lowest_price || priceResponse.data.median_price || "0";
+          const rawPrice = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+          // Valor líquido (deduzindo a comissão de 15% da Steam)
+          price = rawPrice > 0 ? (rawPrice / 1.15) : 0;
+        }
+
+        items.push({
+          name: desc.market_hash_name,
+          icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+          color: desc.name_color || 'ffffff',
+          type: desc.type || 'Item',
+          tradable: desc.tradable,
+          price: price
+        });
+
+        // Delay de 100ms entre requests para evitar rate limit
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (priceErr) {
+        // Se falhar ao buscar preço, adiciona item com preço 0
+        items.push({
+          name: desc.market_hash_name,
+          icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+          color: desc.name_color || 'ffffff',
+          type: desc.type || 'Item',
+          tradable: desc.tradable,
+          price: 0
+        });
+      }
+    }
 
     res.json({
       count: response.data.total_inventory_count || items.length,
-      items: items.slice(0, 100)
+      items: items
     });
   } catch (err) {
     console.error('Steam Inventory Error:', err.message);
