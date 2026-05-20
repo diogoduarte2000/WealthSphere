@@ -845,6 +845,52 @@ app.get('/api/external/steam/inventory', async (req, res) => {
   }
 });
 
+app.get('/api/external/steam/inventory-test', async (req, res) => {
+  try {
+    const steamId = req.query.steamId || '76561198020822606';
+    const inventoryUrl = `https://steamcommunity.com/inventory/${steamId}/730/2?l=portuguese&count=2000`;
+    const response = await axios.get(inventoryUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+
+    const descriptions = Array.isArray(response.data?.descriptions) ? response.data.descriptions : [];
+    const assets = Array.isArray(response.data?.assets) ? response.data.assets : [];
+    const descriptionsByAsset = new Map(descriptions.map((desc) => [`${desc.classid}_${desc.instanceid}`, desc]));
+    const items = assets.map((asset) => {
+      const desc = descriptionsByAsset.get(`${asset.classid}_${asset.instanceid}`) || {};
+      return {
+        assetId: asset.assetid,
+        name: desc.market_hash_name,
+        icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
+        color: desc.name_color || 'ffffff',
+        type: desc.type || 'Item',
+        rarity: getRarity(desc),
+        rarityRank: getRarityRank(desc),
+        tradable: desc.tradable,
+        inspectLink: getInspectLink(desc, asset, steamId)
+      };
+    }).filter((item) => item.name);
+
+    res.json({
+      count: response.data.total_inventory_count || items.length,
+      items: items.slice(0, 100)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'name email steamId steamName');
+    res.json(users);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/external/steam/float', async (req, res) => {
   const { inspectLink } = req.query;
   if (!inspectLink) return res.status(400).json({ message: 'Missing inspect link' });
