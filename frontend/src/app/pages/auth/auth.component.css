@@ -20,6 +20,13 @@
   text-decoration: none;
 }
 
+.auth-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .auth-brand-mark {
   width: 34px;
   height: 34px;
@@ -33,6 +40,33 @@
 .auth-brand-mark svg {
   width: 18px;
   height: 18px;
+}
+
+.theme-toggle {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--brown);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--terra);
+  background: rgba(201, 106, 69, 0.1);
+  color: var(--terra);
+  outline: none;
+  transform: rotate(20deg);
+}
+
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
 }
 
 .auth-layout {
