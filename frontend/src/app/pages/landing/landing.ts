@@ -25,6 +25,34 @@ export class Landing implements AfterViewInit, OnDestroy {
   isDemoActive = false;
   showDemoModal = false;
 
+  /** true = tema escuro (predefinido), false = tema claro */
+  isDark = true;
+
+  /** Lê a preferência guardada no localStorage (dark é o padrão) */
+  private loadTheme(): void {
+    const saved = localStorage.getItem('ws-theme');
+    // Se não houver preferência guardada, usa dark por defeito
+    this.isDark = saved !== 'light';
+    this.applyTheme();
+  }
+
+  /** Aplica o atributo data-theme ao <html> */
+  private applyTheme(): void {
+    const html = document.documentElement;
+    if (this.isDark) {
+      html.removeAttribute('data-theme');       // :root aplica dark por defeito
+    } else {
+      html.setAttribute('data-theme', 'light'); // ativa o tema claro
+    }
+  }
+
+  /** Alterna entre tema escuro e claro e guarda a preferência */
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ws-theme', this.isDark ? 'dark' : 'light');
+    this.applyTheme();
+  }
+
   openDemoModal() {
     this.showDemoModal = true;
     document.body.style.overflow = 'hidden';
@@ -36,6 +64,9 @@ export class Landing implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Carrega o tema assim que o componente é inicializado
+    this.loadTheme();
+
     const root = this.elementRef.nativeElement as HTMLElement;
     const reveals = Array.from(root.querySelectorAll<HTMLElement>('.reveal'));
     this.parallaxItems = Array.from(root.querySelectorAll<HTMLElement>('[data-parallax]'));
