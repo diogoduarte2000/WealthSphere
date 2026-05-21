@@ -20,6 +20,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   modalOpen: boolean = false;
   currentChartPeriod: string = '6m';
   showUserMenu: boolean = false;
+  isDark: boolean = true;
   
   userName: string = 'Utilizador';
   userInitial: string = 'U';
@@ -278,7 +279,32 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   @ViewChild('trendChart', { static: false }) trendChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('compareChart', { static: false }) compareChartCanvas!: ElementRef<HTMLCanvasElement>;
 
+  /** Lê a preferência guardada no localStorage (dark é o padrão) */
+  private loadTheme(): void {
+    const saved = localStorage.getItem('ws-theme');
+    this.isDark = saved !== 'light';
+    this.applyTheme();
+  }
+
+  /** Aplica o atributo data-theme ao <html> */
+  private applyTheme(): void {
+    const html = document.documentElement;
+    if (this.isDark) {
+      html.removeAttribute('data-theme');
+    } else {
+      html.setAttribute('data-theme', 'light');
+    }
+  }
+
+  /** Alterna entre tema escuro e claro e guarda a preferência */
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ws-theme', this.isDark ? 'dark' : 'light');
+    this.applyTheme();
+  }
+
   ngOnInit() {
+    this.loadTheme();
     const userStr = localStorage.getItem('wealthsphere_user');
     if (userStr) {
       try {

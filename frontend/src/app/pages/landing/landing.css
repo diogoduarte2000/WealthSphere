@@ -1,3 +1,112 @@
+/* ==========================================================
+   BOTÃO DE TOGGLE DE TEMA (sol / lua)
+   Fica no nav, entre os links e os botões CTA.
+   ========================================================== */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);      /* borda subtil que muda com o tema */
+  background: transparent;
+  color: var(--brown);                    /* cor do ícone — muda com o tema */
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: rgba(201, 106, 69, 0.1);   /* fundo subtil laranja no hover */
+  color: var(--terra);                    /* ícone fica da cor de destaque */
+  border-color: var(--terra);
+  transform: rotate(20deg);              /* rotação leve para dar vida */
+}
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────
+   OVERRIDES DARK MODE — landing.css
+   Ajustes específicos de componentes da landing page
+   que precisam de cor hard-coded (não usam variáveis CSS).
+   ───────────────────────────────────────────────────────── */
+
+/* Ticker ribbon no hero — fundo e texto adaptam ao tema */
+:root .ticker-ribbon,
+[data-theme="dark"] .ticker-ribbon {
+  background: rgba(30, 27, 24, 0.75);    /* fundo escuro translúcido */
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .ticker-ribbon {
+  background: rgba(250, 249, 246, 0.52); /* fundo claro translúcido (original) */
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Fall cards (ETF, Rendas, CS2) — glassmorphism adaptado */
+:root .fall-card,
+[data-theme="dark"] .fall-card {
+  background: rgba(30, 27, 24, 0.75);    /* card escuro */
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .fall-card {
+  background: rgba(250, 249, 246, 0.62); /* card claro (original) */
+  border-color: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 24px 50px rgba(42, 32, 24, 0.13);
+}
+
+/* Motion rings — cor da borda adapta ao tema */
+:root .motion-ring,
+[data-theme="dark"] .motion-ring {
+  border-color: rgba(240, 235, 224, 0.08);
+  box-shadow: inset 0 0 0 14px rgba(20, 18, 16, 0.18);
+}
+
+[data-theme="light"] .motion-ring {
+  border-color: rgba(90, 74, 58, 0.14);  /* original */
+  box-shadow: inset 0 0 0 14px rgba(250, 249, 246, 0.18);
+}
+
+/* Demo toast — fundo adapta */
+:root .demo-toast,
+[data-theme="dark"] .demo-toast {
+  background: rgba(30, 27, 24, 0.95);
+  border-color: rgba(201, 106, 69, 0.3);
+}
+
+[data-theme="light"] .demo-toast {
+  background: rgba(250, 249, 246, 0.9);  /* original */
+  border-color: rgba(201, 106, 69, 0.24);
+}
+
+/* Demo modal — fundo e bordas */
+:root .demo-modal-content,
+[data-theme="dark"] .demo-modal-content {
+  background: #1e1b18;
+}
+
+[data-theme="light"] .demo-modal-content {
+  background: var(--white);
+}
+
+:root .demo-option-card,
+[data-theme="dark"] .demo-option-card {
+  background: #252118;
+}
+
+[data-theme="light"] .demo-option-card {
+  background: var(--white);
+}
+
+
+
 .hero-eyebrow, .hero > h1, .hero-sub, .hero-actions, .hero-social-proof, .hero-preview {
   position: relative;
   z-index: 1;

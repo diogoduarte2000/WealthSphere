@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,12 +8,13 @@ import { CommonModule } from '@angular/common';
   templateUrl: './dashboard-demo.component.html',
   styleUrls: ['./dashboard-demo.component.css']
 })
-export class DashboardDemoComponent implements AfterViewInit {
+export class DashboardDemoComponent implements OnInit, AfterViewInit {
   @ViewChild('patrimonioChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   currentPage: string = 'dashboard';
   modalOpen: boolean = false;
   currentChartPeriod: string = '6m';
+  isDark: boolean = true;
 
   titles: { [key: string]: [string, string] } = {
     dashboard: ['Dashboard', 'Domingo, 10 de Maio · Euribor 6M: 3.02% ↓'],
@@ -25,6 +26,30 @@ export class DashboardDemoComponent implements AfterViewInit {
     simulador: ['Simulador', 'Juros compostos · FIRE · Amortizações'],
     perfil: ['Perfil', 'João Silva · Lisboa 🇵🇹'],
   };
+
+  /** Lê a preferência guardada no localStorage (dark é o padrão) */
+  private loadTheme(): void {
+    const saved = localStorage.getItem('ws-theme');
+    this.isDark = saved !== 'light';
+    this.applyTheme();
+  }
+
+  /** Aplica o atributo data-theme ao <html> */
+  private applyTheme(): void {
+    const html = document.documentElement;
+    if (this.isDark) {
+      html.removeAttribute('data-theme');
+    } else {
+      html.setAttribute('data-theme', 'light');
+    }
+  }
+
+  /** Alterna entre tema escuro e claro e guarda a preferência */
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ws-theme', this.isDark ? 'dark' : 'light');
+    this.applyTheme();
+  }
 
   data = {
     '6m': {
@@ -43,6 +68,10 @@ export class DashboardDemoComponent implements AfterViewInit {
       rendas: [0, 0, 2400, 2400, 4800, 4800, 7200, 7200, 8400, 8400, 9600, 10200, 10800, 11000, 11200, 11500, 11800, 12000, 12000, 12000, 12000, 12000, 12000, 12000, 12000]
     }
   };
+
+  ngOnInit(): void {
+    this.loadTheme();
+  }
 
   ngAfterViewInit() {
     if (this.chartCanvas) {
@@ -160,4 +189,3 @@ export class DashboardDemoComponent implements AfterViewInit {
     });
   }
 }
-
