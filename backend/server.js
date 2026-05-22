@@ -340,6 +340,26 @@ app.patch('/api/users/me', async (req, res) => {
   }
 });
 
+// Rota para eliminar a propria conta
+app.delete('/api/users/me', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id || decoded.sub;
+
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    await ForumPost.deleteMany({ 'author.id': userId });
+    res.json({ message: 'Conta eliminada' });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
 // Rota para atualizar chaves de API externas
 app.patch('/api/users/me/external-apis', async (req, res) => {
   const authHeader = req.headers.authorization;

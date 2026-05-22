@@ -40,7 +40,7 @@
 :root .ticker-ribbon,
 [data-theme="dark"] .ticker-ribbon {
   background: rgba(30, 27, 24, 0.75);    /* fundo escuro translúcido */
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(70, 70, 70, 0.1);
 }
 
 [data-theme="light"] .ticker-ribbon {
@@ -491,6 +491,51 @@
   margin-top: 8px;
 }
 
+.info-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.25s ease;
+}
+
+.info-modal-content {
+  width: min(520px, 100%);
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.25s ease;
+}
+
+.info-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-modal-header h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Lora', serif;
+  font-size: 24px;
+}
+
+.info-modal-content p {
+  margin: 0;
+  color: var(--brown);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 /* Responsive Modal */
 @media (max-width: 768px) {
   .demo-modal-overlay {
@@ -524,5 +569,183 @@
   
   .demo-option-icon {
     font-size: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  nav {
+    height: 64px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .nav-logo-icon {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  .nav-logo-text {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .nav-cta {
+    gap: 4px;
+    flex-shrink: 0;
+    transform: translateX(-18px) scale(0.9);
+    transform-origin: right center;
+  }
+
+  .nav-cta .btn {
+    padding: 8px 7px;
+    font-size: 10.5px;
+  }
+
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+
+  .hero {
+    min-height: auto;
+    padding: 112px 18px 44px;
+  }
+
+  .hero-eyebrow {
+    max-width: 100%;
+    margin-bottom: 28px;
+    padding: 6px 12px;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .hero h1 {
+    max-width: 100%;
+    font-size: clamp(2.35rem, 12vw, 3.25rem);
+    line-height: 1.08;
+  }
+
+  .hero-sub {
+    max-width: 34ch;
+    margin-top: 22px;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .hero-actions {
+    width: min(100%, 420px);
+    max-width: calc(100vw - 36px);
+    margin-top: 34px;
+    gap: 10px;
+  }
+
+  .hero-actions .btn-lg {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 13px 16px;
+    white-space: nowrap;
+  }
+
+  .hero-social-proof {
+    width: 100%;
+    justify-content: center;
+    margin-top: 42px;
+    gap: 12px;
+  }
+
+  .social-text {
+    max-width: 190px;
+    line-height: 1.35;
+    text-align: left;
+  }
+
+  .motion-field {
+    inset: 64px 0 0;
+    opacity: 0.55;
+  }
+
+  .motion-ring {
+    opacity: 0.65;
+  }
+
+  .ring-one {
+    width: 390px;
+    height: 390px;
+    right: -155px;
+    top: 190px;
+  }
+
+  .ring-two {
+    width: 250px;
+    height: 250px;
+    left: -130px;
+    bottom: 120px;
+  }
+
+  .ticker-ribbon {
+    top: 34%;
+    left: -68%;
+    min-width: 560px;
+    padding: 8px 12px;
+    opacity: 0.38;
+  }
+
+  .fall-card {
+    display: none;
+  }
+
+  .hero-preview {
+    margin-top: 52px;
+  }
+
+  .preview-frame {
+    border-radius: 16px;
+  }
+
+  .preview-bar {
+    padding: 10px 12px;
+  }
+
+  .preview-url {
+    min-width: 0;
+    margin-left: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .preview-content {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .pc-topbar {
+    gap: 10px;
+  }
+
+  .pc-greeting {
+    font-size: 14px;
+  }
+
+  .pc-stats,
+  .pc-row {
+    grid-template-columns: 1fr;
+  }
+
+  section,
+  .rates-section,
+  .cta-section {
+    padding: 56px 18px;
+  }
+
+  .forum-post-footer,
+  .market-item {
+    flex-wrap: wrap;
   }
 }

@@ -267,8 +267,13 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   private loadTheme(): void {
     const saved = localStorage.getItem('ws-theme');
-    this.isDark = saved !== 'light';
+    this.isDark = saved ? saved !== 'light' : !this.isDaytime();
     this.applyTheme();
+  }
+
+  private isDaytime(): boolean {
+    const hour = new Date().getHours();
+    return hour >= 8 && hour < 19;
   }
 
   private applyTheme(): void {
