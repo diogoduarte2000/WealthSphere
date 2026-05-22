@@ -675,6 +675,11 @@ section { padding: 100px 48px; position: relative; }
   align-items: start;
 }
 
+.community-showcase.comments-only {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
+}
+
 
 .forum-post {
   background: var(--sand);

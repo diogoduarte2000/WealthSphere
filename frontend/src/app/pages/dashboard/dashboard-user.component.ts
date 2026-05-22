@@ -135,14 +135,18 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   nameModalOpen: boolean = false;
   t212ModalOpen: boolean = false;
   binanceModalOpen: boolean = false;
+  deleteAccountStep: 'closed' | 'confirm' | 'type' = 'closed';
   
   savingFinancial: boolean = false;
   savingName: boolean = false;
   savingApis: boolean = false;
+  deletingAccount: boolean = false;
   
   newDisplayName: string = '';
   t212ApiKey: string = '';
   binanceKey: string = '';
+  deleteAccountInput: string = '';
+  deleteAccountError: string = '';
 
   userT212Linked: boolean = false;
   userBinanceLinked: boolean = false;
@@ -282,8 +286,13 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   /** Lê a preferência guardada no localStorage (dark é o padrão) */
   private loadTheme(): void {
     const saved = localStorage.getItem('ws-theme');
-    this.isDark = saved !== 'light';
+    this.isDark = saved ? saved !== 'light' : !this.isDaytime();
     this.applyTheme();
+  }
+
+  private isDaytime(): boolean {
+    const hour = new Date().getHours();
+    return hour >= 8 && hour < 19;
   }
 
   /** Aplica o atributo data-theme ao <html> */
@@ -337,6 +346,44 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     localStorage.removeItem('wealthsphere_refresh_token');
     localStorage.removeItem('wealthsphere_user');
     this.router.navigate(['/auth']);
+  }
+
+  openDeleteAccountConfirm(): void {
+    this.deleteAccountStep = 'confirm';
+    this.deleteAccountInput = '';
+    this.deleteAccountError = '';
+  }
+
+  closeDeleteAccountModal(): void {
+    if (this.deletingAccount) return;
+    this.deleteAccountStep = 'closed';
+    this.deleteAccountInput = '';
+    this.deleteAccountError = '';
+  }
+
+  proceedDeleteAccount(): void {
+    this.deleteAccountStep = 'type';
+    this.deleteAccountInput = '';
+    this.deleteAccountError = '';
+  }
+
+  confirmDeleteAccount(): void {
+    if (this.deleteAccountInput.trim() !== 'delete') return;
+
+    this.deletingAccount = true;
+    this.deleteAccountError = '';
+    this.userService.deleteAccount().subscribe({
+      next: () => {
+        localStorage.removeItem('wealthsphere_access_token');
+        localStorage.removeItem('wealthsphere_refresh_token');
+        localStorage.removeItem('wealthsphere_user');
+        this.router.navigate(['/auth']);
+      },
+      error: (err) => {
+        this.deletingAccount = false;
+        this.deleteAccountError = err.error?.message || 'Erro ao eliminar conta.';
+      }
+    });
   }
 
   loginWithSteam() {

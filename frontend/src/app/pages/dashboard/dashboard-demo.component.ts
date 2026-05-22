@@ -1,5 +1,6 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, OnInit } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard-demo',
@@ -10,6 +11,7 @@ import { CommonModule } from '@angular/common';
 })
 export class DashboardDemoComponent implements OnInit, AfterViewInit {
   @ViewChild('patrimonioChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
+  private readonly route = inject(ActivatedRoute);
 
   currentPage: string = 'dashboard';
   modalOpen: boolean = false;
@@ -30,8 +32,13 @@ export class DashboardDemoComponent implements OnInit, AfterViewInit {
   /** Lê a preferência guardada no localStorage (dark é o padrão) */
   private loadTheme(): void {
     const saved = localStorage.getItem('ws-theme');
-    this.isDark = saved !== 'light';
+    this.isDark = saved ? saved !== 'light' : !this.isDaytime();
     this.applyTheme();
+  }
+
+  private isDaytime(): boolean {
+    const hour = new Date().getHours();
+    return hour >= 8 && hour < 19;
   }
 
   /** Aplica o atributo data-theme ao <html> */
@@ -71,6 +78,10 @@ export class DashboardDemoComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadTheme();
+    const page = this.route.snapshot.queryParamMap.get('page');
+    if (page && this.titles[page]) {
+      this.currentPage = page;
+    }
   }
 
   ngAfterViewInit() {
