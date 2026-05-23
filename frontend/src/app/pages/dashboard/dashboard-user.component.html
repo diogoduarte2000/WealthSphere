@@ -158,9 +158,9 @@
               <span class="stat-change" *ngIf="steamInventory">{{ steamInventory.count > 0 ? 'Live' : '0%' }}</span>
               <span class="stat-change" *ngIf="!steamInventory">0.0%</span>
             </div>
-            <div class="stat-label">Inventário CS2</div>
-            <div class="stat-val">€{{ steamInventoryTotalValue > 0 ? steamInventoryTotalValue.toFixed(2) : (steamInventory ? (steamInventory.count * 15.42).toFixed(0) : '0') }}</div>
-            <div class="stat-sub">{{ steamInventory ? steamInventory.count + ' itens (aprox)' : '0 itens' }}</div>
+            <div class="stat-label">Inventário Steam</div>
+            <div class="stat-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div>
+            <div class="stat-sub">{{ steamInventory ? selectedSteamGameName + ' · ' + steamInventory.count + ' itens' : '0 itens' }}</div>
           </div>
           <div class="stat-card fd5">
             <div class="stat-top">
@@ -484,7 +484,7 @@
           <div class="sb-divider"></div>
           <div class="sb-stats" *ngIf="steamInventory">
             <div class="sb-stat"><div class="sb-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="sb-label">Valor estimado</div></div>
-            <div class="sb-stat"><div class="sb-val">{{ steamInventory.count }}</div><div class="sb-label">Itens CS2</div></div>
+            <div class="sb-stat"><div class="sb-val">{{ steamInventory.count }}</div><div class="sb-label">Itens</div></div>
             <div class="sb-stat"><div class="sb-val" style="color:var(--sage)">+€47</div><div class="sb-label">Ganho 30d</div></div>
             <div class="sb-stat"><div class="sb-val">+7.5%</div><div class="sb-label">ROI médio</div></div>
           </div>
@@ -512,8 +512,8 @@
         <!-- Section: Inventário -->
         <div *ngIf="currentSteamTab === 'inventario'">
           <div class="stat-strip fade-up fd2">
-            <div class="scard"><div class="scard-label">Itens no Inventário</div><div class="scard-val">{{ steamInventory?.count || 0 }}</div><div class="scard-chg neu">sincronizados</div></div>
-            <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="scard-chg pos">mercado steam</div></div>
+            <div class="scard"><div class="scard-label">Itens em {{ selectedSteamGameName }}</div><div class="scard-val">{{ steamInventory?.count || 0 }}</div><div class="scard-chg neu">sincronizados</div></div>
+            <div class="scard"><div class="scard-label">Valor atual</div><div class="scard-val">€{{ steamInventoryTotalValue.toFixed(2) }}</div><div class="scard-chg pos">total do jogo</div></div>
             <div class="scard" *ngIf="biggestSteamItem"><div class="scard-label">Maior item</div><div class="scard-val">€{{ (biggestSteamItem.price || 0).toFixed(2) }}</div><div class="scard-chg neu" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">{{ biggestSteamItem.name }}</div></div>
             <div class="scard" *ngIf="!biggestSteamItem"><div class="scard-label">Maior item</div><div class="scard-val">€0.00</div><div class="scard-chg neu">-</div></div>
             <div class="scard"><div class="scard-label">Comissão Retida</div><div class="scard-val">€{{ ((steamInventoryTotalValue * 0.15)).toFixed(2) }}</div><div class="scard-chg neg">Taxa Steam (15%)</div></div>
@@ -521,9 +521,17 @@
 
           <div class="card fade-up fd3">
             <div class="card-header">
-              <div><div class="card-title">O meu Inventário CS2</div><div class="card-subtitle">Sincronizado da Steam</div></div>
-              <div style="display:flex;gap:8px">
-                <select class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px; height: 32px; border: 1px solid var(--border); border-radius: 6px;" [(ngModel)]="steamSortOption">
+              <div><div class="card-title">O meu inventário {{ selectedSteamGameName }}</div><div class="card-subtitle">Sincronizado da Steam</div></div>
+              <div class="inventory-toolbar">
+                <input
+                  type="search"
+                  class="inventory-search"
+                  placeholder="Pesquisar item..."
+                  [(ngModel)]="steamInventorySearch">
+                <select class="inventory-select" [(ngModel)]="steamInventoryGameFilter" (ngModelChange)="onSteamGameChange($event)">
+                  <option *ngFor="let game of steamInventoryGames" [value]="game.id">{{ game.name }}</option>
+                </select>
+                <select class="inventory-select" [(ngModel)]="steamSortOption">
                   <option value="value_desc">Maior Valor</option>
                   <option value="value_asc">Menor Valor</option>
                   <option value="rarity">Raridade</option>
@@ -532,8 +540,9 @@
             </div>
 
             <div *ngIf="steamLoading" style="padding: 60px; text-align: center; color: var(--muted);">
-              <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
-              Sincronizando o teu inventário da Steam...
+              <div class="inventory-loader" style="margin: 0 auto 16px;"></div>
+              <div>A procurar inventário e preços de {{ selectedSteamGameName }}...</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px">A Steam pode demorar quando há muitos itens.</div>
             </div>
 
             <!-- Error State -->
@@ -555,7 +564,7 @@
               <div style="font-size: 32px; margin-bottom: 16px;">🎮</div>
               <div style="font-weight: 600; color: var(--ink); margin-bottom: 8px;">Conecta a tua conta Steam</div>
               <div style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">
-                Precisamos do teu Steam ID para mostrar o teu inventário de CS2.
+                Precisamos do teu Steam ID para mostrar os teus inventários Steam.
               </div>
               <button class="btn btn-primary" style="display: inline-block;" (click)="loginWithSteam()">Ligar via Steam</button>
             </div>
@@ -564,7 +573,7 @@
             <div *ngIf="!steamLoading && userSteamId && (!steamInventory || steamInventory.items?.length === 0) && !steamError" style="padding: 60px; text-align: center; color: var(--muted); background: var(--sand); border-radius: 12px; margin-top: 20px;">
               <div style="font-size: 32px; margin-bottom: 16px;">🎒</div>
               <div style="font-weight: 600; color: var(--ink); margin-bottom: 8px;">Inventário Vazio</div>
-              <div style="font-size: 13px; color: var(--muted);">Não foram encontrados itens de CS2 no teu inventário Steam.</div>
+              <div style="font-size: 13px; color: var(--muted);">Não foram encontrados itens de {{ selectedSteamGameName }} no teu inventário Steam.</div>
             </div>
 
             <style>
@@ -576,14 +585,18 @@
               <div class="skin-card" *ngFor="let item of sortedSteamInventory" (click)="openSkinModal(item)" style="cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;">
                 <div class="skin-top">
                   <div class="skin-emoji"><img [src]="item.icon"></div>
+                  <div *ngIf="item.quantity > 1" class="skin-rarity" style="background:var(--terra-dim);color:var(--terra)">x{{ item.quantity }}</div>
                 </div>
                 <div class="skin-name" [style.color]="'#' + item.color">{{ item.name }}</div>
-                <div class="skin-wear">{{ item.type }}</div>
+                <div class="skin-wear">{{ item.type }}<span *ngIf="item.quantity > 1"> · {{ item.quantity }} unidades</span></div>
                 <div class="skin-bottom" style="margin-top: 12px;">
                   <div>
                     <div class="skin-price">
                       <span *ngIf="item.price !== null">€{{ item.price.toFixed(2) }}</span>
                       <span *ngIf="item.price === null" style="font-size: 10px; color: var(--muted);">⌛ a calcular...</span>
+                    </div>
+                    <div *ngIf="item.quantity > 1 && item.unitPrice !== undefined" style="font-size:10px;color:var(--muted);margin-top:2px">
+                      €{{ item.unitPrice.toFixed(2) }} / unidade
                     </div>
                   </div>
                   <div class="skin-chg" [class.pos]="item.mockVariation > 0" [class.neg]="item.mockVariation < 0" [class.neu]="item.mockVariation === 0" *ngIf="item.mockVariation !== undefined">
@@ -591,6 +604,9 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <div *ngIf="!steamLoading && steamInventory && steamInventory.items?.length > 0 && sortedSteamInventory.length === 0" class="inventory-empty-filter">
+              Nenhum item encontrado para os filtros atuais.
             </div>
           </div>
         </div>
