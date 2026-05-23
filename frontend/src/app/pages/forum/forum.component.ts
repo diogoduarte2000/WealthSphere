@@ -87,7 +87,7 @@ export class ForumComponent implements OnInit {
   }
 
   getUserID(): string {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('wealthsphere_access_token');
     if (!token) return '';
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));

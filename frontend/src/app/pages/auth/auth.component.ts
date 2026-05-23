@@ -52,6 +52,8 @@ export class AuthComponent implements OnInit, OnDestroy {
   errorMessage = '';
   isSubmitting = false;
   isMorphing = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   readonly authForm = this.fb.group({
     name: [''],
@@ -121,6 +123,15 @@ export class AuthComponent implements OnInit, OnDestroy {
   loginWithSteam(): void {
     // Redirecionar para a rota de auth do backend
     window.location.href = `${this.apiBaseUrl}/auth/steam`;
+  }
+
+  togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
+    if (field === 'password') {
+      this.showPassword = !this.showPassword;
+      return;
+    }
+
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   submit(): void {

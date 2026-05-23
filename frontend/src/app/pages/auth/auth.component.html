@@ -38,13 +38,29 @@
 
         <label class="field">
           <span>Password</span>
-          <input type="password" formControlName="password" [autocomplete]="isRegister ? 'new-password' : 'current-password'" placeholder="Mínimo 8 caracteres">
+          <div class="password-field">
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password" [autocomplete]="isRegister ? 'new-password' : 'current-password'" placeholder="Mínimo 8 caracteres">
+            <button type="button" class="password-toggle" (click)="togglePasswordVisibility('password')" [attr.aria-label]="showPassword ? 'Esconder password' : 'Mostrar password'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
           <small *ngIf="isInvalid('password')">A password precisa de pelo menos 8 caracteres.</small>
         </label>
 
         <label *ngIf="isRegister" class="field">
           <span>Confirmar password</span>
-          <input type="password" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repete a password">
+          <div class="password-field">
+            <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repete a password">
+            <button type="button" class="password-toggle" (click)="togglePasswordVisibility('confirmPassword')" [attr.aria-label]="showConfirmPassword ? 'Esconder password' : 'Mostrar password'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
           <small *ngIf="isInvalid('confirmPassword')">Confirma a password.</small>
           <small *ngIf="hasPasswordMismatch()">As passwords não coincidem.</small>
         </label>
