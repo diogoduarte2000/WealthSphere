@@ -17,12 +17,12 @@ interface RateData {
 })
 export class RatesService {
   private ratesSubject = new BehaviorSubject<RateData>({
-    euribor3m: 2.39,
-    euribor6m: 2.61,
-    euribor12m: 2.78,
-    teag: 4.12,
-    bceDeposit: 2.25,
-    ipc: 2.3,
+    euribor3m: 2.85,
+    euribor6m: 3.02,
+    euribor12m: 3.18,
+    teag: 4.35,
+    bceDeposit: 2.75,
+    ipc: 2.1,
     lastUpdate: new Date().toISOString()
   });
 
@@ -42,12 +42,12 @@ export class RatesService {
     this.http.get<any>('https://api.bancodeportugal.pt/v1/rates').pipe(take(1)).subscribe({
       next: (data) => {
         this.ratesSubject.next({
-          euribor3m: data.euribor3m || 2.39,
-          euribor6m: data.euribor6m || 2.61,
-          euribor12m: data.euribor12m || 2.78,
-          teag: data.teag || 4.12,
-          bceDeposit: data.bceDeposit || 2.25,
-          ipc: data.ipc || 2.3,
+          euribor3m: data.euribor3m || 2.85,
+          euribor6m: data.euribor6m || 3.02,
+          euribor12m: data.euribor12m || 3.18,
+          teag: data.teag || 4.35,
+          bceDeposit: data.bceDeposit || 2.75,
+          ipc: data.ipc || 2.1,
           lastUpdate: new Date().toISOString()
         });
       },
