@@ -61,3 +61,8 @@ This document records the current state of the **WealthSphere** platform, what h
 ---
 
 *This file is intentionally kept simple so that the AI can read and update it without needing to parse complex markdown tables.*
+
+
+Latest stable version (version17)
+
+new (version17.5) tests of new features "case number", case value total & single, check for items of same type like weapons and show "ex ak-47 elite build 0.10 float and ak-47 elite build 0.02 float"

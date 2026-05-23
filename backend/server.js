@@ -559,17 +559,155 @@ app.get('/api/users/me', async (req, res) => {
   }
 });
 const steamPriceCache = new Map();
+let steamPriceBlockedUntil = 0;
+
+const STEAM_PRICE_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const STEAM_PRICE_STALE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const STEAM_PRICE_LIVE_LIMIT = Number(process.env.STEAM_PRICE_LIVE_LIMIT || 20);
+const STEAM_PRICE_DELAY_MS = Number(process.env.STEAM_PRICE_DELAY_MS || 1200);
+const STEAM_GAMES = {
+  cs2: { id: 'cs2', name: 'Counter-Strike 2', appId: 730, contextId: 2, stackDuplicates: false },
+  rust: { id: 'rust', name: 'Rust', appId: 252490, contextId: 2, stackDuplicates: true },
+  dota2: { id: 'dota2', name: 'Dota 2', appId: 570, contextId: 2, stackDuplicates: true },
+  tf2: { id: 'tf2', name: 'Team Fortress 2', appId: 440, contextId: 2, stackDuplicates: true },
+  unturned: { id: 'unturned', name: 'Unturned', appId: 304930, contextId: 2, stackDuplicates: true },
+  payday2: { id: 'payday2', name: 'PAYDAY 2', appId: 218620, contextId: 2, stackDuplicates: true },
+  banana: { id: 'banana', name: 'Banana', appId: 2923300, contextId: 2, stackDuplicates: true }
+};
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getSteamGame(gameId = 'cs2') {
+  return STEAM_GAMES[gameId] || STEAM_GAMES.cs2;
+}
+
+function getSteamPriceCacheKey(appId, name) {
+  return `${appId}:${name}`;
+}
+
+function parseSteamMarketPrice(priceStr) {
+  const cleaned = String(priceStr || '').replace(/&nbsp;/g, '').replace(/\s/g, '').replace(/[^\d.,]/g, '');
+  if (!cleaned) return null;
+  const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned;
+  const price = Number.parseFloat(normalized);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+function getCachedSteamPrice(name, allowStale = false, appId = 730) {
+  const cached = steamPriceCache.get(getSteamPriceCacheKey(appId, name));
+  if (!cached) return null;
+
+  const age = Date.now() - cached.timestamp;
+  const ttl = allowStale ? STEAM_PRICE_STALE_TTL_MS : STEAM_PRICE_CACHE_TTL_MS;
+  if (age > ttl) return null;
+
+  return {
+    price: cached.price,
+    stale: age > STEAM_PRICE_CACHE_TTL_MS
+  };
+}
+
+function isSteamRateLimit(err) {
+  return err?.response?.status === 429;
+}
+
+function markSteamPriceBlocked(err) {
+  const retryAfter = Number(err?.response?.headers?.['retry-after'] || 0);
+  const waitMs = retryAfter > 0 ? retryAfter * 1000 : 15 * 60 * 1000;
+  steamPriceBlockedUntil = Date.now() + waitMs;
+}
+
+async function fetchSteamPrice(name, appId = 730) {
+  if (Date.now() < steamPriceBlockedUntil) {
+    const err = new Error('Steam price API is temporarily rate limited');
+    err.rateLimited = true;
+    throw err;
+  }
+
+  const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=${appId}&market_hash_name=${encodeURIComponent(name)}`;
+  const priceResponse = await axios.get(priceUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    },
+    timeout: 5000
+  });
+
+  if (!priceResponse.data || !priceResponse.data.success) return null;
+
+  const priceStr = priceResponse.data.lowest_price || priceResponse.data.median_price || '0';
+  const price = parseSteamMarketPrice(priceStr);
+  if (price !== null) steamPriceCache.set(getSteamPriceCacheKey(appId, name), { price, timestamp: Date.now() });
+  return price;
+}
+
+function shouldSkipSteamInventoryItem(desc) {
+  const name = desc.market_hash_name || '';
+  const type = desc.type || '';
+  return !desc.tradable ||
+    type.includes('Medal') ||
+    type.includes('Badge') ||
+    type.includes('Coin') ||
+    type.includes('Charm') ||
+    name.includes('Sealed Graffiti');
+}
+
+function getSteamPricePriority(desc) {
+  const name = desc.market_hash_name || '';
+  const type = desc.type || '';
+  if (name.includes('Case') || name.includes('Terminal')) return 0;
+  if (type.includes('Rifle') || type.includes('Pistol') || type.includes('SMG') || type.includes('Sniper') || type.includes('Shotgun')) return 1;
+  if (name.includes('Sticker')) return 3;
+  return 2;
+}
+
+function shouldStackSteamInventoryItem(desc) {
+  const name = desc.market_hash_name || '';
+  const type = desc.type || '';
+  return name.includes('Case') ||
+    name.includes('Capsule') ||
+    name.includes('Sticker') ||
+    name.includes('Graffiti') ||
+    name.includes('Terminal') ||
+    name.includes('Pass') ||
+    type.includes('Container') ||
+    type.includes('Sticker') ||
+    type.includes('Graffiti');
+}
 
 app.get('/api/external/steam/price', async (req, res) => {
   const { name } = req.query;
+  const game = getSteamGame(req.query.game);
   if (!name) return res.status(400).json({ message: 'Missing item name' });
 
-  // Cache por 15 minutos para evitar rate limit agressivo da Steam
-  if (steamPriceCache.has(name)) {
-    const cached = steamPriceCache.get(name);
-    if (Date.now() - cached.timestamp < 15 * 60 * 1000) {
-      return res.json({ price: cached.price });
-    }
+  const cached = getCachedSteamPrice(name, false, game.appId);
+  if (cached) {
+    return res.json({ price: cached.price, source: cached.stale ? 'cache-stale' : 'cache' });
+  }
+
+  try {
+    const price = await fetchSteamPrice(name, game.appId);
+    return res.json({ price, source: price === null ? 'unavailable' : 'steam' });
+  } catch (err) {
+    if (isSteamRateLimit(err)) markSteamPriceBlocked(err);
+    console.error('Steam Price Error for', name, ':', err.message);
+    const stale = getCachedSteamPrice(name, true, game.appId);
+    return res.json({
+      price: stale?.price ?? null,
+      source: stale ? 'cache-stale' : 'rate-limited',
+      rateLimited: isSteamRateLimit(err) || err.rateLimited === true
+    });
+  }
+});
+
+app.get('/api/external/steam/price-legacy', async (req, res) => {
+  const { name } = req.query;
+  if (!name) return res.status(400).json({ message: 'Missing item name' });
+
+  const cached = getCachedSteamPrice(name);
+  if (cached) {
+    return res.json({ price: cached.price, source: cached.stale ? 'cache-stale' : 'cache' });
   }
 
   try {
@@ -606,6 +744,7 @@ app.get('/api/external/steam/inventory', async (req, res) => {
 
   const token = authHeader.split(' ')[1];
   try {
+    const game = getSteamGame(req.query.game);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     
@@ -614,12 +753,12 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       return res.status(400).json({ message: 'User has no Steam ID linked' });
     }
 
-    console.log('Fetching Steam inventory for user:', user.email, 'Steam ID:', user.steamId);
+    console.log('Fetching Steam inventory for user:', user.email, 'Steam ID:', user.steamId, 'Game:', game.name);
 
     // Voltar à API Community mas com Headers de Browser (evita bloqueios)
-    const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/730/2?l=portuguese&count=2000`;
+    const inventoryUrl = `https://steamcommunity.com/inventory/${user.steamId}/${game.appId}/${game.contextId}?l=portuguese&count=2000`;
     
-    console.log('Fetching inventory from Community API for:', user.steamId);
+    console.log('Fetching inventory from Community API for:', user.steamId, game.name);
     const response = await axios.get(inventoryUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -629,88 +768,147 @@ app.get('/api/external/steam/inventory', async (req, res) => {
     });
 
     if (!response.data || !response.data.descriptions) {
-      console.log('No descriptions found in Steam response for user:', user.email);
-      return res.json({ count: 0, items: [] });
+      console.log('No descriptions found in Steam response for user:', user.email, 'Game:', game.name);
+      return res.json({ count: 0, items: [], game: game.id, gameName: game.name, appId: game.appId });
     }
 
-    console.log('Found', response.data.descriptions.length, 'items in Steam inventory for user:', user.email);
+    const assetCounts = new Map();
+    const assetsByKey = new Map();
+    const assets = Array.isArray(response.data.assets) ? response.data.assets : [];
+    assets.forEach((asset) => {
+      const key = `${asset.classid}_${asset.instanceid}`;
+      assetCounts.set(key, (assetCounts.get(key) || 0) + Number(asset.amount || 1));
+      const list = assetsByKey.get(key) || [];
+      list.push(asset);
+      assetsByKey.set(key, list);
+    });
 
-    // Buscar preços para cada item usando Steam API com delays longos para evitar rate limit
+    console.log('Found', assets.length || response.data.descriptions.length, 'items in Steam inventory for user:', user.email);
+
+    // Buscar precos por tipo de item e multiplicar pela quantidade real em assets.
     const items = [];
-    const descriptions = response.data.descriptions.slice(0, 30); // Limitar a 30 itens
+    const descriptions = [...response.data.descriptions].sort((a, b) => getSteamPricePriority(a) - getSteamPricePriority(b));
+    const pricingStats = {
+      liveFetched: 0,
+      cached: 0,
+      stale: 0,
+      missing: 0,
+      skipped: 0,
+      rateLimited: false,
+      liveLimit: STEAM_PRICE_LIVE_LIMIT,
+      blockedUntil: null
+    };
     
-    console.log('Fetching prices for', descriptions.length, 'items using Steam API with 2s delay');
+    console.log('Fetching prices for', descriptions.length, 'unique item types using Steam API');
     
     for (const desc of descriptions) {
+      const assetKey = `${desc.classid}_${desc.instanceid}`;
+      const quantity = assetCounts.get(assetKey) || 1;
+
       // Skip non-tradable items like medals, badges, etc.
-      if (!desc.tradable || desc.type && (desc.type.includes('Medal') || desc.type.includes('Badge') || desc.type.includes('Coin') || desc.type.includes('Sealed Graffiti') || desc.type.includes('Charm'))) {
+      if (shouldSkipSteamInventoryItem(desc)) {
         console.log('Skipping non-tradable item:', desc.market_hash_name, 'Type:', desc.type);
+        pricingStats.skipped++;
         items.push({
           name: desc.market_hash_name,
           icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
           color: desc.name_color || 'ffffff',
           type: desc.type || 'Item',
+          game: game.id,
+          gameName: game.name,
+          appId: game.appId,
           tradable: false,
-          price: 0
+          price: 0,
+          unitPrice: 0,
+          quantity,
+          totalPrice: 0,
+          priceSource: 'skipped'
         });
         continue;
       }
 
-      let price = 0;
-      
-      // Check cache first
-      if (steamPriceCache.has(desc.market_hash_name)) {
-        const cached = steamPriceCache.get(desc.market_hash_name);
-        if (Date.now() - cached.timestamp < 30 * 60 * 1000) { // 30 minutos de cache
-          console.log('Using cached price for:', desc.market_hash_name, '-', cached.price);
-          price = cached.price;
-        }
-      }
+      let price = null;
+      let priceSource = 'unpriced';
+      const cachedPrice = getCachedSteamPrice(desc.market_hash_name, true, game.appId);
 
-      // If not in cache or expired, fetch from Steam API
-      if (price === 0) {
+      if (cachedPrice) {
+        price = cachedPrice.price;
+        priceSource = cachedPrice.stale ? 'cache-stale' : 'cache';
+        cachedPrice.stale ? pricingStats.stale++ : pricingStats.cached++;
+        console.log('Using cached price for:', desc.market_hash_name, '-', price);
+      } else if (!pricingStats.rateLimited && pricingStats.liveFetched < STEAM_PRICE_LIVE_LIMIT) {
         try {
-          const priceUrl = `https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(desc.market_hash_name)}`;
-          const priceResponse = await axios.get(priceUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            },
-            timeout: 5000
-          });
-
-          if (priceResponse.data && priceResponse.data.success) {
-            const priceStr = priceResponse.data.lowest_price || priceResponse.data.median_price || "0";
-            const rawPrice = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
-            price = rawPrice > 0 ? rawPrice : 0;
+          price = await fetchSteamPrice(desc.market_hash_name, game.appId);
+          pricingStats.liveFetched++;
+          if (price !== null) {
+            priceSource = 'steam';
             console.log('Fetched price for:', desc.market_hash_name, '-', price);
-            steamPriceCache.set(desc.market_hash_name, { price, timestamp: Date.now() });
           } else {
             console.log('Steam API returned success=false for:', desc.market_hash_name);
           }
 
-          // Delay de 2 segundos entre requests para evitar rate limit
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await sleep(STEAM_PRICE_DELAY_MS);
         } catch (priceErr) {
+          if (isSteamRateLimit(priceErr)) {
+            markSteamPriceBlocked(priceErr);
+            pricingStats.rateLimited = true;
+            pricingStats.blockedUntil = new Date(steamPriceBlockedUntil).toISOString();
+          }
           console.error('Steam API error for item:', desc.market_hash_name, '-', priceErr.message);
-          price = 0;
+          price = null;
+          priceSource = pricingStats.rateLimited ? 'rate-limited' : 'unavailable';
         }
+      } else {
+        priceSource = pricingStats.rateLimited ? 'rate-limited' : 'live-limit';
       }
 
-      items.push({
+      if (price === null) pricingStats.missing++;
+      const totalPrice = price === null ? null : price * quantity;
+      const baseItem = {
         name: desc.market_hash_name,
         icon: desc.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}` : '',
         color: desc.name_color || 'ffffff',
         type: desc.type || 'Item',
+        game: game.id,
+        gameName: game.name,
+        appId: game.appId,
         tradable: desc.tradable,
-        price: price
-      });
+        price: totalPrice,
+        unitPrice: price,
+        quantity,
+        totalPrice,
+        priceSource
+      };
+
+      const matchingAssets = assetsByKey.get(assetKey) || [];
+      if (quantity > 1 && !game.stackDuplicates && !shouldStackSteamInventoryItem(desc) && matchingAssets.length > 1) {
+        matchingAssets.forEach((asset, index) => {
+          items.push({
+            ...baseItem,
+            assetId: asset.assetid,
+            name: `${desc.market_hash_name} #${index + 1}`,
+            baseName: desc.market_hash_name,
+            price,
+            totalPrice: price,
+            quantity: 1,
+            duplicateIndex: index + 1,
+            duplicateTotal: matchingAssets.length
+          });
+        });
+      } else {
+        items.push(baseItem);
+      }
     }
 
     console.log('Successfully fetched', items.length, 'items with prices for user:', user.email);
 
     res.json({
-      count: response.data.total_inventory_count || items.length,
-      items: items
+      count: response.data.total_inventory_count || assets.length || items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+      items: items,
+      pricing: pricingStats,
+      game: game.id,
+      gameName: game.name,
+      appId: game.appId
     });
   } catch (err) {
     console.error('Steam Inventory Error:', err.message);

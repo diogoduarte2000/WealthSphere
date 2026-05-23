@@ -450,6 +450,24 @@ canvas{display:block}
 .r-industrial{background:rgba(109,167,171,0.12);color:#6da7ab}
 .skin-float{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px}
 .steam-sort-select{font-size:11px;padding:7px 12px}
+.inventory-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.inventory-search,.inventory-select{
+  height:32px;border:1px solid var(--border);border-radius:6px;background:var(--sand);
+  color:var(--ink);font:inherit;font-size:12px;outline:none;
+}
+.inventory-search{width:190px;padding:0 10px}
+.inventory-select{padding:0 10px}
+.inventory-search:focus,.inventory-select:focus{border-color:var(--terra);background:var(--card)}
+.inventory-empty-filter{
+  margin-top:14px;padding:28px;text-align:center;border:1px dashed var(--border);
+  border-radius:10px;color:var(--muted);background:var(--sand);
+}
+.inventory-loader{
+  width:42px;height:42px;border-radius:50%;
+  border:3px solid var(--border);border-top-color:var(--terra);
+  animation:inventorySpin .8s linear infinite;
+}
+@keyframes inventorySpin{to{transform:rotate(360deg)}}
 
 /* FLOAT BAR */
 .float-wrap{margin-top:6px}
