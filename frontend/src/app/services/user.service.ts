@@ -50,12 +50,12 @@ export class UserService {
     return this.http.patch(`${this.apiUrl}/me/financial-data`, data);
   }
 
-  getSteamInventory(): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/external/steam/inventory`);
+  getSteamInventory(game: string = 'cs2'): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/external/steam/inventory?game=${encodeURIComponent(game)}`);
   }
 
-  getSteamItemPrice(name: string): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/external/steam/price?name=${encodeURIComponent(name)}`);
+  getSteamItemPrice(name: string, game: string = 'cs2'): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/external/steam/price?name=${encodeURIComponent(name)}&game=${encodeURIComponent(game)}`);
   }
 
   getSteamItemFloat(inspectLink: string): Observable<any> {

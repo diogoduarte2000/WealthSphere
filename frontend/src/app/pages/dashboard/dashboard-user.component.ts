@@ -183,10 +183,22 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
 
   steamInventory: any = null;
+  steamInventories: { [game: string]: any } = {};
   steamLoading: boolean = false;
   steamError: string = '';
   currentSteamTab: string = 'inventario';
   steamSortOption: string = 'value_desc';
+  steamInventorySearch: string = '';
+  steamInventoryGameFilter: string = 'cs2';
+  steamInventoryGames = [
+    { id: 'cs2', name: 'Counter-Strike 2' },
+    { id: 'rust', name: 'Rust' },
+    { id: 'dota2', name: 'Dota 2' },
+    { id: 'tf2', name: 'Team Fortress 2' },
+    { id: 'unturned', name: 'Unturned' },
+    { id: 'payday2', name: 'PAYDAY 2' },
+    { id: 'banana', name: 'Banana' }
+  ];
   
   // Skin Modal
   selectedSkin: any = null;
@@ -846,8 +858,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   loadSteamInventory() {
+    const game = this.steamInventoryGameFilter || 'cs2';
     this.steamLoading = true;
-    this.userService.getSteamInventory().subscribe({
+    this.steamError = '';
+    this.steamInventory = null;
+    this.userService.getSteamInventory(game).subscribe({
       next: (res) => {
         console.log('Steam inventory response:', res);
         if (res.items) {
@@ -862,7 +877,9 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
             item.mockVolume = (Math.abs(hash + 100) % 500) + 15;
           });
         }
+        this.steamInventories[game] = res;
         this.steamInventory = res;
+        this.steamError = '';
         this.steamLoading = false;
         console.log('Steam inventory set:', this.steamInventory);
         
@@ -880,13 +897,28 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     });
   }
 
+  onSteamGameChange(game: string) {
+    this.steamInventoryGameFilter = game;
+    this.steamInventorySearch = '';
+    this.loadSteamInventory();
+  }
+
+  get selectedSteamGameName(): string {
+    return this.steamInventoryGames.find(game => game.id === this.steamInventoryGameFilter)?.name || 'Steam';
+  }
+
   get sortedSteamInventory() {
     if (!this.steamInventory || !this.steamInventory.items) return [];
-    let items = [...this.steamInventory.items];
+    const query = this.steamInventorySearch.trim().toLowerCase();
+    let items: any[] = this.steamInventory.items.filter((item: any) => {
+      const searchable = `${item.name || ''} ${item.baseName || ''} ${item.type || ''} ${item.rarity || ''}`.toLowerCase();
+      return !query || searchable.includes(query);
+    });
+
     if (this.steamSortOption === 'value_desc') {
-      items.sort((a, b) => (b.price || 0) - (a.price || 0));
+      items.sort((a: any, b: any) => (b.price || 0) - (a.price || 0));
     } else if (this.steamSortOption === 'value_asc') {
-      items.sort((a, b) => (a.price || 0) - (b.price || 0));
+      items.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
     } else if (this.steamSortOption === 'rarity') {
       // Ordenação simples por raridade baseada na cor (ex: Vermelho > Rosa > Roxo > Azul)
       const rarityWeight: {[key: string]: number} = {
@@ -897,7 +929,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         '5e98d9': 1, // Industrial (Light Blue)
         'b0c3d9': 0  // Consumer (White)
       };
-      items.sort((a, b) => {
+      items.sort((a: any, b: any) => {
         const wA = rarityWeight[a.color?.toLowerCase()] || 0;
         const wB = rarityWeight[b.color?.toLowerCase()] || 0;
         return wB - wA;
