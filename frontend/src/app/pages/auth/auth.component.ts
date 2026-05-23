@@ -54,6 +54,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   isMorphing = false;
   showPassword = false;
   showConfirmPassword = false;
+  isDark = true;
 
   readonly authForm = this.fb.group({
     name: [''],
@@ -69,6 +70,8 @@ export class AuthComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadTheme();
+
     // Capturar tokens da URL (vindo do redirect da Steam)
     this.route.queryParams.subscribe(params => {
       const token = params['token'];
@@ -132,6 +135,12 @@ export class AuthComponent implements OnInit, OnDestroy {
     }
 
     this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ws-theme', this.isDark ? 'dark' : 'light');
+    this.applyTheme();
   }
 
   submit(): void {
@@ -254,6 +263,28 @@ export class AuthComponent implements OnInit, OnDestroy {
     }
 
     return environment.apiUrl;
+  }
+
+  private loadTheme(): void {
+    const saved = localStorage.getItem('ws-theme');
+    this.isDark = saved ? saved !== 'light' : !this.isDaytime();
+    this.applyTheme();
+  }
+
+  private isDaytime(): boolean {
+    const hour = new Date().getHours();
+    return hour >= 8 && hour < 19;
+  }
+
+  private applyTheme(): void {
+    const html = document.documentElement;
+
+    if (this.isDark) {
+      html.removeAttribute('data-theme');
+      return;
+    }
+
+    html.setAttribute('data-theme', 'light');
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {

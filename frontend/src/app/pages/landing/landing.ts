@@ -24,6 +24,39 @@ export class Landing implements AfterViewInit, OnDestroy {
 
   isDemoActive = false;
   showDemoModal = false;
+  infoModal?: { title: string; body: string };
+
+  /** true = tema escuro (predefinido), false = tema claro */
+  isDark = true;
+
+  /** Lê a preferência guardada no localStorage (dark é o padrão) */
+  private loadTheme(): void {
+    const saved = localStorage.getItem('ws-theme');
+    this.isDark = saved ? saved !== 'light' : !this.isDaytime();
+    this.applyTheme();
+  }
+
+  private isDaytime(): boolean {
+    const hour = new Date().getHours();
+    return hour >= 8 && hour < 19;
+  }
+
+  /** Aplica o atributo data-theme ao <html> */
+  private applyTheme(): void {
+    const html = document.documentElement;
+    if (this.isDark) {
+      html.removeAttribute('data-theme');       // :root aplica dark por defeito
+    } else {
+      html.setAttribute('data-theme', 'light'); // ativa o tema claro
+    }
+  }
+
+  /** Alterna entre tema escuro e claro e guarda a preferência */
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ws-theme', this.isDark ? 'dark' : 'light');
+    this.applyTheme();
+  }
 
   openDemoModal() {
     this.showDemoModal = true;
@@ -35,7 +68,47 @@ export class Landing implements AfterViewInit, OnDestroy {
     document.body.style.overflow = 'auto';
   }
 
+  openInfoModal(type: 'about' | 'contact' | 'terms' | 'privacy' | 'cookies' | 'rgpd', event?: Event): void {
+    event?.preventDefault();
+    const content = {
+      about: {
+        title: 'Sobre nós',
+        body: 'A WealthSphere é uma plataforma portuguesa para juntar património, rendas, simulações, comunidade e ativos digitais num só dashboard.'
+      },
+      contact: {
+        title: 'Contacto',
+        body: 'Email: geral@wealthsphere.pt. Morada: Lisboa, Portugal. Horário: dias úteis, 09:00-18:00.'
+      },
+      terms: {
+        title: 'Termos de Uso',
+        body: 'A utilização da WealthSphere pressupõe uso responsável da plataforma. Os dados apresentados são informativos e não constituem aconselhamento financeiro.'
+      },
+      privacy: {
+        title: 'Privacidade',
+        body: 'Tratamos apenas os dados necessários para criar conta, autenticar utilizadores e apresentar funcionalidades. Podes pedir exportação ou eliminação dos teus dados.'
+      },
+      cookies: {
+        title: 'Cookies',
+        body: 'Usamos cookies essenciais para sessão, segurança e preferências como o tema claro/escuro. Cookies analíticos serão opcionais.'
+      },
+      rgpd: {
+        title: 'RGPD',
+        body: 'Seguimos os princípios de minimização, transparência e limitação de finalidade. O utilizador pode exercer direitos de acesso, retificação, oposição e apagamento.'
+      }
+    };
+    this.infoModal = content[type];
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeInfoModal(): void {
+    this.infoModal = undefined;
+    document.body.style.overflow = 'auto';
+  }
+
   ngAfterViewInit(): void {
+    // Carrega o tema assim que o componente é inicializado
+    this.loadTheme();
+
     const root = this.elementRef.nativeElement as HTMLElement;
     const reveals = Array.from(root.querySelectorAll<HTMLElement>('.reveal'));
     this.parallaxItems = Array.from(root.querySelectorAll<HTMLElement>('[data-parallax]'));

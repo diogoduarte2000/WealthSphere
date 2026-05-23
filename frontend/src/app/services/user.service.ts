@@ -26,6 +26,10 @@ export class UserService {
     return this.http.patch(`${this.apiUrl}/me`, data);
   }
 
+  deleteAccount(): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/me`);
+  }
+
   updateExternalApis(data: { 
     steamId?: string; 
     trading212ApiKey?: string;
