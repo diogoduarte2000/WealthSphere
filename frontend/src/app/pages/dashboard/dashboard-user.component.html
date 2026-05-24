@@ -397,7 +397,7 @@
               <div *ngIf="t212Portfolio" class="tx-item" style="border-top: 1px dashed var(--border); margin-top: 8px; padding-top: 16px;">
                 <div class="tx-icon" style="background:var(--sage-dim)">📈</div>
                 <div><div class="tx-name">Trading 212 - Fundos Livres</div><div class="tx-cat">Investimentos · API</div></div>
-                <div><div class="tx-amount neu">€{{ t212Portfolio.free.toLocaleString() }}</div></div>
+                <div><div class="tx-amount neu">€{{ (t212Portfolio.free || 0).toLocaleString() }}</div></div>
               </div>
             </div>
           </div>
