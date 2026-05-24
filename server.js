@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const crypto = require('crypto');
 const User = require('./models/User');
-const ForumPostSchema = require('./backend/models/ForumPost');
 const bcrypt = require('bcryptjs');
 
 const rootEnvPath = fs.existsSync(path.join(__dirname, '.env'))
@@ -21,7 +20,6 @@ require('dotenv').config({ path: rootEnvPath });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const ForumPost = mongoose.models.ForumPost || mongoose.model('ForumPost', ForumPostSchema);
 const steamPriceCache = new Map();
 const steamInventoryCache = new Map();
 const steamFloatCache = new Map();
@@ -828,9 +826,46 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       };
     }).filter((item) => item.name);
 
+    // Fetch prices for all items with delay to avoid rate limiting
+    const itemsWithPrices = [];
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      // Skip non-tradable items (medalhas, etc.)
+      if (!item.tradable) {
+        itemsWithPrices.push({ ...item, price: null, change24h: null });
+        skippedCount++;
+        continue;
+      }
+      try {
+        console.log(`Fetching price for ${item.name} (${i + 1}/${items.length})...`);
+        const priceData = await fetchSteamListingSnapshot(item.name);
+        itemsWithPrices.push({
+          ...item,
+          price: priceData.price,
+          change24h: priceData.change24h
+        });
+        successCount++;
+        console.log(`✓ Price fetched for ${item.name}: ${priceData.price}`);
+        // Add delay between requests to avoid rate limiting (1.5s)
+        if (i < items.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      } catch (err) {
+        console.error(`✗ Error fetching price for ${item.name}:`, err.message);
+        itemsWithPrices.push({ ...item, price: null, change24h: null });
+        failCount++;
+      }
+    }
+    
+    console.log(`Price fetch summary: ${successCount} success, ${failCount} failed, ${skippedCount} skipped (non-tradable)`);
+
     const payload = {
       count: response.data.total_inventory_count || items.length,
-      items: items.slice(0, 100)
+      items: itemsWithPrices.slice(0, 100)
     };
 
     setBoundedCache(steamInventoryCache, user.steamId, {
@@ -983,64 +1018,6 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
   }
 });
 
-app.get('/api/forum', async (_req, res) => {
-  try {
-    const posts = await ForumPost.find().sort({ createdAt: -1 }).limit(50);
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ message: 'Erro ao carregar fórum' });
-  }
-});
-
-app.post('/api/forum', async (req, res) => {
-  try {
-    const { user } = await authenticateRequest(req);
-    const { title, content, category, price, game } = req.body;
-
-    if (!title || !content) {
-      return res.status(400).json({ message: 'Title and content are required' });
-    }
-
-    const newPost = new ForumPost({
-      title,
-      content,
-      category,
-      price,
-      game: game || 'CS2',
-      author: {
-        id: user._id,
-        name: user.displayName || user.name,
-        avatar: user.avatar || ''
-      }
-    });
-
-    await newPost.save();
-    res.json({ message: 'Anúncio publicado com sucesso!', post: newPost });
-  } catch (err) {
-    res.status(err.statusCode || 401).json({ message: err.message || 'Token inválido ou expirado' });
-  }
-});
-
-app.delete('/api/forum/:id', async (req, res) => {
-  try {
-    const { user } = await authenticateRequest(req);
-    const post = await ForumPost.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post não encontrado' });
-    }
-
-    if (post.author.id.toString() !== user._id.toString()) {
-      return res.status(403).json({ message: 'Sem permissão para apagar este anúncio' });
-    }
-
-    await ForumPost.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Anúncio removido' });
-  } catch (err) {
-    res.status(err.statusCode || 401).json({ message: err.message || 'Erro ao apagar' });
-  }
-});
-
 app.get('/api', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -1053,8 +1030,7 @@ app.get('/api', (req, res) => {
       '/api/external/steam/price',
       '/api/external/steam/inventory',
       '/api/external/steam/float',
-      '/api/external/trading212/portfolio',
-      '/api/forum'
+      '/api/external/trading212/portfolio'
     ]
   });
 });
