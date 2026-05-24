@@ -593,7 +593,7 @@
                   <div>
                     <div class="skin-price">
                       <span *ngIf="item.price !== null">€{{ item.price.toFixed(2) }}</span>
-                      <span *ngIf="item.price === null" style="font-size: 10px; color: var(--muted);">⌛ a calcular...</span>
+                      <span *ngIf="item.price === null" style="font-size: 10px; color: var(--muted);">N/A</span>
                     </div>
                     <div *ngIf="item.quantity > 1 && item.unitPrice !== undefined" style="font-size:10px;color:var(--muted);margin-top:2px">
                       €{{ item.unitPrice.toFixed(2) }} / unidade
