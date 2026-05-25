@@ -829,14 +829,29 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       };
     }).filter((item) => item.name);
 
-    // Fetch prices for all items with delay to avoid rate limiting
+    // Group items by name to reduce API calls
+    const itemGroups = new Map();
+    items.forEach((item) => {
+      const key = item.name;
+      if (!itemGroups.has(key)) {
+        itemGroups.set(key, { ...item, quantity: 0, assetIds: [] });
+      }
+      const group = itemGroups.get(key);
+      group.quantity++;
+      group.assetIds.push(item.assetId);
+    });
+
+    const uniqueItems = Array.from(itemGroups.values());
+    console.log(`Grouped ${items.length} items into ${uniqueItems.length} unique items`);
+
+    // Fetch prices for unique items with delay to avoid rate limiting
     const itemsWithPrices = [];
     let successCount = 0;
     let failCount = 0;
     let skippedCount = 0;
     
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    for (let i = 0; i < uniqueItems.length; i++) {
+      const item = uniqueItems[i];
       // Skip non-tradable items (medalhas, etc.)
       if (!item.tradable) {
         itemsWithPrices.push({ ...item, price: null, change24h: null });
@@ -844,7 +859,7 @@ app.get('/api/external/steam/inventory', async (req, res) => {
         continue;
       }
       try {
-        console.log(`Fetching price for ${item.name} (${i + 1}/${items.length})...`);
+        console.log(`Fetching price for ${item.name} (${i + 1}/${uniqueItems.length})...`);
         const priceData = await fetchSteamListingSnapshot(item.name);
         itemsWithPrices.push({
           ...item,
@@ -854,7 +869,7 @@ app.get('/api/external/steam/inventory', async (req, res) => {
         successCount++;
         console.log(`✓ Price fetched for ${item.name}: ${priceData.price}`);
         // Add delay between requests to avoid rate limiting (2.5s)
-        if (i < items.length - 1) {
+        if (i < uniqueItems.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 2500));
         }
       } catch (err) {
