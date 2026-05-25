@@ -156,6 +156,7 @@ function calculateChange24h(history) {
 
 async function fetchSteamListingSnapshot(name) {
   const listingUrl = `https://steamcommunity.com/market/listings/730/${encodeURIComponent(name)}`;
+  console.log(`Fetching listing for: ${name}`);
   const response = await axios.get(listingUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0',
@@ -169,6 +170,8 @@ async function fetchSteamListingSnapshot(name) {
   const saleMatch = html.match(/for sale starting at[\s\S]{0,500}?>([^<>]*\d+[,.]\d+[^<>]*)<\/span>/i);
   const history = extractSteamHistory(html);
   const latestHistoryPrice = history.length ? history[history.length - 1].price : null;
+
+  console.log(`  - saleMatch: ${saleMatch ? 'found' : 'not found'}, history: ${history.length} items, latestPrice: ${latestHistoryPrice}`);
 
   return {
     price: parseMarketPrice(saleMatch?.[1]) ?? latestHistoryPrice,
@@ -850,9 +853,9 @@ app.get('/api/external/steam/inventory', async (req, res) => {
         });
         successCount++;
         console.log(`✓ Price fetched for ${item.name}: ${priceData.price}`);
-        // Add delay between requests to avoid rate limiting (1.5s)
+        // Add delay between requests to avoid rate limiting (2.5s)
         if (i < items.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 2500));
         }
       } catch (err) {
         console.error(`✗ Error fetching price for ${item.name}:`, err.message);
