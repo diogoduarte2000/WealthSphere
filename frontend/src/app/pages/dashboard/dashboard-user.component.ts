@@ -1305,7 +1305,10 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       'cs2': 'Counter-Strike 2',
       'dota2': 'Dota 2',
       'rust': 'Rust',
-      'tf2': 'Team Fortress 2'
+      'tf2': 'Team Fortress 2',
+      'unturned': 'Unturned',
+      'payday2': 'PAYDAY 2',
+      'banana': 'Banana'
     };
     this.selectedMarketGameName = gameNames[game];
     

@@ -16,6 +16,7 @@ yarn-error.log*
 *.p12
 *.cert
 *.crt
+# NOTE: .env.example é um TEMPLATE e DEVE estar commitado no git!
 
 # Build output
 dist/
@@ -25,6 +26,7 @@ build/
 # IDE and editor files
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
@@ -48,6 +50,11 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Project-specific exclusions
+backend/
+progress.md
+site\ preview\ v1/
 *.tmp
 *.temp
 

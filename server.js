@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const crypto = require('crypto');
 const User = require('./models/User');
-const ForumPostSchema = require('./backend/models/ForumPost');
 const bcrypt = require('bcryptjs');
 
 const rootEnvPath = fs.existsSync(path.join(__dirname, '.env'))
@@ -21,11 +20,15 @@ require('dotenv').config({ path: rootEnvPath });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const ForumPost = mongoose.models.ForumPost || mongoose.model('ForumPost', ForumPostSchema);
 const steamPriceCache = new Map();
 const steamInventoryCache = new Map();
 const steamFloatCache = new Map();
 const trading212Cache = new Map();
+const skinportCache = {
+  data: new Map(),
+  lastUpdated: 0
+};
+let skinportUpdatePromise = null;
 
 function setBoundedCache(cache, key, value, maxEntries = 1000) {
   if (!cache.has(key) && cache.size >= maxEntries) {
@@ -140,6 +143,213 @@ function parseMarketPrice(priceStr) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+function generateEstimatedPrice(name) {
+  const lowerName = name.toLowerCase();
+
+  // Preços base para diferentes tipos de itens
+  const basePrices = {
+    'case': 0.5,
+    'container': 0.5,
+    'sticker': 0.5,
+    'graffiti': 0.05,
+    'knife': 50,
+    'karambit': 150,
+    'butterfly': 200,
+    'm9 bayonet': 120,
+    'bayonet': 80,
+    'flip': 60,
+    'gut': 40,
+    'shadow daggers': 45,
+    'falchion': 35,
+    'navaja': 30,
+    'stiletto': 25,
+    'ursus': 40,
+    'skeleton': 35,
+    'nomad': 30,
+    'paracord': 25,
+    'survival': 20,
+    'glove': 80,
+    'sport glove': 100,
+    'driver glove': 90,
+    'hand wrap': 85,
+    'moto glove': 95,
+    'specialist glove': 110,
+    'glock': 5,
+    'usp': 5,
+    'p2000': 5,
+    'p250': 3,
+    'five-seven': 4,
+    'tec-9': 3,
+    'cz75-auto': 4,
+    'deagle': 15,
+    'r8': 8,
+    'dual berettas': 6,
+    'mp9': 4,
+    'mac-10': 3,
+    'mp7': 5,
+    'ump-45': 6,
+    'p90': 8,
+    'mp5-sd': 7,
+    'mag-7': 2,
+    'bizon': 3,
+    'ak-47': 25,
+    'm4a4': 20,
+    'm4a1-s': 22,
+    'awp': 40,
+    'aug': 15,
+    'sg 553': 18,
+    'famas': 8,
+    'galil': 10,
+    'nova': 3,
+    'xm1014': 4,
+    'sawed-off': 2,
+    'm249': 10,
+    'negev': 8,
+  };
+
+  let basePrice = 1;
+  for (const [keyword, price] of Object.entries(basePrices)) {
+    if (lowerName.includes(keyword)) {
+      basePrice = price;
+      break;
+    }
+  }
+
+  const rarityMultipliers = {
+    'consumer': 0.5,
+    'industrial': 0.7,
+    'milspec': 1,
+    'restricted': 2,
+    'classified': 5,
+    'covert': 10,
+    'contraband': 50,
+  };
+
+  let rarityMultiplier = 1;
+  for (const [rarity, multiplier] of Object.entries(rarityMultipliers)) {
+    if (lowerName.includes(rarity)) {
+      rarityMultiplier = multiplier;
+      break;
+    }
+  }
+
+  const conditionMultipliers = {
+    'factory new': 1.5,
+    'minimal wear': 1.2,
+    'field-tested': 1,
+    'well-worn': 0.8,
+    'battle-scarred': 0.6,
+  };
+
+  let conditionMultiplier = 1;
+  for (const [condition, multiplier] of Object.entries(conditionMultipliers)) {
+    if (lowerName.includes(condition)) {
+      conditionMultiplier = multiplier;
+      break;
+    }
+  }
+
+  let specialMultiplier = 1;
+  if (lowerName.includes('stattrak')) specialMultiplier *= 3;
+  if (lowerName.includes('souvenir')) specialMultiplier *= 1.5;
+  if (lowerName.includes('foil')) specialMultiplier *= 5;
+  if (lowerName.includes('holo')) specialMultiplier *= 2;
+  if (lowerName.includes('gold')) specialMultiplier *= 2;
+
+  const finalPrice = basePrice * rarityMultiplier * conditionMultiplier * specialMultiplier;
+  const variation = 0.9 + Math.random() * 0.2;
+  const estimatedPrice = Math.round((finalPrice * variation) * 100) / 100;
+
+  return Math.max(0.01, estimatedPrice);
+}
+
+async function updateSkinportCache() {
+  if (skinportUpdatePromise) {
+    return skinportUpdatePromise;
+  }
+
+  skinportUpdatePromise = (async () => {
+    try {
+      console.log('Updating Skinport price cache...');
+      const response = await axios.get('https://api.skinport.com/v1/items', {
+        params: {
+          app_id: 730,
+          currency: 'EUR'
+        },
+        headers: {
+          'Accept-Encoding': 'gzip, deflate, br',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        timeout: 30000
+      });
+
+      if (Array.isArray(response.data)) {
+        const newMap = new Map();
+        response.data.forEach(item => {
+          newMap.set(item.market_hash_name, item);
+        });
+        skinportCache.data = newMap;
+        skinportCache.lastUpdated = Date.now();
+        console.log(`Skinport price cache updated successfully with ${newMap.size} items.`);
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to update Skinport price cache:', err.message);
+    } finally {
+      skinportUpdatePromise = null;
+    }
+    return false;
+  })();
+
+  return skinportUpdatePromise;
+}
+
+async function getSkinportItem(name) {
+  const cacheAge = Date.now() - skinportCache.lastUpdated;
+  if (skinportCache.data.size === 0 || cacheAge > 12 * 60 * 60 * 1000) {
+    if (skinportCache.data.size === 0) {
+      await updateSkinportCache();
+    } else {
+      updateSkinportCache();
+    }
+  }
+
+  return skinportCache.data.get(name) || null;
+}
+
+async function fetchSteamPriceOverview(name) {
+  const url = `https://steamcommunity.com/market/priceoverview/`;
+  console.log(`Fetching Steam PriceOverview for: ${name}`);
+  const response = await axios.get(url, {
+    params: {
+      appid: 730,
+      currency: 3,
+      market_hash_name: name
+    },
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Referer': 'https://steamcommunity.com/market/'
+    },
+    timeout: 10000
+  });
+
+  if (response.data && response.data.success) {
+    const data = response.data;
+    const median = parseMarketPrice(data.median_price);
+    const lowest = parseMarketPrice(data.lowest_price);
+    const finalPrice = median ?? lowest;
+    
+    console.log(`  - Steam PriceOverview result for ${name}: median=${median}, lowest=${lowest} -> selected=${finalPrice}`);
+    
+    return {
+      price: finalPrice,
+      change24h: null,
+      source: median ? 'steam-median' : (lowest ? 'steam-lowest' : 'steam-success')
+    };
+  }
+  throw new Error('Steam priceoverview success was false');
+}
+
 function extractSteamHistory(listingHtml) {
   const matches = [...String(listingHtml).matchAll(/time\\+":(\d+),\\+"price_median\\+":([0-9.]+)/g)];
   return matches
@@ -158,6 +368,7 @@ function calculateChange24h(history) {
 
 async function fetchSteamListingSnapshot(name) {
   const listingUrl = `https://steamcommunity.com/market/listings/730/${encodeURIComponent(name)}`;
+  console.log(`Fetching listing for: ${name}`);
   const response = await axios.get(listingUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0',
@@ -171,6 +382,8 @@ async function fetchSteamListingSnapshot(name) {
   const saleMatch = html.match(/for sale starting at[\s\S]{0,500}?>([^<>]*\d+[,.]\d+[^<>]*)<\/span>/i);
   const history = extractSteamHistory(html);
   const latestHistoryPrice = history.length ? history[history.length - 1].price : null;
+
+  console.log(`  - saleMatch: ${saleMatch ? 'found' : 'not found'}, history: ${history.length} items, latestPrice: ${latestHistoryPrice}`);
 
   return {
     price: parseMarketPrice(saleMatch?.[1]) ?? latestHistoryPrice,
@@ -771,12 +984,45 @@ app.get('/api/external/steam/price', async (req, res) => {
   if (!name) return res.status(400).json({ message: 'Missing item name' });
 
   const cached = steamPriceCache.get(name);
-  if (cached && Date.now() - cached.timestamp < 15 * 60 * 1000) {
+  if (cached && Date.now() - cached.timestamp < 60 * 60 * 1000) { // Cache for 1 hour
     return res.json(cached.payload);
   }
 
   try {
-    const payload = await fetchSteamListingSnapshot(name);
+    let payload = null;
+
+    // 1. Try Skinport cache
+    const spData = await getSkinportItem(name);
+    if (spData) {
+      const price = spData.suggested_price ?? spData.min_price ?? spData.median_price ?? spData.mean_price ?? null;
+      if (price !== null) {
+        payload = {
+          price: price,
+          change24h: null,
+          source: 'skinport'
+        };
+      }
+    }
+
+    // 2. Try Steam PriceOverview
+    if (!payload) {
+      try {
+        payload = await fetchSteamPriceOverview(name);
+      } catch (steamErr) {
+        console.error(`Steam PriceOverview failed for ${name}:`, steamErr.message);
+      }
+    }
+
+    // 3. Fallback to estimation
+    if (!payload) {
+      const estPrice = generateEstimatedPrice(name);
+      payload = {
+        price: estPrice,
+        change24h: null,
+        source: 'estimated'
+      };
+    }
+
     setBoundedCache(steamPriceCache, name, { payload, timestamp: Date.now() }, 2000);
     return res.json(payload);
   } catch (err) {
@@ -821,6 +1067,7 @@ app.get('/api/external/steam/inventory', async (req, res) => {
         rarity: getRarity(desc),
         rarityRank: getRarityRank(desc),
         tradable: desc.tradable,
+        marketable: desc.marketable,
         inspectLink: getInspectLink(desc, asset, user.steamId),
         float: null,
         change24h: null,
@@ -828,9 +1075,102 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       };
     }).filter((item) => item.name);
 
+    // Group items by name to reduce API calls
+    const itemGroups = new Map();
+    items.forEach((item) => {
+      const key = item.name;
+      if (!itemGroups.has(key)) {
+        itemGroups.set(key, { ...item, quantity: 0, assetIds: [] });
+      }
+      const group = itemGroups.get(key);
+      group.quantity++;
+      group.assetIds.push(item.assetId);
+    });
+
+    const uniqueItems = Array.from(itemGroups.values());
+    console.log(`Grouped ${items.length} items into ${uniqueItems.length} unique items`);
+
+    // Fetch prices for unique items using hybrid pricing model
+    const itemsWithPrices = [];
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
+    
+    // Pre-warm the Skinport cache if empty or stale
+    const spAge = Date.now() - skinportCache.lastUpdated;
+    if (skinportCache.data.size === 0 || spAge > 12 * 60 * 60 * 1000) {
+      console.log('Skinport cache empty or stale, warming it up before inventory processing...');
+      await updateSkinportCache();
+    }
+    
+    for (let i = 0; i < uniqueItems.length; i++) {
+      const item = uniqueItems[i];
+      // Skip non-marketable items (medalhas, coins, badges, etc.)
+      if (!item.marketable) {
+        itemsWithPrices.push({ ...item, price: null, change24h: null });
+        skippedCount++;
+        continue;
+      }
+      
+      try {
+        const name = item.name;
+        let priceData = null;
+        
+        // 1. Try Skinport lookup (O(1) from local cache Map)
+        const spData = skinportCache.data.get(name);
+        if (spData) {
+          const price = spData.suggested_price ?? spData.min_price ?? spData.median_price ?? spData.mean_price ?? null;
+          if (price !== null) {
+            priceData = {
+              price: price,
+              change24h: null,
+              source: 'skinport'
+            };
+          }
+        }
+        
+        // 2. If not found in Skinport, try Steam PriceOverview
+        if (!priceData) {
+          console.log(`Item "${name}" not found in Skinport cache. Querying Steam PriceOverview...`);
+          try {
+            priceData = await fetchSteamPriceOverview(name);
+            // Add short delay after hitting Steam to prevent rate limit triggers
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          } catch (steamErr) {
+            console.error(`✗ Steam PriceOverview failed for ${name}:`, steamErr.message);
+          }
+        }
+        
+        // 3. If both failed, use local estimation logic
+        if (!priceData) {
+          console.log(`Using local estimated price for ${name}...`);
+          const estPrice = generateEstimatedPrice(name);
+          priceData = {
+            price: estPrice,
+            change24h: null,
+            source: 'estimated'
+          };
+        }
+        
+        itemsWithPrices.push({
+          ...item,
+          price: priceData.price,
+          change24h: priceData.change24h
+        });
+        successCount++;
+        console.log(`✓ Price for ${item.name}: €${priceData.price} (source: ${priceData.source})`);
+      } catch (err) {
+        console.error(`✗ Error getting price for ${item.name}:`, err.message);
+        itemsWithPrices.push({ ...item, price: null, change24h: null });
+        failCount++;
+      }
+    }
+    
+    console.log(`Price fetch summary: ${successCount} success, ${failCount} failed, ${skippedCount} skipped (non-marketable)`);
+
     const payload = {
       count: response.data.total_inventory_count || items.length,
-      items: items.slice(0, 100)
+      items: itemsWithPrices.slice(0, 100)
     };
 
     setBoundedCache(steamInventoryCache, user.steamId, {
@@ -983,64 +1323,6 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
   }
 });
 
-app.get('/api/forum', async (_req, res) => {
-  try {
-    const posts = await ForumPost.find().sort({ createdAt: -1 }).limit(50);
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ message: 'Erro ao carregar fórum' });
-  }
-});
-
-app.post('/api/forum', async (req, res) => {
-  try {
-    const { user } = await authenticateRequest(req);
-    const { title, content, category, price, game } = req.body;
-
-    if (!title || !content) {
-      return res.status(400).json({ message: 'Title and content are required' });
-    }
-
-    const newPost = new ForumPost({
-      title,
-      content,
-      category,
-      price,
-      game: game || 'CS2',
-      author: {
-        id: user._id,
-        name: user.displayName || user.name,
-        avatar: user.avatar || ''
-      }
-    });
-
-    await newPost.save();
-    res.json({ message: 'Anúncio publicado com sucesso!', post: newPost });
-  } catch (err) {
-    res.status(err.statusCode || 401).json({ message: err.message || 'Token inválido ou expirado' });
-  }
-});
-
-app.delete('/api/forum/:id', async (req, res) => {
-  try {
-    const { user } = await authenticateRequest(req);
-    const post = await ForumPost.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post não encontrado' });
-    }
-
-    if (post.author.id.toString() !== user._id.toString()) {
-      return res.status(403).json({ message: 'Sem permissão para apagar este anúncio' });
-    }
-
-    await ForumPost.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Anúncio removido' });
-  } catch (err) {
-    res.status(err.statusCode || 401).json({ message: err.message || 'Erro ao apagar' });
-  }
-});
-
 app.get('/api', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -1053,8 +1335,7 @@ app.get('/api', (req, res) => {
       '/api/external/steam/price',
       '/api/external/steam/inventory',
       '/api/external/steam/float',
-      '/api/external/trading212/portfolio',
-      '/api/forum'
+      '/api/external/trading212/portfolio'
     ]
   });
 });
