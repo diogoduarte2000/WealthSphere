@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const crypto = require('crypto');
 const User = require('./models/User');
+const Post = require('./models/Post');
 const bcrypt = require('bcryptjs');
 
 const rootEnvPath = fs.existsSync(path.join(__dirname, '.env'))
@@ -1320,6 +1321,272 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
   } catch (err) {
     console.error('Trading 212 API Error:', err.response?.data || err.message);
     res.status(500).json({ message: 'Failed to fetch Trading 212 data' });
+  }
+});
+
+// ==========================================
+//                 FORUM API
+// ==========================================
+
+// GET all posts with filters and sorting
+app.get('/api/forum', async (req, res) => {
+  try {
+    const { search, category, tag, sort } = req.query;
+    let query = {};
+
+    if (category && category !== 'Todas' && category !== 'all') {
+      // Handle different casing/naming from frontend
+      // Tags/categorias navegáveis: ETF, Imóveis, CS2, FIRE, Portugal, Novato
+      let mappedCategory = category;
+      if (category.toLowerCase().includes('etf')) mappedCategory = 'ETF & Ações';
+      else if (category.toLowerCase().includes('imoveis') || category.toLowerCase().includes('imóveis')) mappedCategory = 'Imóveis & Rendas';
+      else if (category.toLowerCase().includes('cs2') || category.toLowerCase().includes('steam')) mappedCategory = 'CS2 & Steam';
+      else if (category.toLowerCase().includes('fire') || category.toLowerCase().includes('poupança')) mappedCategory = 'FIRE & Poupança';
+      else if (category.toLowerCase().includes('cripto')) mappedCategory = 'Cripto';
+      else if (category.toLowerCase().includes('portugal') || category.toLowerCase().includes('irs')) mappedCategory = 'Portugal & IRS';
+      else if (category.toLowerCase().includes('novato')) mappedCategory = 'Novato';
+      
+      query.category = mappedCategory;
+    }
+
+    if (tag) {
+      query.tags = tag.startsWith('#') ? tag : `#${tag}`;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    let sortQuery = { isPinned: -1, createdAt: -1 }; // Pinned always first
+
+    if (sort === 'trending') {
+      sortQuery = { isPinned: -1, votes: -1, 'comments.length': -1, createdAt: -1 };
+    } else if (sort === 'top') {
+      sortQuery = { isPinned: -1, votes: -1 };
+    } else if (sort === 'unanswered') {
+      query.comments = { $size: 0 };
+      sortQuery = { isPinned: -1, createdAt: -1 };
+    } else if (sort === 'recent') {
+      sortQuery = { isPinned: -1, createdAt: -1 };
+    }
+
+    // Increments views on get (standard fetch doesn't view-increment, but for simplicity we can increment viewed inline)
+    const posts = await Post.find(query).sort(sortQuery);
+    res.json(posts);
+  } catch (err) {
+    console.error('Get posts error:', err);
+    res.status(500).json({ message: 'Erro ao carregar posts' });
+  }
+});
+
+// GET specific post and increment views
+app.get('/api/forum/:id', async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }, { new: true });
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao carregar post' });
+  }
+});
+
+// POST new post
+app.post('/api/forum', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { title, content, category, tags } = req.body;
+
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Título e conteúdo são obrigatórios' });
+    }
+
+    let tagsArray = Array.isArray(tags) ? tags : [];
+    // Ensure all tags start with #
+    tagsArray = tagsArray.map(t => t.startsWith('#') ? t : `#${t}`);
+    
+    // REQUIREMENT: Must have #investimentos tag!
+    if (!tagsArray.some(t => t.toLowerCase() === '#investimentos')) {
+      tagsArray.push('#investimentos');
+    }
+
+    // Determine user flair based on user's investments or realEstate
+    let flair = 'Membro';
+    if (user.realEstate && user.realEstate.length > 0) flair = 'Landlord';
+    else if (user.financialProfile && user.financialProfile.etfPortfolio > 1000) flair = 'Expert ETFs';
+    else if (user.inventory && user.inventory.length > 5) flair = 'Skin Trader';
+    else if (user.customSettings && user.customSettings.salary > 3000) flair = 'FIRE';
+
+    const post = await Post.create({
+      author: user._id,
+      authorName: user.displayName || user.name || 'Utilizador',
+      authorAvatar: user.avatar || user.steamAvatar || '',
+      authorFlair: flair,
+      title,
+      content,
+      category: category || 'Novato',
+      tags: tagsArray,
+      votes: 0,
+      views: 1
+    });
+
+    res.status(201).json(post);
+  } catch (err) {
+    console.error('Create post error:', err);
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao publicar post' });
+  }
+});
+
+// DELETE post
+app.delete('/api/forum/:id', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+
+    if (post.author.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: 'Não tens permissão para apagar este post' });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Post removido com sucesso' });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao remover post' });
+  }
+});
+
+// VOTE on a post
+app.post('/api/forum/:id/vote', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { direction } = req.body; // 'up' or 'down'
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+
+    const userIdStr = user._id.toString();
+    const hasUpvoted = post.upvotedBy.some(id => id.toString() === userIdStr);
+    const hasDownvoted = post.downvotedBy.some(id => id.toString() === userIdStr);
+
+    if (direction === 'up') {
+      if (hasUpvoted) {
+        // Toggle off upvote
+        post.upvotedBy = post.upvotedBy.filter(id => id.toString() !== userIdStr);
+      } else {
+        // Toggle on upvote, remove downvote if any
+        post.upvotedBy.push(user._id);
+        post.downvotedBy = post.downvotedBy.filter(id => id.toString() !== userIdStr);
+      }
+    } else if (direction === 'down') {
+      if (hasDownvoted) {
+        // Toggle off downvote
+        post.downvotedBy = post.downvotedBy.filter(id => id.toString() !== userIdStr);
+      } else {
+        // Toggle on downvote, remove upvote if any
+        post.downvotedBy.push(user._id);
+        post.upvotedBy = post.upvotedBy.filter(id => id.toString() !== userIdStr);
+      }
+    }
+
+    post.votes = post.upvotedBy.length - post.downvotedBy.length;
+    await post.save();
+    res.json({ votes: post.votes, upvoted: post.upvotedBy.includes(user._id), downvoted: post.downvotedBy.includes(user._id) });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao votar' });
+  }
+});
+
+// POST comment to a post
+app.post('/api/forum/:id/comments', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ message: 'Conteúdo do comentário é obrigatório' });
+
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+
+    post.comments.push({
+      author: user._id,
+      authorName: user.displayName || user.name || 'Utilizador',
+      authorAvatar: user.avatar || user.steamAvatar || '',
+      content,
+      votes: 0,
+      replies: []
+    });
+
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao adicionar comentário' });
+  }
+});
+
+// POST reply to a comment (1-level nesting)
+app.post('/api/forum/:id/comments/:commentId/reply', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ message: 'Conteúdo da resposta é obrigatório' });
+
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: 'Comentário não encontrado' });
+
+    comment.replies.push({
+      author: user._id,
+      authorName: user.displayName || user.name || 'Utilizador',
+      authorAvatar: user.avatar || user.steamAvatar || '',
+      content,
+      votes: 0
+    });
+
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao responder' });
+  }
+});
+
+// VOTE on a comment
+app.post('/api/forum/comments/:commentId/vote', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { direction } = req.body;
+    
+    // Find post containing the comment
+    const post = await Post.findOne({ 'comments._id': req.params.commentId });
+    if (!post) return res.status(404).json({ message: 'Comentário não encontrado' });
+
+    const comment = post.comments.id(req.params.commentId);
+    const userIdStr = user._id.toString();
+    const hasUpvoted = comment.upvotedBy.some(id => id.toString() === userIdStr);
+    const hasDownvoted = comment.downvotedBy.some(id => id.toString() === userIdStr);
+
+    if (direction === 'up') {
+      if (hasUpvoted) {
+        comment.upvotedBy = comment.upvotedBy.filter(id => id.toString() !== userIdStr);
+      } else {
+        comment.upvotedBy.push(user._id);
+        comment.downvotedBy = comment.downvotedBy.filter(id => id.toString() !== userIdStr);
+      }
+    } else if (direction === 'down') {
+      if (hasDownvoted) {
+        comment.downvotedBy = comment.downvotedBy.filter(id => id.toString() !== userIdStr);
+      } else {
+        comment.downvotedBy.push(user._id);
+        comment.upvotedBy = comment.upvotedBy.filter(id => id.toString() !== userIdStr);
+      }
+    }
+
+    comment.votes = comment.upvotedBy.length - comment.downvotedBy.length;
+    await post.save();
+    res.json({ votes: comment.votes });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao votar no comentário' });
   }
 });
 

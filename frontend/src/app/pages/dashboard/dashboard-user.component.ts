@@ -712,6 +712,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const networthVal = this.calculatedNetWorth;
     const etfVal = this.totalETF;
     const rendasVal = this.financialData.realEstateValue || 0;
+    const steamVal = this.steamInventoryTotalValue || 0;
+    const savingsVal = this.totalSavings || 0;
 
     const makeCurve = (len: number, finalVal: number, baselinePercent: number = 0.85) => {
       if (finalVal <= 0) return Array(len).fill(0);
@@ -734,6 +736,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(8, networthVal, 0.99),
       etf: makeCurve(8, etfVal, 0.99),
       rendas: Array(8).fill(rendasVal),
+      steam: makeCurve(8, steamVal, 0.99),
+      savings: makeCurve(8, savingsVal, 0.99),
       labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00', '23:00']
     };
 
@@ -742,6 +746,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(7, networthVal, 0.98),
       etf: makeCurve(7, etfVal, 0.97),
       rendas: makeCurve(7, rendasVal, 1.0),
+      steam: makeCurve(7, steamVal, 0.98),
+      savings: makeCurve(7, savingsVal, 0.98),
       labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
     };
 
@@ -750,6 +756,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(7, networthVal, 0.88),
       etf: makeCurve(7, etfVal, 0.82),
       rendas: makeCurve(7, rendasVal, 0.95),
+      steam: makeCurve(7, steamVal, 0.85),
+      savings: makeCurve(7, savingsVal, 0.80),
       labels: ['Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai']
     };
 
@@ -758,6 +766,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(12, networthVal, 0.78),
       etf: makeCurve(12, etfVal, 0.68),
       rendas: makeCurve(12, rendasVal, 0.90),
+      steam: makeCurve(12, steamVal, 0.75),
+      savings: makeCurve(12, savingsVal, 0.70),
       labels: ['Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai']
     };
 
@@ -766,6 +776,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(24, networthVal, 0.55),
       etf: makeCurve(24, etfVal, 0.40),
       rendas: makeCurve(24, rendasVal, 0.75),
+      steam: makeCurve(24, steamVal, 0.50),
+      savings: makeCurve(24, savingsVal, 0.45),
       labels: ['2024 Q1', 'Q2', 'Q3', 'Q4', '2025 Q1', 'Q2', 'Q3', 'Q4', '2026 Q1', 'Q2']
     };
 
@@ -774,15 +786,26 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       networth: makeCurve(36, networthVal, 0.35),
       etf: makeCurve(36, etfVal, 0.20),
       rendas: makeCurve(36, rendasVal, 0.60),
+      steam: makeCurve(36, steamVal, 0.30),
+      savings: makeCurve(36, savingsVal, 0.25),
       labels: ['2023', '2024', '2025', '2026']
     };
   }
 
   get totalExpenses() {
     let propExpTotal = 0;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     this.realEstate.forEach(r => {
       if (r.expenses) {
-        r.expenses.forEach((e: any) => propExpTotal += (e.amount || 0));
+        r.expenses.forEach((e: any) => {
+          const expDate = new Date(e.date || Date.now());
+          if (expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear) {
+            propExpTotal += (e.amount || 0);
+          }
+        });
       }
     });
     return (this.customSettings.supermarket || 0) + 
@@ -792,6 +815,31 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   get totalSavings() {
     return this.totalIncome - this.totalExpenses;
+  }
+
+  get currentMonthDaysInfo(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); // 28, 29, 30, or 31 days
+    const currentDay = now.getDate();
+    const daysLeft = daysInMonth - currentDay;
+    
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthName = monthNames[month];
+    
+    return `${monthName} (${daysInMonth} dias · ${currentDay} decorridos · ${daysLeft} restantes)`;
+  }
+
+  getCurrentMonthExpenses(prop: any): any[] {
+    if (!prop || !prop.expenses) return [];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    return prop.expenses.filter((e: any) => {
+      const expDate = new Date(e.date || Date.now());
+      return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    });
   }
 
   get nextRentInfo() {
@@ -1152,14 +1200,16 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const cW = W - pad.l - pad.r;
     const cH = H - pad.t - pad.b;
     const datasets = [
-      { data: data6m.networth, color: '#c96a45' },
-      { data: data6m.etf, color: '#5f7e5f' },
-      { data: data6m.rendas, color: '#8b80c8' },
+      { data: data6m.networth || [], color: '#ff6f00' }, // Net Worth (Orange)
+      { data: data6m.rendas || [], color: '#2e7d32' },  // Rendas (Green)
+      { data: data6m.etf || [], color: '#8b80c8' },     // ETF (Purple)
+      { data: data6m.steam || [], color: '#c9a84c' },   // Steam (Yellow)
+      { data: data6m.savings || [], color: '#8a7a6a' }, // Savings (Greyish-brown)
     ];
     const allVals = datasets.flatMap(d => d.data);
     const maxV = Math.max(...allVals) || 1000; // Fallback to 1000 if empty/zero
     const minV = Math.min(...allVals) * 0.95;
-    const n = data6m.networth.length;
+    const n = (data6m.networth || []).length || 7;
 
     const xOf = (i: number) => pad.l + (i / (n - 1)) * cW;
     const yOf = (v: number) => pad.t + cH - ((v - minV) / (maxV - minV)) * cH;
@@ -1197,6 +1247,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
     // Lines
     datasets.forEach(ds => {
+      if (!ds.data || ds.data.length === 0) return;
       // Area
       ctx.beginPath();
       ds.data.forEach((v: number, i: number) => {
