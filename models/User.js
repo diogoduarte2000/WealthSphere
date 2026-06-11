@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
   inventory: { type: Array, default: [] },
   trading212ApiKey: { type: String, select: false },
   binanceApiKey: { type: String, select: false },
+  binanceApiSecret: { type: String, select: false },
+  krakenApiKey: { type: String, select: false },
+  krakenApiSecret: { type: String, select: false },
+  paypalClientId: { type: String, select: false },
+  paypalClientSecret: { type: String, select: false },
   refreshTokens: {
     type: [String],
     default: [],
@@ -95,6 +100,8 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     realEstate: this.realEstate,
     hasTrading212ApiKey: !!this.trading212ApiKey,
     hasBinanceApiKey: !!this.binanceApiKey,
+    hasKrakenApiKey: !!this.krakenApiKey,
+    hasPaypalClientId: !!this.paypalClientId,
     lastLogin: this.lastLogin,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt

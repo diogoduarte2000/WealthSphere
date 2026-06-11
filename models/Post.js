@@ -39,7 +39,11 @@ const postSchema = new mongoose.Schema({
   downvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   views: { type: Number, default: 0 },
   comments: [commentSchema],
-  isPinned: { type: Boolean, default: false }
+  isPinned: { type: Boolean, default: false },
+  expiresAt: { type: Date, default: () => new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) } // 3 months
 }, { timestamps: true });
+
+// TTL index — MongoDB automatically removes expired posts
+postSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('Post', postSchema);
