@@ -34,14 +34,13 @@ build/
 
 # OS files
 .DS_Store
-backend.log
-backend.err
 Thumbs.db
 desktop.ini
 
-# Logs
+# Logs and runtime error dumps
 logs/
 *.log
+*.err
 
 # Coverage
 coverage/
