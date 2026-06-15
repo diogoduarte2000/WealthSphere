@@ -1,3 +1,4 @@
+// v2
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -14,7 +15,7 @@ import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { UserService } from '../../services/user.service';
 
 type AuthMode = 'login' | 'register';
-type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
+type AuthControl = 'name' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms' | 'nationality';
 
 interface AuthResponse {
   message: string;
@@ -62,7 +63,8 @@ export class AuthComponent implements OnInit, OnDestroy {
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: [''],
     remember: [true],
-    acceptTerms: [false]
+    acceptTerms: [false],
+    nationality: ['']
   }, { validators: this.passwordMatchValidator() });
 
   constructor() {
@@ -88,9 +90,7 @@ export class AuthComponent implements OnInit, OnDestroy {
             localStorage.setItem('wealthsphere_user', JSON.stringify(res.profile));
             this.successMessage = `Login via Steam efetuado com sucesso!`;
             this.isSubmitting = false;
-            setTimeout(() => {
-              this.router.navigate(['/dashboard-user']);
-            }, 1000);
+            this.router.navigate(['/dashboard-user']);
           },
           error: () => {
             this.errorMessage = 'Erro ao sincronizar perfil da Steam.';
@@ -169,8 +169,10 @@ export class AuthComponent implements OnInit, OnDestroy {
           this.successMessage = `Bem-vindo de volta, ${response.user.name}!`;
           this.isSubmitting = false;
           setTimeout(() => {
-            this.router.navigate(['/dashboard-user']);
-          }, 1500);
+            this.router.navigate(['/dashboard-user']).then(ok => {
+              if (!ok) window.location.href = '/dashboard-user';
+            }).catch(() => { window.location.href = '/dashboard-user'; });
+          }, 600);
         },
         error: (error: HttpErrorResponse) => {
           this.errorMessage = this.getErrorMessage(error);
@@ -183,8 +185,16 @@ export class AuthComponent implements OnInit, OnDestroy {
     const payload = {
       name: value.name,
       email: value.email,
-      password: value.password
+      password: value.password,
+      nationality: value.nationality || ''
     };
+
+    // Auto-set language from nationality on register
+    if (value.nationality && ['pt','br','en','us','fr','de'].includes(value.nationality)) {
+      const langMap: Record<string, string> = { pt:'pt', br:'pt', en:'en', us:'en', fr:'fr', de:'de' };
+      const lang = langMap[value.nationality] || 'en';
+      localStorage.setItem('ws_language', lang);
+    }
 
     this.isSubmitting = true;
     this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload).subscribe({
@@ -195,8 +205,10 @@ export class AuthComponent implements OnInit, OnDestroy {
         this.successMessage = `Conta criada com sucesso. Bem-vindo, ${response.user.name}!`;
         this.isSubmitting = false;
         setTimeout(() => {
-          this.router.navigate(['/dashboard-user']);
-        }, 1500);
+          this.router.navigate(['/dashboard-user']).then(ok => {
+            if (!ok) window.location.href = '/dashboard-user';
+          }).catch(() => { window.location.href = '/dashboard-user'; });
+        }, 600);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.getErrorMessage(error);

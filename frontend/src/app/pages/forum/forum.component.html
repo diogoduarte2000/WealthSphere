@@ -1,107 +1,376 @@
-<div class="forum-wrapper">
-  <header class="forum-header fade-up">
-    <div class="header-content">
-      <div>
-        <h1>Mercado da Comunidade</h1>
-        <p>Negocia skins, itens e partilha estratégias com outros investidores.</p>
+<!-- TOP NAV (WealthSphere Style) -->
+<nav class="forum-nav">
+  <a routerLink="/dashboard-user" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <span class="logo-text">WealthSphere</span>
+  </a>
+  <div class="nav-links">
+    <a routerLink="/dashboard-user" class="nav-link">Dashboard</a>
+    <a routerLink="/dashboard-user" class="nav-link">Património</a>
+    <a routerLink="/dashboard-user" class="nav-link">Simulador</a>
+    <a routerLink="/dashboard-user" class="nav-link">Taxas</a>
+    <a routerLink="/forum" class="nav-link active">Fórum</a>
+  </div>
+  <div class="nav-right">
+    <div class="notif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      <div class="notif-pip"></div>
+    </div>
+    <button class="btn btn-primary" (click)="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Novo post
+    </button>
+    <div class="user-av" routerLink="/dashboard-user">{{ myProfile.initial }}</div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <aside class="left-sidebar">
+    <div class="sidebar-section">Feed</div>
+    <button class="sidebar-item" [class.active]="activeCategory === 'Todas'" (click)="filterByCategory('Todas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      Todos os posts
+      <span class="tag-count">{{ posts.length }}</span>
+    </button>
+
+    <div class="sidebar-section">Categorias</div>
+    <button class="sidebar-item" [class.active]="activeCategory === 'ETF & Ações'" (click)="filterByCategory('ETF & Ações')">
+      <div class="tag-dot" style="background:#8b80c8"></div>ETF & Ações
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'Imóveis & Rendas'" (click)="filterByCategory('Imóveis & Rendas')">
+      <div class="tag-dot" style="background:#2e7d32"></div>Imóveis & Rendas
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'CS2 & Steam'" (click)="filterByCategory('CS2 & Steam')">
+      <div class="tag-dot" style="background:#c9a84c"></div>CS2 & Steam
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'FIRE & Poupança'" (click)="filterByCategory('FIRE & Poupança')">
+      <div class="tag-dot" style="background:#ff6f00"></div>FIRE & Poupança
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'Cripto'" (click)="filterByCategory('Cripto')">
+      <div class="tag-dot" style="background:#8b80c8"></div>Cripto
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'Portugal & IRS'" (click)="filterByCategory('Portugal & IRS')">
+      <div class="tag-dot" style="background:#e07a52"></div>Portugal & IRS
+    </button>
+    <button class="sidebar-item" [class.active]="activeCategory === 'Novato'" (click)="filterByCategory('Novato')">
+      <div class="tag-dot" style="background:#8a7a6a"></div>Novato
+    </button>
+
+    <div class="sidebar-section" style="margin-top:8px">Online agora (6)</div>
+    <div class="online-users">
+      <div *ngFor="let user of onlineUsers" class="online-av" [style.background]="user.color" [title]="user.name">
+        <span>{{ user.name.charAt(0).toUpperCase() }}</span>
+        <div class="online-dot"></div>
       </div>
-      <button class="btn btn-primary" (click)="openModal()">+ Publicar Anúncio</button>
     </div>
 
-    <div class="category-tabs">
-      <button *ngFor="let cat of ['Todas', 'Venda', 'Compra', 'Troca', 'Discussão']" 
-              class="tab-btn" 
-              [class.active]="activeCategory === cat"
-              (click)="filterByCategory(cat)">
-        {{ cat }}
-      </button>
+    <!-- User Profile Summary (Displays if logged in) -->
+    <div class="my-profile" *ngIf="getUserID()">
+      <div class="mp-top">
+        <div class="user-av" style="width:34px;height:34px;font-size:14px">{{ myProfile.initial }}</div>
+        <div>
+          <div class="mp-name">{{ myProfile.name }}</div>
+          <div class="mp-role">{{ myProfile.role }}</div>
+        </div>
+      </div>
+      <div class="mp-stats">
+        <div class="mp-stat"><div class="mp-stat-val">{{ myProfile.posts }}</div><div class="mp-stat-label">Posts</div></div>
+        <div class="mp-stat"><div class="mp-stat-val">{{ myProfile.votes }}</div><div class="mp-stat-label">Votos</div></div>
+        <div class="mp-stat"><div class="mp-stat-val">{{ myProfile.views }}</div><div class="mp-stat-label">Views</div></div>
+      </div>
     </div>
-  </header>
+  </aside>
 
-  <main class="forum-main">
-    <div class="post-grid" *ngIf="posts.length > 0; else noPosts">
-      <div class="post-card fade-up" *ngFor="let post of getFilteredPosts()">
-        <div class="post-top">
-          <div class="post-author">
-            <div class="author-avatar">{{ post.author.name?.charAt(0) || 'U' }}</div>
+  <!-- ═══ CENTER FEED ═══ -->
+  <section class="center-feed">
+
+    <!-- SEARCH -->
+    <div class="feed-header fu">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="search-input" placeholder="Pesquisar no fórum... (ex: #investimentos)" [(ngModel)]="searchQuery" (input)="onSearch()">
+      </div>
+    </div>
+
+    <!-- SORT TABS -->
+    <div class="sort-tabs fu fd1">
+      <button class="sort-tab" [class.active]="activeSort === 'trending'" (click)="setSort('trending')">🔥 Trending</button>
+      <button class="sort-tab" [class.active]="activeSort === 'recent'" (click)="setSort('recent')">🕐 Recentes</button>
+      <button class="sort-tab" [class.active]="activeSort === 'top'" (click)="setSort('top')">⬆ Top</button>
+      <button class="sort-tab" [class.active]="activeSort === 'unanswered'" (click)="setSort('unanswered')">💬 Sem resposta</button>
+    </div>
+
+    <!-- QUICK COMPOSE -->
+    <div class="main-compose fu fd2">
+      <input class="compose-input" placeholder="Partilha uma ideia, pergunta ou estratégia..." (click)="openModal()" readonly>
+    </div>
+
+    <!-- POST LIST -->
+    <div class="posts-container" *ngIf="posts.length > 0; else noPosts">
+      <ng-container *ngFor="let post of posts; let idx = index">
+        
+        <!-- Post Card -->
+        <div class="post-card fu" [class.active]="activePostId === post._id" [class.pinned]="post.isPinned" (click)="togglePost(post._id, $event)">
+          <span class="pin-badge" *ngIf="post.isPinned">📌 Fixado</span>
+          
+          <div class="post-header">
+            <div class="post-av" [style.background]="idx % 2 === 0 ? 'var(--terra)' : 'var(--lilac)'">
+              {{ post.authorName?.charAt(0) || 'U' }}
+            </div>
             <div>
-              <div class="author-name">{{ post.author.name }}</div>
-              <div class="post-date">{{ post.createdAt | date:'dd MMM, HH:mm' }}</div>
+              <span class="post-user">{{ post.authorName }}</span>
+              <span class="post-flair" [ngClass]="{
+                'pf-etf': post.authorFlair === 'Expert ETFs',
+                'pf-trader': post.authorFlair === 'Skin Trader',
+                'pf-landlord': post.authorFlair === 'Landlord',
+                'pf-fire': post.authorFlair === 'FIRE',
+                'pf-novato': post.authorFlair === 'Membro'
+              }">{{ post.authorFlair || 'Membro' }}</span>
+            </div>
+            <span class="post-time">{{ post.createdAt | date:'dd MMM, HH:mm' }}</span>
+          </div>
+
+          <div class="post-tags">
+            <button *ngFor="let tag of post.tags" class="post-tag" (click)="filterByPopularTag(tag)" [ngClass]="{
+              'pt-etf': tag.toLowerCase() === '#etf',
+              'pt-cs2': tag.toLowerCase() === '#cs2' || tag.toLowerCase() === '#cs2-skins',
+              'pt-imoveis': tag.toLowerCase() === '#imóveis' || tag.toLowerCase() === '#rendas',
+              'pt-fire': tag.toLowerCase() === '#fire',
+              'pt-cripto': tag.toLowerCase() === '#cripto',
+              'pt-portugal': tag.toLowerCase() === '#portugal' || tag.toLowerCase() === '#investimentos'
+            }">{{ tag }}</button>
+          </div>
+
+          <div class="post-title">{{ post.title }}</div>
+          <div class="post-excerpt">{{ post.content.length > 180 ? (post.content | slice:0:180) + '...' : post.content }}</div>
+
+          <div class="post-footer">
+            <div class="vote-wrap">
+              <button class="vote-btn" [class.up-active]="post.upvoted" (click)="votePost($event, post._id, 'up')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+              <span class="vote-count">{{ post.votes }}</span>
+              <button class="vote-btn" [class.dn-active]="post.downvoted" (click)="votePost($event, post._id, 'down')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+            <button class="post-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              {{ post.comments?.length || 0 }} respostas
+            </button>
+            <button class="post-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              {{ post.views }} views
+            </button>
+            <div class="post-stat-actions">
+              <button class="action-btn" *ngIf="post.author === getUserID()" (click)="deletePost(post._id)" title="Remover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              <button class="action-btn" title="Guardar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
             </div>
           </div>
-          <div class="post-category" [attr.data-cat]="post.category">{{ post.category }}</div>
         </div>
 
-        <div class="post-body">
-          <h3 class="post-title">{{ post.title }}</h3>
-          <p class="post-text">{{ post.content }}</p>
-          <div class="post-meta" *ngIf="post.price">
-            <span class="price-tag">€{{ post.price.toFixed(2) }}</span>
-            <span class="game-tag">{{ post.game }}</span>
-          </div>
-        </div>
+        <!-- Inline Post Detail Thread (Visible when expanded) -->
+        <div class="post-detail" [class.open]="activePostId === post._id && expandedPost" *ngIf="activePostId === post._id && expandedPost">
+          <div class="pd-body" [innerHTML]="expandedPost.content"></div>
+          
+          <div class="comments-section">
+            <div class="comments-title">{{ expandedPost.comments?.length || 0 }} comentários</div>
 
-        <div class="post-footer">
-          <div class="expires-info" [class.urgent]="getRemainingDays(post.expiresAt) < 7">
-            ⌛ Expira em {{ getRemainingDays(post.expiresAt) }} dias
-          </div>
-          <div class="post-actions">
-            <button class="btn btn-ghost small" *ngIf="post.author.id === getUserID()" (click)="deletePost(post._id)">Remover</button>
-            <button class="btn btn-ghost small">💬 Comentar</button>
+            <!-- Comment List -->
+            <div class="comment" *ngFor="let c of expandedPost.comments; let cIdx = index">
+              <div class="comment-av" [style.background]="cIdx % 2 === 0 ? 'var(--sage)' : 'var(--terra)'">
+                {{ c.authorName?.charAt(0) || 'U' }}
+              </div>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <span class="comment-user">{{ c.authorName }}</span>
+                  <span class="comment-time">{{ c.createdAt | date:'dd MMM, HH:mm' }}</span>
+                </div>
+                <div class="comment-text" [innerHTML]="c.content"></div>
+                <div class="comment-actions">
+                  <button class="c-action" [class.up-active]="c.upvoted" (click)="voteComment(c._id, 'up')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                    {{ c.votes }}
+                  </button>
+                  <button class="c-action" (click)="toggleReply(c._id)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    Responder
+                  </button>
+                  <button class="c-action">Reportar</button>
+                </div>
+
+                <!-- 1-Level Nested Replies Thread -->
+                <div class="comment-nested" *ngIf="c.replies?.length > 0">
+                  <div class="comment" *ngFor="let rep of c.replies; let rIdx = index">
+                    <div class="comment-av" style="width:24px;height:24px;font-size:10px;" [style.background]="rIdx % 2 === 0 ? 'var(--lilac)' : 'var(--sage)'">
+                      {{ rep.authorName?.charAt(0) || 'U' }}
+                    </div>
+                    <div class="comment-body">
+                      <div class="comment-header">
+                        <span class="comment-user" style="font-size:11px">{{ rep.authorName }}</span>
+                        <span class="comment-time" style="font-size:9px">{{ rep.createdAt | date:'dd MMM, HH:mm' }}</span>
+                      </div>
+                      <div class="comment-text" style="font-size:12px" [innerHTML]="rep.content"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Inline Reply Compose Textarea -->
+                <div class="reply-compose" [class.open]="replyingCommentId === c._id" *ngIf="replyingCommentId === c._id">
+                  <textarea class="reply-textarea" placeholder="Escreve a tua resposta direta..." rows="2" [(ngModel)]="newReplyText"></textarea>
+                  <div class="reply-actions">
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 10px" (click)="toggleReply(c._id)">Cancelar</button>
+                    <button class="btn btn-primary" style="font-size:10px;padding:4px 10px" (click)="addReply(c._id)">Responder</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Top-level Comment Compose Box (Visible if logged in) -->
+            <div class="comment" style="margin-top:16px" *ngIf="getUserID()">
+              <div class="user-av" style="width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">{{ myProfile.initial }}</div>
+              <div style="flex:1">
+                <textarea class="reply-textarea" placeholder="Adiciona o teu comentário..." rows="3" [(ngModel)]="newCommentText"></textarea>
+                <div class="reply-actions">
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" (click)="newCommentText=''">Cancelar</button>
+                  <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" (click)="addComment()">Comentar</button>
+                </div>
+              </div>
+            </div>
+            
+            <div style="padding:12px; text-align:center; color:var(--muted); font-size:12px" *ngIf="!getUserID()">
+              Inicia sessão para poderes participar nas discussões do fórum.
+            </div>
+
           </div>
         </div>
-      </div>
+      </ng-container>
     </div>
 
+    <!-- Empty State -->
     <ng-template #noPosts>
       <div class="empty-state">
         <div class="empty-icon">📣</div>
-        <h2>Ainda não há anúncios nesta categoria</h2>
+        <h2>Ainda não há posts nesta categoria</h2>
         <p>Sê o primeiro a publicar algo para a comunidade!</p>
-        <button class="btn btn-primary" (click)="openModal()">Criar Anúncio</button>
+        <button class="btn btn-primary" (click)="openModal()">Criar Post</button>
       </div>
     </ng-template>
-  </main>
 
-  <!-- Create Post Modal -->
-  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Novo Anúncio / Post</h2>
-        <button class="close-btn" (click)="closeModal()">✕</button>
-      </div>
-      
-      <div class="modal-body">
-        <div class="input-group">
-          <label>Título do Anúncio</label>
-          <input type="text" [(ngModel)]="newPost.title" placeholder="Ex: Vendo AK-47 Slate StatTrak">
-        </div>
+  </section>
 
-        <div class="input-row">
-          <div class="input-group">
-            <label>Categoria</label>
-            <select [(ngModel)]="newPost.category">
-              <option value="Venda">Venda</option>
-              <option value="Compra">Compra</option>
-              <option value="Troca">Troca</option>
-              <option value="Discussão">Discussão</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label>Preço (€) - Opcional</label>
-            <input type="number" [(ngModel)]="newPost.price" placeholder="0.00">
-          </div>
-        </div>
+  <!-- ═══ RIGHT SIDEBAR ═══ -->
+  <aside class="right-sidebar">
+    
+    <!-- CTA Card if Not Logged In -->
+    <div class="rs-card cta-card" *ngIf="!getUserID()">
+      <h4>Junta-te à Comunidade!</h4>
+      <p>Cria uma conta na WealthSphere para guardares posts, votares e partilhares as tuas próprias análises e investimentos.</p>
+      <button class="btn-white" routerLink="/auth">Registar Agora</button>
+    </div>
 
-        <div class="input-group">
-          <label>Descrição / Detalhes</label>
-          <textarea [(ngModel)]="newPost.content" placeholder="Descreve o teu item, condições de troca ou inicia uma discussão..." rows="5"></textarea>
+    <!-- Weekly Trending (top 5) -->
+    <div class="rs-card">
+      <div class="rs-title">Trending da Semana</div>
+      <div class="trend-item" *ngFor="let item of trendingPosts; let i = index">
+        <div class="trend-num">0{{ i + 1 }}</div>
+        <div>
+          <div class="trend-tag">#{{ item.category }}</div>
+          <div class="trend-title">{{ item.title }}</div>
+          <div class="trend-meta">{{ item.replies }} respostas · {{ item.views }} views</div>
         </div>
       </div>
+    </div>
 
-      <div class="modal-footer">
+    <!-- Top Users (Reputation) -->
+    <div class="rs-card">
+      <div class="rs-title">Utilizadores de Elite</div>
+      <div class="top-user" *ngFor="let u of topUsers">
+        <div class="tu-av" [style.background]="u.color">{{ u.initial }}</div>
+        <div class="tu-name">
+          <div>{{ u.name }}</div>
+          <small style="color:var(--muted); font-size:10px">{{ u.flair }}</small>
+        </div>
+        <div class="tu-score">{{ u.score }} pts</div>
+        <div class="tu-dot" [class.td-online]="u.online" [class.td-offline]="!u.online"></div>
+      </div>
+    </div>
+
+    <!-- Popular Tags Cloud -->
+    <div class="rs-card">
+      <div class="rs-title">Tags Populares</div>
+      <div class="tags-cloud">
+        <button *ngFor="let tag of popularTags" class="tc-tag" (click)="filterByPopularTag(tag.name)" [class.active]="searchQuery === tag.name">
+          {{ tag.name }} <span style="font-size:9px;opacity:0.7">({{ tag.count }})</span>
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- CREATE POST MODAL -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-title">
+      Criar Novo Post no Fórum
+      <button class="modal-close" (click)="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    
+    <label class="modal-label">Título do Post</label>
+    <input type="text" [(ngModel)]="newPost.title" class="modal-input" placeholder="Ex: VWCE vs IWDA em 2026?">
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+      <div>
+        <label class="modal-label">Categoria</label>
+        <select [(ngModel)]="newPost.category" class="modal-input" style="height:40px; padding:0 12px">
+          <option value="ETF & Ações">ETF & Ações</option>
+          <option value="Imóveis & Rendas">Imóveis & Rendas</option>
+          <option value="CS2 & Steam">CS2 & Steam</option>
+          <option value="FIRE & Poupança">FIRE & Poupança</option>
+          <option value="Cripto">Cripto</option>
+          <option value="Portugal & IRS">Portugal & IRS</option>
+          <option value="Novato">Novato</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Tags (separadas por vírgula)</label>
+        <input type="text" [(ngModel)]="newPost.tagsString" class="modal-input" placeholder="Ex: ETF, poupanca">
+      </div>
+    </div>
+
+    <label class="modal-label">Conteúdo do Post (Markdown suportado)</label>
+    <textarea [(ngModel)]="newPost.content" class="modal-textarea" placeholder="Partilha a tua ideia ou questão com a comunidade de investidores..." rows="6"></textarea>
+
+    <div class="modal-footer">
+      <div class="modal-footer-left">
+        * A tag <strong style="color:var(--terra)">#investimentos</strong> é adicionada automaticamente.
+      </div>
+      <div style="display:flex; gap:8px">
         <button class="btn btn-ghost" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="createPost()">Publicar Agora</button>
+        <button class="btn btn-primary" (click)="createPost()">Publicar no Fórum</button>
       </div>
     </div>
   </div>
