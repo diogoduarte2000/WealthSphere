@@ -96,8 +96,10 @@ body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;di
 .notif-btn:hover{background:var(--sand2)}
 .notif-btn svg{width:16px;height:16px;color:var(--brown)}
 .notif-pip{
-  position:absolute;top:6px;right:6px;width:7px;height:7px;
-  border-radius:50%;background:var(--terra);border:1.5px solid var(--white);
+  position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;
+  border-radius:99px;background:var(--terra);border:1.5px solid var(--white);
+  font-size:10px;font-weight:700;color:#fff;line-height:13px;
+  display:flex;align-items:center;justify-content:center;
 }
 
 /* CONTENT */
@@ -138,8 +140,9 @@ body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;di
 .stat-change.up{background:rgba(95,126,95,0.1);color:var(--sage)}
 .stat-change.dn{background:rgba(201,106,69,0.1);color:var(--terra)}
 .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
-.stat-val{font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1}
+.stat-val{font-family:'Lora',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1}
 .stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+:host-context([data-theme="light"]) .stat-val{color:#0f0d0b}
 
 /* GRID LAYOUTS */
 .grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
@@ -211,7 +214,8 @@ canvas{display:block}
 .rate-item:hover{background:var(--sand2)}
 .rate-label{font-size:9px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
 .rate-name{font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px}
-.rate-val{font-family:'Lora',serif;font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-0.02em}
+.rate-val{font-family:'Lora',serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.02em}
+:host-context([data-theme="light"]) .rate-val{color:#0f0d0b}
 .rate-unit{font-size:12px;color:var(--muted);margin-left:1px}
 .rate-chg{font-size:10px;margin-top:4px}
 .rate-up{color:var(--sage)} .rate-dn{color:var(--terra)}
@@ -328,7 +332,8 @@ canvas{display:block}
 .steam-name{font-size:14px;font-weight:600;color:var(--ink)}
 .steam-id{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
 .steam-stats{display:flex;gap:20px;margin-left:auto}
-.steam-stat-val{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--ink)}
+.steam-stat-val{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#fff}
+:host-context([data-theme="light"]) .steam-stat-val{color:#0f0d0b}
 .steam-stat-label{font-size:10px;color:var(--muted)}
 
 /* MODAL */
@@ -607,7 +612,7 @@ body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;di
 .btn-sage{background:var(--sage);color:#fff}.btn-sage:hover{background:#4e6a4e}
 .notif{width:36px;height:36px;border-radius:50%;background:var(--sand);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
 .notif svg{width:16px;height:16px;color:var(--brown)}
-.notif-pip{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--terra);border:1.5px solid var(--white)}
+.notif-pip{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--terra);border:1.5px solid var(--white);font-size:10px;font-weight:700;color:#fff;line-height:13px;display:flex;align-items:center;justify-content:center;}
 
 /* ── LAYOUT ── */
 .app{display:flex;flex:1;min-height:0}
@@ -1086,4 +1091,250 @@ canvas{display:block;width:100%!important}
     height: 48px;
     font-size: 26px;
   }
+}
+
+/* ── Mobile Bottom Navigation ─────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .sidebar {
+    display: none !important;
+  }
+
+  .main {
+    margin-left: 0 !important;
+    padding-bottom: 70px; /* space for bottom nav */
+  }
+
+  /* Mobile hamburger in topbar */
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--sand);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+
+  /* Bottom nav bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .mob-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    border-radius: 10px;
+    transition: color .15s;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mob-nav-item.active {
+    color: var(--terra);
+  }
+
+  .mob-nav-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .mob-nav-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60px;
+  }
+
+  /* Mobile fullscreen sidebar overlay */
+  .mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,.45);
+    animation: fadeIn .15s ease;
+  }
+
+  .mobile-sidebar-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(80vw, 280px);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 301;
+    animation: slideInLeft .2s ease;
+    padding-bottom: 24px;
+  }
+
+  @keyframes slideInLeft {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .mobile-sidebar-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: var(--sand);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Content spacing & stacking */
+  .content {
+    padding: 16px 12px 80px;
+  }
+
+  .grid-2, .grid-3, .grid-2-1, .grid-1-2, .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Topbar on mobile */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .topbar-title {
+    font-size: 15px;
+  }
+
+  .topbar-sub {
+    font-size: 11px;
+  }
+
+  /* Cards */
+  .card {
+    padding: 14px;
+  }
+
+  /* Stat cards scroll */
+  .stats-row, .stat-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+  }
+
+  .stats-row .stat-card,
+  .stat-strip .sc-card {
+    min-width: 170px;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Charts */
+  .chart-area, .inv-chart {
+    height: 180px !important;
+    min-height: 180px !important;
+  }
+
+  /* Modals full-width */
+  .modal, .modal-card {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 18px !important;
+    margin: 12px;
+  }
+
+  /* Page tabs scroll */
+  .page-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+
+  .page-tabs::-webkit-scrollbar { display: none; }
+
+  .page-tab {
+    flex: 0 0 auto;
+  }
+
+  /* Sim tabs scroll */
+  .sim-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-right .btn-text {
+    display: none; /* hide long button labels, show only icons */
+  }
+
+  .stat-val, .sc-val {
+    font-size: 19px;
+  }
+
+  .mob-nav-item {
+    padding: 6px 4px;
+    font-size: 8px;
+  }
+
+  .mob-nav-item svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Toast notifications ───────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

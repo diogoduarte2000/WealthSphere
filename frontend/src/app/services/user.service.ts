@@ -122,4 +122,28 @@ export class UserService {
   getTrendingStocks(cat: string = 'tendencias'): Observable<any> {
     return this.http.get(`${environment.apiUrl}/external/stocks/trending?cat=${encodeURIComponent(cat)}`);
   }
+
+  getCoinbaseBalance(): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/external/coinbase/balance`);
+  }
+
+  getWiseBalance(): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/external/wise/balance`);
+  }
+
+  getGoals(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/me/goals`);
+  }
+
+  addGoal(goal: { label: string; target: number; deadline?: string }): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/me/goals`, goal);
+  }
+
+  updateGoal(id: string, data: Partial<{ label: string; target: number; deadline: string; notified: boolean }>): Observable<any[]> {
+    return this.http.put<any[]>(`${this.apiUrl}/me/goals/${id}`, data);
+  }
+
+  deleteGoal(id: string): Observable<any[]> {
+    return this.http.delete<any[]>(`${this.apiUrl}/me/goals/${id}`);
+  }
 }
