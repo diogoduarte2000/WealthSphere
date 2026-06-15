@@ -125,6 +125,7 @@ function toPublicUser(user) {
     hasBinanceApiKey: !!user.binanceApiKey,
     hasBinanceApiSecret: !!user.binanceApiSecret,
     hasKrakenApiKey: !!user.krakenApiKey,
+    hasCsFloatApiKey: !!user.csFloatApiKey,
     lastLogin: user.lastLogin,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
@@ -523,7 +524,7 @@ async function authenticateRequest(req) {
     throw error;
   }
 
-  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey +binanceApiSecret +krakenApiKey +krakenApiSecret');
+  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey +binanceApiSecret +krakenApiKey +krakenApiSecret +csFloatApiKey');
   if (!user) {
     const error = new Error('User not found');
     error.statusCode = 401;
@@ -797,6 +798,7 @@ app.patch('/api/users/me/external-apis', async (req, res) => {
     if (krakenApiSecret !== undefined) user.krakenApiSecret = krakenApiSecret || undefined;
     if (paypalClientId !== undefined) user.paypalClientId = paypalClientId || undefined;
     if (paypalClientSecret !== undefined) user.paypalClientSecret = paypalClientSecret || undefined;
+    if (req.body.csFloatApiKey !== undefined) user.csFloatApiKey = req.body.csFloatApiKey || undefined;
 
     user.lastLogin = new Date();
     await user.save();
@@ -885,6 +887,62 @@ app.patch('/api/users/me/settings', async (req, res) => {
   } catch (err) {
     const statusCode = err.statusCode || 401;
     res.status(statusCode).json({ message: err.message || 'Invalid token' });
+  }
+});
+
+// ── Financial Goals ──────────────────────────────────────────────────────────
+app.get('/api/users/me/goals', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    res.json(user.financialGoals || []);
+  } catch (err) {
+    res.status(err.statusCode || 401).json({ message: err.message });
+  }
+});
+
+app.post('/api/users/me/goals', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { label, target, deadline } = req.body;
+    if (!label || !target) return res.status(400).json({ message: 'label e target obrigatórios' });
+    if (!user.financialGoals) user.financialGoals = [];
+    if (user.financialGoals.length >= 5) return res.status(400).json({ message: 'Máximo de 5 metas' });
+    user.financialGoals.push({ label, target: Number(target), deadline: deadline || '', notified: false });
+    user.markModified('financialGoals');
+    await user.save();
+    res.json(user.financialGoals);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+app.put('/api/users/me/goals/:id', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const goal = (user.financialGoals || []).id(req.params.id);
+    if (!goal) return res.status(404).json({ message: 'Meta não encontrada' });
+    const { label, target, deadline, notified } = req.body;
+    if (label !== undefined) goal.label = label;
+    if (target !== undefined) goal.target = Number(target);
+    if (deadline !== undefined) goal.deadline = deadline;
+    if (notified !== undefined) goal.notified = notified;
+    user.markModified('financialGoals');
+    await user.save();
+    res.json(user.financialGoals);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/users/me/goals/:id', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    user.financialGoals = (user.financialGoals || []).filter(g => g._id.toString() !== req.params.id);
+    user.markModified('financialGoals');
+    await user.save();
+    res.json(user.financialGoals);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
   }
 });
 
@@ -1039,6 +1097,165 @@ app.get('/api/external/steam/price', async (req, res) => {
   }
 });
 
+// Steam market search (autocomplete for watchlist / ROI)
+const steamSearchCache = new Map();
+app.get('/api/external/steam/search', async (req, res) => {
+  const { q = '', appid = '730', count = '10' } = req.query;
+  if (!q || q.length < 2) return res.json({ results: [] });
+  const cacheKey = `${appid}:${String(q).toLowerCase()}`;
+  const cached = steamSearchCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return res.json(cached.data);
+
+  // For CS2, use Skinport local cache — Steam's search/render API ignores q without auth session
+  if (String(appid) === '730') {
+    if (skinportCache.data.size === 0) await updateSkinportCache().catch(() => {});
+    if (skinportCache.data.size > 0) {
+      const searchQ = String(q).toLowerCase();
+      const maxCount = Math.min(+count, 20);
+      const matches = [];
+      for (const [name, item] of skinportCache.data.entries()) {
+        const nameLow = name.toLowerCase();
+        // Normalize: "AK-47 | Redline (Factory New)" → "ak-47 redline factory new" for flexible matching
+        const nameNorm = nameLow.replace(' | ', ' ').replace(/\s*\([^)]+\)/g, '').trim();
+        if (nameLow.includes(searchQ) || nameNorm.includes(searchQ)) {
+          matches.push({
+            name,
+            hash_name: name,
+            price: item.min_price ?? item.suggested_price ?? null,
+            icon: null,
+            _score: nameLow.startsWith(searchQ) || nameNorm.startsWith(searchQ) ? 0 : 1
+          });
+        }
+      }
+      matches.sort((a, b) => a._score - b._score || a.name.localeCompare(b.name));
+      const results = matches.slice(0, maxCount).map(({ _score, ...r }) => r);
+      const data = { results };
+      if (results.length) steamSearchCache.set(cacheKey, { data, ts: Date.now() });
+      return res.json(data);
+    }
+  }
+
+  // Fallback: Steam API (works for non-CS2 games)
+  try {
+    const r = await axios.get('https://steamcommunity.com/market/search/render/', {
+      params: { q, appid, search_descriptions: 0, sort_column: 'popular', sort_dir: 'desc', norender: 1, count: Math.min(+count, 20) },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Referer': 'https://steamcommunity.com/market/', 'Accept-Language': 'en-US,en;q=0.9' },
+      timeout: 10000
+    });
+    const results = (r.data?.results || []).map(item => ({
+      name: item.name,
+      hash_name: item.hash_name,
+      price: (item.sell_price || 0) / 100,
+      icon: item.asset_description?.icon_url ? `https://steamcommunity-a.akamaihd.net/economy/image/${item.asset_description.icon_url}/75fx57f` : null
+    }));
+    const data = { results };
+    if (results.length) steamSearchCache.set(cacheKey, { data, ts: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('Steam search error:', err.message);
+    res.json({ results: [] });
+  }
+});
+
+// Steam Top10 per game
+const top10Cache = new Map();
+app.get('/api/external/steam/top10', async (req, res) => {
+  const { game = 'cs2' } = req.query;
+  const gameMap = { cs2: 730, rust: 252490, tf2: 440, kf2: 232090, warframe: 230410, h1z1: 433850, unturned: 304930, payday2: 218620 };
+  const appid = gameMap[game] || 730;
+  const cached = top10Cache.get(String(game));
+  if (cached && Date.now() - cached.ts < 30 * 60 * 1000) return res.json(cached.data);
+  try {
+    const r = await axios.get('https://steamcommunity.com/market/search/render/', {
+      params: { appid, search_descriptions: 0, sort_column: 'popular', sort_dir: 'desc', norender: 1, count: 10, start: 0 },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Referer': 'https://steamcommunity.com/market/', 'Accept-Language': 'en-US,en;q=0.9' },
+      timeout: 12000
+    });
+    const items = (r.data?.results || []).map(item => ({
+      name: item.name,
+      price: (item.sell_price || 0) / 100,
+      listings: item.sell_listings || 0,
+      icon: item.asset_description?.icon_url ? `https://steamcommunity-a.akamaihd.net/economy/image/${item.asset_description.icon_url}/75fx57f` : null
+    }));
+    const data = { items };
+    if (items.length) top10Cache.set(String(game), { data, ts: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('Top10 error:', err.message);
+    res.json({ items: [] });
+  }
+});
+
+// Price history endpoint — Steam's new UI no longer embeds var line1 in SSR HTML.
+// We use the public priceoverview API + Skinport cache as fallback.
+const priceHistoryCache = new Map();
+
+app.get('/api/external/steam/price-history', async (req, res) => {
+  const { name, appid = '730' } = req.query;
+  if (!name) return res.status(400).json({ message: 'Missing name' });
+
+  const cacheKey = `${appid}:${name}`;
+  const cached = priceHistoryCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < 2 * 60 * 60 * 1000) {
+    return res.json(cached.data);
+  }
+
+  let history = [];
+  let priceOverview = null;
+
+  // 1) Try Steam priceoverview API (public, no auth needed) — gives current price snapshot
+  try {
+    const overviewUrl = `https://steamcommunity.com/market/priceoverview/?appid=${appid}&currency=3&market_hash_name=${encodeURIComponent(name)}`;
+    const overviewRes = await axios.get(overviewUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+      },
+      timeout: 8000
+    });
+    const ov = overviewRes.data;
+    if (ov && ov.success) {
+      // Steam returns prices like "€0,72" — parse to float
+      const parseEur = (s) => s ? parseFloat(String(s).replace(/[^\d,\.]/g, '').replace(',', '.')) : null;
+      priceOverview = {
+        lowest: parseEur(ov.lowest_price),
+        median: parseEur(ov.median_price),
+        volume: ov.volume || null,
+        currency: 'EUR',
+        steamUrl: `https://steamcommunity.com/market/listings/${appid}/${encodeURIComponent(name)}`
+      };
+    }
+  } catch (e) {
+    console.warn('Steam priceoverview failed:', e.message);
+  }
+
+  // 2) Augment with Skinport cache if available (CS2 only)
+  if (String(appid) === '730' && skinportCache.data.size > 0) {
+    const skinportItem = skinportCache.data.get(name);
+    if (skinportItem) {
+      const sp = {
+        min: skinportItem.min_price ?? null,
+        max: skinportItem.max_price ?? null,
+        suggested: skinportItem.suggested_price ?? null,
+        quantity: skinportItem.quantity ?? null,
+      };
+      priceOverview = {
+        ...(priceOverview || {}),
+        skinport: sp,
+        steamUrl: priceOverview?.steamUrl || `https://steamcommunity.com/market/listings/${appid}/${encodeURIComponent(name)}`
+      };
+      // If we have a current price but no overview from Steam, fill in from Skinport
+      if (!priceOverview.lowest && sp.min) priceOverview.lowest = sp.min / 100;
+      if (!priceOverview.median && sp.suggested) priceOverview.median = sp.suggested / 100;
+    }
+  }
+
+  const data = { history, priceOverview };
+  // Cache for 2h even when history is empty (priceOverview is still useful)
+  priceHistoryCache.set(cacheKey, { data, ts: Date.now() });
+  res.json(data);
+});
+
 // Map game IDs (sent by frontend) to Steam appid + contextid
 const STEAM_GAMES = {
   cs2:       { appid: 730,     contextid: 2, hasFloat: true  },
@@ -1173,28 +1390,73 @@ app.get('/api/external/steam/inventory', async (req, res) => {
       if (hit && Date.now() - hit.timestamp < 24 * 60 * 60 * 1000) {
         return { assetId: item.assetId, ...hit.payload };
       }
-      try {
-        const fr = await axios.get('https://api.csfloat.com/', {
-          params: { url: item.inspectLink },
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          timeout: 10000
-        });
-        const info = fr.data?.iteminfo || fr.data;
-        const payload = {
+
+      // Helper to parse CSFloat-style response
+      function parseFloatResponse(data) {
+        const info = data?.iteminfo || data;
+        return {
           float: typeof info?.floatvalue === 'number' ? info.floatvalue : null,
           paintSeed: info?.paintseed ?? null,
           paintIndex: info?.paintindex ?? null
         };
-        setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
-        return { assetId: item.assetId, ...payload };
-      } catch (err) {
-        console.error(`Float error for ${item.name} (${item.assetId}):`, err.message);
-        return { assetId: item.assetId, float: null, paintSeed: null, paintIndex: null };
       }
+
+      // 1. If user has a CSFloat API key, use authenticated endpoint first
+      if (user.csFloatApiKey) {
+        try {
+          const fr = await axios.get('https://csfloat.com/api/v1/', {
+            params: { url: item.inspectLink },
+            headers: { 'User-Agent': 'Mozilla/5.0', 'Authorization': `Bearer ${user.csFloatApiKey}` },
+            timeout: 12000
+          });
+          const payload = parseFloatResponse(fr.data);
+          if (payload.float !== null) {
+            setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
+            return { assetId: item.assetId, ...payload };
+          }
+        } catch (err) {
+          if (err.response?.status !== 401 && err.response?.status !== 403) {
+            // non-auth error, fall through to free endpoints
+          }
+        }
+      }
+
+      // 2. Free endpoints — try steam.supply first, then legacy fallbacks
+      const FLOAT_ENDPOINTS = [
+        { url: 'https://api.steam.supply/float', paramName: 'url' },
+        { url: 'https://api.csfloat.com/',       paramName: 'url' },
+        { url: 'https://api.csgofloat.com/',     paramName: 'url' },
+      ];
+      for (const endpoint of FLOAT_ENDPOINTS) {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const fr = await axios.get(endpoint.url, {
+              params: { [endpoint.paramName]: item.inspectLink },
+              headers: { 'User-Agent': 'Mozilla/5.0' },
+              timeout: 12000
+            });
+            const payload = parseFloatResponse(fr.data);
+            if (payload.float !== null) {
+              setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
+              return { assetId: item.assetId, ...payload };
+            }
+          } catch (err) {
+            const isTransient = err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.response?.status === 429;
+            const isDnsFail = err.code === 'ENOTFOUND';
+            if (isDnsFail) break;
+            if (isTransient && attempt < 2) {
+              await new Promise(r => setTimeout(r, 1500));
+              continue;
+            }
+          }
+        }
+      }
+
+      return { assetId: item.assetId, float: null, paintSeed: null, paintIndex: null };
     }
 
     const floatByAssetId = new Map();
-    const FLOAT_CONCURRENCY = 3;
+    const FLOAT_CONCURRENCY = 2;
     for (let i = 0; i < itemsWithInspect.length; i += FLOAT_CONCURRENCY) {
       const batch = itemsWithInspect.slice(i, i + FLOAT_CONCURRENCY);
       const results = await Promise.all(batch.map(item => fetchFloatCached(item)));
@@ -1292,26 +1554,51 @@ app.get('/api/external/steam/float', async (req, res) => {
     return res.json(cached.payload);
   }
 
-  try {
-    const response = await axios.get('https://api.csfloat.com/', {
-      params: { url: inspectLink },
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      timeout: 10000
-    });
-    const itemInfo = response.data?.iteminfo || response.data;
-    const payload = {
-      float: typeof itemInfo?.floatvalue === 'number' ? itemInfo.floatvalue : null,
-      paintSeed: itemInfo?.paintseed ?? null,
-      paintIndex: itemInfo?.paintindex ?? null,
-      source: 'csfloat'
+  function parseInfo(data) {
+    const info = data?.iteminfo || data;
+    return {
+      float: typeof info?.floatvalue === 'number' ? info.floatvalue : null,
+      paintSeed: info?.paintseed ?? null,
+      paintIndex: info?.paintindex ?? null
     };
-
-    setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
-    res.json(payload);
-  } catch (err) {
-    console.error('Steam Float Error:', err.response?.data || err.message);
-    res.json({ float: null, paintSeed: null, paintIndex: null, source: 'unavailable' });
   }
+
+  // Try authenticated CSFloat first if user is logged in and has key
+  try {
+    const { user } = await authenticateRequest(req).catch(() => ({ user: null }));
+    if (user?.csFloatApiKey) {
+      const r = await axios.get('https://csfloat.com/api/v1/', {
+        params: { url: inspectLink },
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Authorization': `Bearer ${user.csFloatApiKey}` },
+        timeout: 10000
+      });
+      const payload = { ...parseInfo(r.data), source: 'csfloat-auth' };
+      if (payload.float !== null) {
+        setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
+        return res.json(payload);
+      }
+    }
+  } catch (_) {}
+
+  const FLOAT_ENDPOINTS = ['https://api.csfloat.com/', 'https://api.csgofloat.com/'];
+  for (const baseUrl of FLOAT_ENDPOINTS) {
+    try {
+      const response = await axios.get(baseUrl, {
+        params: { url: inspectLink },
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 10000
+      });
+      const payload = { ...parseInfo(response.data), source: baseUrl.includes('csgofloat') ? 'csgofloat' : 'csfloat' };
+      if (payload.float !== null) {
+        setBoundedCache(steamFloatCache, cacheKey, { payload, timestamp: Date.now() }, 5000);
+        return res.json(payload);
+      }
+    } catch (err) {
+      if (err.code === 'ENOTFOUND') continue;
+      console.error('Steam Float Error:', err.response?.data || err.message);
+    }
+  }
+  res.json({ float: null, paintSeed: null, paintIndex: null, source: 'unavailable' });
 });
 
 app.get('/api/external/trading212/portfolio', async (req, res) => {
@@ -1353,17 +1640,34 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     }
 
     const total = calculateTrading212Total(data.positions, data.summary);
-    const invested = Number(data.summary?.investedValue ?? data.summary?.invested ?? 0);
-    const result = Number(data.summary?.ppl ?? data.summary?.result ?? (total - invested));
+
+    // Uninvested cash sitting in the T212 account
+    const cash = Number(data.summary?.free ?? data.summary?.cash ?? data.summary?.availableCash ?? 0);
+
+    // Cost basis in EUR: currentValue (EUR) - unrealisedPnL (EUR)
+    // This avoids the multi-currency problem of averagePricePaid × qty (which is in instrument currency)
+    const positions = Array.isArray(data.positions) ? data.positions : [];
+    const positionsValue = positions.reduce((sum, p) => {
+      const val = Number(p.walletImpact?.currentValue ?? p.currentPrice * p.quantity ?? 0);
+      return sum + val;
+    }, 0);
+    const totalPpl = positions.reduce((sum, p) => {
+      return sum + Number(p.walletImpact?.unrealizedProfitLoss ?? p.ppl ?? 0);
+    }, 0);
+    // invested = amount actually put into stocks (in EUR)
+    const invested = Math.max(0, positionsValue - totalPpl);
+    const result = totalPpl;
 
     const payload = {
       success: true,
       data: {
         environment: environmentName,
         total,
-        invested,
-        result,
-        positions: Array.isArray(data.positions) ? data.positions : [],
+        cash,           // uninvested balance
+        positionsValue, // current value of all positions
+        invested,       // cost basis of positions (EUR)
+        result,         // unrealised P&L (EUR)
+        positions,
         summary: data.summary
       }
     };
@@ -1376,11 +1680,9 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     // Save daily portfolio snapshot for evolution chart
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const total = payload.data?.total || 0;
-      const invested = data.summary?.investedValue ?? data.summary?.invested ?? 0;
       await PortfolioSnapshot.findOneAndUpdate(
         { user: user._id, date: today, source: 'trading212' },
-        { total, invested, result: total - invested },
+        { total, positionsValue, cash, invested, result },
         { upsert: true, new: true }
       );
     } catch (snapErr) { /* non-critical */ }
@@ -1448,31 +1750,64 @@ app.get('/api/external/market-data', async (req, res) => {
       results.eurGbp = ecbResp.data.rates?.GBP;
     } catch (e) { console.warn('Frankfurter forex error:', e.message); }
 
-    // Euribor: ECB SDMX API (flow/key format)
+    // Euribor: ECB SDMX API — all in parallel with short timeout
     try {
       const euriborSeries = [
         { key: 'euribor3m',  seriesKey: 'M.U2.EUR.RT0.MM.EURIBOR3MD_.HSTA' },
         { key: 'euribor6m',  seriesKey: 'M.U2.EUR.RT0.MM.EURIBOR6MD_.HSTA' },
         { key: 'euribor12m', seriesKey: 'M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA' },
       ];
-      for (const { key, seriesKey } of euriborSeries) {
-        try {
-          const r = await axios.get(
-            `https://data-api.ecb.europa.eu/service/data/FM/${seriesKey}?lastNObservations=1&format=jsondata`,
-            { timeout: 10000, headers: { 'Accept': 'application/json' } }
-          );
-          const seriesData = r.data?.dataSets?.[0]?.series;
+      const ecbHeaders = {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Origin': 'https://data.ecb.europa.eu',
+        'Referer': 'https://data.ecb.europa.eu/',
+      };
+      const euriborResults = await Promise.allSettled(euriborSeries.map(({ seriesKey }) =>
+        axios.get(`https://data-api.ecb.europa.eu/service/data/FM/${seriesKey}?lastNObservations=1&format=jsondata`,
+          { timeout: 6000, headers: ecbHeaders })
+      ));
+      euriborSeries.forEach(({ key }, i) => {
+        const r = euriborResults[i];
+        if (r.status === 'fulfilled') {
+          const seriesData = r.value.data?.dataSets?.[0]?.series;
           if (seriesData) {
-            const firstKey = Object.keys(seriesData)[0];
-            const obs = seriesData[firstKey]?.observations;
+            const obs = seriesData[Object.keys(seriesData)[0]]?.observations;
             if (obs) {
               const lastObs = Object.values(obs).pop();
               results[key] = Array.isArray(lastObs) ? lastObs[0] : lastObs;
             }
           }
-        } catch (e) { console.warn(`ECB ${key} error:`, e.message); }
-      }
+        }
+      });
     } catch (e) { console.warn('ECB Euribor error:', e.message); }
+
+    // Live indices via Yahoo Finance (same yfGet helper used for stocks)
+    try {
+      const indexTickers = [
+        { key: 'sp500',    symbol: '^GSPC'     },
+        { key: 'nasdaq',   symbol: '^IXIC'     },
+        { key: 'stoxx50',  symbol: '^STOXX50E' },
+        { key: 'psi20',    symbol: 'PSI20.LS'  },
+      ];
+      const indexResults = await Promise.allSettled(indexTickers.map(({ symbol }) =>
+        yfGet(`/v8/finance/chart/${encodeURIComponent(symbol)}`, { range: '1d', interval: '1d' })
+      ));
+      indexTickers.forEach(({ key }, i) => {
+        if (indexResults[i].status === 'fulfilled') {
+          const m = indexResults[i].value?.chart?.result?.[0]?.meta;
+          if (m?.regularMarketPrice) {
+            results[key] = { price: m.regularMarketPrice, change: m.regularMarketChangePercent ?? null };
+          }
+        }
+      });
+    } catch (e) { console.warn('Yahoo indices error:', e.message); }
+
+    // Euribor fallback: use last known values if ECB API failed
+    if (results.euribor3m == null)  results.euribor3m  = 2.28;  // approximate Jun 2026
+    if (results.euribor6m == null)  results.euribor6m  = 2.18;
+    if (results.euribor12m == null) results.euribor12m = 1.99;
+    results.euriborFallback = results.euribor3m === 2.28; // flag so UI can indicate estimated
 
     results.updatedAt = new Date().toISOString();
 
@@ -1523,9 +1858,13 @@ app.get('/api/external/binance/balance', async (req, res) => {
     setBoundedCache(binanceBalanceCache, String(user._id), { timestamp: Date.now(), payload }, 500);
     res.json(payload);
   } catch (err) {
+    const isAuthErr = err.message?.includes('jwt') || err.message?.includes('token') || err.status === 401 || err.statusCode === 401;
+    if (isAuthErr) {
+      return res.status(401).json({ message: 'Sessão expirada — faz login novamente' });
+    }
     const msg = err.response?.data?.msg || err.message;
     console.error('Binance API Error:', msg);
-    res.status(500).json({ message: `Erro Binance: ${msg}` });
+    res.status(500).json({ message: msg || 'Erro ao contactar Binance' });
   }
 });
 
@@ -1584,7 +1923,125 @@ app.get('/api/external/kraken/balance', async (req, res) => {
   } catch (err) {
     const msg = err.response?.data?.error?.[0] || err.message;
     console.error('Kraken API Error:', msg);
-    res.status(500).json({ message: `Erro Kraken: ${msg}` });
+    const isAuthErrK = err.message?.includes('jwt') || err.message?.includes('token') || err.status === 401;
+    if (isAuthErrK) return res.status(401).json({ message: 'Sessão expirada — faz login novamente' });
+    res.status(500).json({ message: msg || 'Erro ao contactar Kraken' });
+  }
+});
+
+// ==========================================
+//              COINBASE API (v2 HMAC)
+// ==========================================
+const coinbaseBalanceCache = new Map();
+
+app.get('/api/external/coinbase/balance', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    if (!user.coinbaseApiKey || !user.coinbaseApiSecret) {
+      return res.status(400).json({ message: 'Coinbase API Key e Secret não configurados' });
+    }
+
+    const cached = coinbaseBalanceCache.get(String(user._id));
+    if (cached && Date.now() - cached.timestamp < 60_000) {
+      return res.json(cached.payload);
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const method = 'GET';
+    const requestPath = '/v2/accounts?limit=100';
+    const body = '';
+    const message = `${timestamp}${method}${requestPath}${body}`;
+    const signature = crypto.createHmac('sha256', user.coinbaseApiSecret).update(message).digest('hex');
+
+    const response = await axios.get(`https://api.coinbase.com${requestPath}`, {
+      headers: {
+        'CB-ACCESS-KEY': user.coinbaseApiKey,
+        'CB-ACCESS-SIGN': signature,
+        'CB-ACCESS-TIMESTAMP': String(timestamp),
+        'CB-VERSION': '2016-02-18',
+      },
+      timeout: 10000
+    });
+
+    const accounts = (response.data.data || [])
+      .filter(a => parseFloat(a.balance?.amount || 0) > 0)
+      .map(a => ({
+        asset: a.balance.currency,
+        total: parseFloat(a.balance.amount),
+        name: a.name
+      }));
+
+    const payload = { success: true, balances: accounts };
+    setBoundedCache(coinbaseBalanceCache, String(user._id), { timestamp: Date.now(), payload }, 500);
+    res.json(payload);
+  } catch (err) {
+    const isAuthErr = err.message?.includes('jwt') || err.message?.includes('token') || err.status === 401 || err.statusCode === 401;
+    if (isAuthErr) return res.status(401).json({ message: 'Sessão expirada' });
+    const msg = err.response?.data?.errors?.[0]?.message || err.message;
+    console.error('Coinbase API Error:', msg);
+    res.status(500).json({ message: msg || 'Erro ao contactar Coinbase' });
+  }
+});
+
+// Guardar chaves Coinbase
+app.post('/api/users/me/coinbase', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { apiKey, apiSecret } = req.body;
+    if (!apiKey || !apiSecret) return res.status(400).json({ message: 'API Key e Secret obrigatórios' });
+    user.coinbaseApiKey = apiKey;
+    user.coinbaseApiSecret = apiSecret;
+    await user.save();
+    coinbaseBalanceCache.delete(String(user._id));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+// Guardar token Wise
+app.post('/api/users/me/wise', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { apiToken } = req.body;
+    if (!apiToken) return res.status(400).json({ message: 'Token obrigatório' });
+    user.wiseApiToken = apiToken;
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+// Wise balance
+app.get('/api/external/wise/balance', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    if (!user.wiseApiToken) return res.status(400).json({ message: 'Wise token não configurado' });
+
+    // Get profiles first
+    const profilesResp = await axios.get('https://api.wise.com/v1/profiles', {
+      headers: { Authorization: `Bearer ${user.wiseApiToken}` },
+      timeout: 8000
+    });
+    const personalProfile = profilesResp.data.find(p => p.type === 'PERSONAL') || profilesResp.data[0];
+    if (!personalProfile) return res.status(404).json({ message: 'Perfil Wise não encontrado' });
+
+    // Get balances
+    const balancesResp = await axios.get(
+      `https://api.wise.com/v4/profiles/${personalProfile.id}/balances?types=STANDARD`,
+      { headers: { Authorization: `Bearer ${user.wiseApiToken}` }, timeout: 8000 }
+    );
+
+    const balances = (balancesResp.data || [])
+      .filter(b => b.amount?.value > 0)
+      .map(b => ({ currency: b.amount.currency, amount: b.amount.value }));
+
+    res.json({ success: true, balances });
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors?.[0]?.message || err.message;
+    console.error('Wise API Error:', msg);
+    res.status(500).json({ message: msg || 'Erro ao contactar Wise' });
   }
 });
 
@@ -1702,11 +2159,30 @@ app.get('/api/forum', async (req, res) => {
   }
 });
 
-// GET specific post and increment views
+// GET specific post and increment views (unique per user)
 app.get('/api/forum/:id', async (req, res) => {
   try {
-    const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }, { new: true });
+    let userId = null;
+    try { const auth = await authenticateRequest(req); userId = auth.user._id; } catch {}
+    
+    const updateOp = userId
+      ? { $addToSet: { viewedBy: userId }, $set: {} }
+      : {};
+    // Always fetch, only increment if new unique viewer
+    const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post não encontrado' });
+
+    if (userId) {
+      const alreadyViewed = post.viewedBy.some(id => id.toString() === userId.toString());
+      if (!alreadyViewed) {
+        post.viewedBy.push(userId);
+        post.views = (post.views || 0) + 1;
+        await post.save();
+      }
+    } else {
+      post.views = (post.views || 0) + 1;
+      await post.save();
+    }
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: 'Erro ao carregar post' });
@@ -1721,6 +2197,12 @@ app.post('/api/forum', async (req, res) => {
 
     if (!title || !content) {
       return res.status(400).json({ message: 'Título e conteúdo são obrigatórios' });
+    }
+
+    // One post per user
+    const existingPost = await Post.findOne({ author: user._id });
+    if (existingPost) {
+      return res.status(409).json({ message: 'Já criaste um post no fórum. Podes editar o existente.' });
     }
 
     let tagsArray = Array.isArray(tags) ? tags : [];
@@ -1811,7 +2293,8 @@ app.post('/api/forum/:id/vote', async (req, res) => {
 
     post.votes = post.upvotedBy.length - post.downvotedBy.length;
     await post.save();
-    res.json({ votes: post.votes, upvoted: post.upvotedBy.includes(user._id), downvoted: post.downvotedBy.includes(user._id) });
+    const uid = user._id.toString();
+    res.json({ votes: post.votes, upvoted: post.upvotedBy.some(id => id.toString() === uid), downvoted: post.downvotedBy.some(id => id.toString() === uid) });
   } catch (err) {
     res.status(err.statusCode || 500).json({ message: err.message || 'Erro ao votar' });
   }
@@ -1855,6 +2338,12 @@ app.post('/api/forum/:id/comments/:commentId/reply', async (req, res) => {
 
     const comment = post.comments.id(req.params.commentId);
     if (!comment) return res.status(404).json({ message: 'Comentário não encontrado' });
+
+    // One reply per user per comment
+    const alreadyReplied = comment.replies.some(r => r.author.toString() === user._id.toString());
+    if (alreadyReplied) {
+      return res.status(409).json({ message: 'Já respondeste a este comentário.' });
+    }
 
     comment.replies.push({
       author: user._id,
@@ -1913,8 +2402,64 @@ app.post('/api/forum/comments/:commentId/vote', async (req, res) => {
 // ==========================================
 //           STOCKS API (Yahoo Finance)
 // ==========================================
-let yahooFinance;
-try { yahooFinance = require('yahoo-finance2').default; } catch(e) { console.warn('yahoo-finance2 not available'); }
+// Uses direct axios calls to Yahoo Finance API (no library dependency)
+const YF_BASE = 'https://query1.finance.yahoo.com';
+const YF_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'application/json',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Origin': 'https://finance.yahoo.com',
+  'Referer': 'https://finance.yahoo.com',
+};
+
+let _yfCookie = '';
+let _yfCrumb  = '';
+let _yfCrumbTs = 0;
+const YF_CRUMB_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
+async function yfRefreshCrumb() {
+  try {
+    const r1 = await axios.get('https://fc.yahoo.com', {
+      timeout: 8000, headers: YF_HEADERS, maxRedirects: 5,
+      validateStatus: s => s < 500
+    });
+    const setCookies = r1.headers['set-cookie'] || [];
+    _yfCookie = setCookies.map(c => c.split(';')[0]).join('; ');
+    const r2 = await axios.get(`${YF_BASE}/v1/test/getcrumb`, {
+      timeout: 8000, headers: { ...YF_HEADERS, Cookie: _yfCookie }
+    });
+    _yfCrumb = typeof r2.data === 'string' ? r2.data.trim() : String(r2.data).trim();
+    _yfCrumbTs = Date.now();
+    console.log('[YF] Crumb refreshed OK');
+  } catch(e) {
+    console.warn('[YF] Crumb refresh failed:', e.message);
+  }
+}
+
+async function yfGet(path, params = {}) {
+  if (!_yfCrumb || Date.now() - _yfCrumbTs > YF_CRUMB_TTL) await yfRefreshCrumb();
+  if (_yfCrumb) params.crumb = _yfCrumb;
+  try {
+    const r = await axios.get(`${YF_BASE}${path}`, {
+      params, timeout: 10000,
+      headers: { ...YF_HEADERS, Cookie: _yfCookie }
+    });
+    return r.data;
+  } catch(e) {
+    if (e.response?.status === 401 || e.response?.status === 403) {
+      // Crumb expired, refresh and retry once
+      _yfCrumb = '';
+      await yfRefreshCrumb();
+      if (_yfCrumb) params.crumb = _yfCrumb;
+      const r = await axios.get(`${YF_BASE}${path}`, {
+        params, timeout: 10000,
+        headers: { ...YF_HEADERS, Cookie: _yfCookie }
+      });
+      return r.data;
+    }
+    throw e;
+  }
+}
 
 const stockSearchCache = new Map();
 const stockQuoteCache  = new Map();
@@ -1924,15 +2469,14 @@ const STOCK_QUOTE_TTL  = 2 * 60 * 1000;   // 2 min
 const STOCK_CHART_TTL  = 10 * 60 * 1000;  // 10 min
 
 app.get('/api/external/stocks/search', async (req, res) => {
-  if (!yahooFinance) return res.status(503).json({ message: 'Yahoo Finance unavailable' });
   const q = (req.query.q || '').trim();
   if (!q) return res.json([]);
   const cacheKey = q.toLowerCase();
   const cached = stockSearchCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < STOCK_SEARCH_TTL) return res.json(cached.data);
   try {
-    const result = await yahooFinance.search(q, { newsCount: 0, quotesCount: 10 });
-    const quotes = (result.quotes || [])
+    const data = await yfGet('/v1/finance/search', { q, newsCount: 0, quotesCount: 10, lang: 'en-US', region: 'US' });
+    const quotes = (data.quotes || [])
       .filter(r => r.quoteType === 'EQUITY' || r.quoteType === 'ETF' || r.quoteType === 'MUTUALFUND' || r.quoteType === 'INDEX')
       .slice(0, 10)
       .map(r => ({
@@ -1957,14 +2501,14 @@ const TRENDING_CATEGORIES = {
   tendencias: ['NVDA','AAPL','MSFT','AMZN','TSLA','META','GOOGL','AMD','NFLX','PLTR'],
   bigtech:    ['AAPL','MSFT','GOOGL','META','AMZN','NVDA','TSLA','ORCL','CRM','ADBE'],
   etfs:       ['SPY','VOO','QQQ','VTI','VWRA.L','CSPX.L','IWDA.AS','VUSA.L','EQQQ.L','XDWD.DE'],
-  cripto:     ['BTC-USD','ETH-USD','BNB-USD','SOL-USD','XRP-USD','ADA-USD','DOGE-USD','AVAX-USD'],
-  dividendos: ['JNJ','KO','PG','VZ','T','MMM','MO','O','REALTY','HDV'],
+  cripto:     ['BTC-USD','ETH-USD','SOL-USD','BNB-USD','XRP-USD','ADA-USD','DOGE-USD','AVAX-USD'],
+  dividendos: ['JNJ','KO','PG','VZ','T','MMM','MO','O','HDV','SCHD'],
+  materiais:  ['GLD','SLV','USO','GDX','XLB','PDBC','PICK','WEAT','DBA','CORN'],
 };
 const trendingCache = new Map();
 const TRENDING_TTL = 5 * 60 * 1000;
 
 app.get('/api/external/stocks/trending', async (req, res) => {
-  if (!yahooFinance) return res.status(503).json({ message: 'Yahoo Finance unavailable' });
   const cat = (req.query.cat || 'tendencias').toLowerCase();
   const symbols = TRENDING_CATEGORIES[cat] || TRENDING_CATEGORIES.tendencias;
   const cacheKey = cat;
@@ -1972,21 +2516,27 @@ app.get('/api/external/stocks/trending', async (req, res) => {
   if (cached && Date.now() - cached.ts < TRENDING_TTL) return res.json(cached.data);
   try {
     const results = await Promise.allSettled(
-      symbols.map(s => yahooFinance.quote(s, { fields: ['symbol','shortName','regularMarketPrice','regularMarketChangePercent','regularMarketChange','currency','quoteType','exchange'] }).catch(() => null))
+      symbols.map(async s => {
+        const yfData = await yfGet(`/v8/finance/chart/${encodeURIComponent(s)}`, {
+          range: '1d', interval: '1d', lang: 'en-US', region: 'US'
+        });
+        const m = yfData.chart?.result?.[0]?.meta;
+        if (!m) return null;
+        const prev = m.chartPreviousClose || m.previousClose || 0;
+        const price = m.regularMarketPrice || 0;
+        return {
+          symbol: m.symbol || s,
+          shortName: m.shortName || s,
+          price,
+          change: price - prev,
+          changePct: prev ? ((price - prev) / prev) * 100 : 0,
+          currency: m.currency || 'USD',
+          quoteType: m.instrumentType || '',
+          exchange: m.exchangeName || '',
+        };
+      })
     );
-    const data = results
-      .map(r => r.status === 'fulfilled' ? r.value : null)
-      .filter(Boolean)
-      .map(q => ({
-        symbol: q.symbol,
-        shortName: q.shortName || q.symbol,
-        price: q.regularMarketPrice,
-        change: q.regularMarketChange,
-        changePct: q.regularMarketChangePercent,
-        currency: q.currency || 'USD',
-        quoteType: q.quoteType,
-        exchange: q.exchange,
-      }));
+    const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
     setBoundedCache(trendingCache, cacheKey, { ts: Date.now(), data }, 20);
     res.json(data);
   } catch (err) {
@@ -1996,39 +2546,39 @@ app.get('/api/external/stocks/trending', async (req, res) => {
 });
 
 app.get('/api/external/stocks/quote', async (req, res) => {
-  if (!yahooFinance) return res.status(503).json({ message: 'Yahoo Finance unavailable' });
   const symbol = (req.query.symbol || '').trim().toUpperCase();
   if (!symbol) return res.status(400).json({ message: 'Symbol required' });
   const cached = stockQuoteCache.get(symbol);
   if (cached && Date.now() - cached.ts < STOCK_QUOTE_TTL) return res.json(cached.data);
   try {
-    const q = await yahooFinance.quote(symbol);
+    const yfData = await yfGet(`/v8/finance/chart/${encodeURIComponent(symbol)}`, {
+      range: '1d', interval: '1d', lang: 'en-US', region: 'US'
+    });
+    const result = yfData.chart?.result?.[0];
+    if (!result) return res.status(404).json({ message: 'Symbol not found' });
+    const m = result.meta || {};
+    const prev = m.chartPreviousClose || m.previousClose || 0;
+    const price = m.regularMarketPrice || 0;
     const data = {
-      symbol: q.symbol,
-      shortName: q.shortName || q.longName || symbol,
-      longName: q.longName || q.shortName || symbol,
-      currency: q.currency,
-      regularMarketPrice: q.regularMarketPrice,
-      regularMarketChange: q.regularMarketChange,
-      regularMarketChangePercent: q.regularMarketChangePercent,
-      regularMarketPreviousClose: q.regularMarketPreviousClose,
-      regularMarketOpen: q.regularMarketOpen,
-      regularMarketDayHigh: q.regularMarketDayHigh,
-      regularMarketDayLow: q.regularMarketDayLow,
-      regularMarketVolume: q.regularMarketVolume,
-      fiftyTwoWeekHigh: q.fiftyTwoWeekHigh,
-      fiftyTwoWeekLow: q.fiftyTwoWeekLow,
-      marketCap: q.marketCap,
-      trailingPE: q.trailingPE,
-      forwardPE: q.forwardPE,
-      dividendYield: q.dividendYield,
-      fiftyDayAverage: q.fiftyDayAverage,
-      twoHundredDayAverage: q.twoHundredDayAverage,
-      exchange: q.exchange,
-      quoteType: q.quoteType,
-      sector: q.sector,
-      industry: q.industry,
-      marketState: q.marketState
+      symbol: m.symbol || symbol,
+      shortName: m.shortName || symbol,
+      longName: m.longName || m.shortName || symbol,
+      currency: m.currency || 'USD',
+      regularMarketPrice: price,
+      regularMarketChange: price - prev,
+      regularMarketChangePercent: prev ? ((price - prev) / prev) * 100 : 0,
+      regularMarketPreviousClose: prev,
+      regularMarketOpen: m.regularMarketOpen || price,
+      regularMarketDayHigh: m.regularMarketDayHigh || price,
+      regularMarketDayLow: m.regularMarketDayLow || price,
+      regularMarketVolume: m.regularMarketVolume || 0,
+      fiftyTwoWeekHigh: m.fiftyTwoWeekHigh || 0,
+      fiftyTwoWeekLow: m.fiftyTwoWeekLow || 0,
+      marketCap: m.marketCap || null,
+      trailingPE: m.trailingPE || null,
+      exchange: m.exchangeName || '',
+      quoteType: m.instrumentType || '',
+      marketState: m.marketState || 'CLOSED'
     };
     setBoundedCache(stockQuoteCache, symbol, { ts: Date.now(), data }, 500);
     res.json(data);
@@ -2042,7 +2592,6 @@ const PERIOD_MAP = { '1d': 1, '5d': 5, '1mo': 30, '3mo': 90, '6mo': 180, '1y': 3
 const INTERVAL_MAP = { '1d': '5m', '5d': '30m', '1mo': '1d', '3mo': '1d', '6mo': '1wk', '1y': '1wk', '2y': '1wk', '5y': '1mo' };
 
 app.get('/api/external/stocks/chart', async (req, res) => {
-  if (!yahooFinance) return res.status(503).json({ message: 'Yahoo Finance unavailable' });
   const symbol = (req.query.symbol || '').trim().toUpperCase();
   const period = req.query.period || '1mo';
   if (!symbol) return res.status(400).json({ message: 'Symbol required' });
@@ -2052,20 +2601,31 @@ app.get('/api/external/stocks/chart', async (req, res) => {
   try {
     const days = PERIOD_MAP[period] || 30;
     const interval = INTERVAL_MAP[period] || '1d';
-    const period1 = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const chart = await yahooFinance.chart(symbol, { period1, interval });
-    const quotes = (chart.quotes || []).filter(q => q.close != null).map(q => ({
-      date: q.date instanceof Date ? q.date.toISOString() : q.date,
-      open: q.open,
-      high: q.high,
-      low: q.low,
-      close: q.close,
-      volume: q.volume
-    }));
+    const rangeMap = { 1: '1d', 5: '5d', 30: '1mo', 90: '3mo', 180: '6mo', 365: '1y', 730: '2y', 1825: '5y' };
+    const range = rangeMap[days] || '1mo';
+    const yfData = await yfGet(`/v8/finance/chart/${encodeURIComponent(symbol)}`, {
+      range, interval, lang: 'en-US', region: 'US'
+    });
+    const result = yfData.chart?.result?.[0];
+    if (!result) return res.status(404).json({ message: 'Symbol not found' });
+    const timestamps = result.timestamp || [];
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    const opens = result.indicators?.quote?.[0]?.open || [];
+    const highs = result.indicators?.quote?.[0]?.high || [];
+    const lows = result.indicators?.quote?.[0]?.low || [];
+    const volumes = result.indicators?.quote?.[0]?.volume || [];
+    const quotes = timestamps.map((ts, i) => ({
+      date: new Date(ts * 1000).toISOString(),
+      open: opens[i] ?? null,
+      high: highs[i] ?? null,
+      low: lows[i] ?? null,
+      close: closes[i] ?? null,
+      volume: volumes[i] ?? null
+    })).filter(q => q.close != null);
     const data = {
       symbol,
-      currency: chart.meta?.currency,
-      regularMarketPrice: chart.meta?.regularMarketPrice,
+      currency: result.meta?.currency,
+      regularMarketPrice: result.meta?.regularMarketPrice,
       quotes
     };
     setBoundedCache(stockChartCache, cacheKey, { ts: Date.now(), data }, 500);
@@ -2077,43 +2637,22 @@ app.get('/api/external/stocks/chart', async (req, res) => {
 });
 
 app.get('/api/external/stocks/news', async (req, res) => {
-  if (!yahooFinance) return res.status(503).json({ message: 'Yahoo Finance unavailable' });
   const symbol = (req.query.symbol || '').trim().toUpperCase();
   if (!symbol) return res.json([]);
   const cacheKey = `news_${symbol}`;
   const cached = stockSearchCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return res.json(cached.data);
   try {
-    const result = await yahooFinance.search(symbol, { newsCount: 10, quotesCount: 0 }, { validateResult: false });
-    // yahoo-finance2 may return news under different keys depending on version
-    const raw = Array.isArray(result) ? result
-      : result.news || result.News || result.items || [];
-    console.log(`[news] ${symbol} → raw items: ${raw.length}`);
-    if (raw.length === 0) {
-      // Fallback: try a keyword search using company/index name
-      const fallbackMap = { 'SPY': 'ETF stock market', 'BTC-USD': 'Bitcoin crypto', 'JPM': 'banking finance', 'MSFT': 'Microsoft gaming', 'GLD': 'gold commodities' };
-      const query = fallbackMap[symbol] || symbol;
-      const r2 = await yahooFinance.search(query, { newsCount: 10, quotesCount: 0 }, { validateResult: false });
-      raw.push(...(r2.news || r2.News || r2.items || []));
-      console.log(`[news] ${symbol} fallback "${query}" → ${raw.length} items`);
-    }
-    const news = raw.map(n => {
-      let ts = n.providerPublishTime;
-      if (ts instanceof Date) ts = Math.floor(ts.getTime() / 1000);
-      else if (typeof ts === 'string') ts = Math.floor(new Date(ts).getTime() / 1000);
-      else if (!ts) ts = Math.floor(Date.now() / 1000);
-      const thumb = n.thumbnail?.resolutions?.[1]?.url
-        || n.thumbnail?.resolutions?.[0]?.url
-        || null;
-      return {
-        title: n.title || n.headline || '',
-        publisher: n.publisher || n.source || n.siteName || '',
-        link: n.link || n.url || n.clickThroughUrl?.url || '',
-        providerPublishTime: ts,
-        thumbnail: thumb,
-        relatedTickers: n.relatedTickers || []
-      };
-    }).filter(n => n.title && n.title.length > 3);
+    const data = await yfGet('/v1/finance/search', { q: symbol, newsCount: 10, quotesCount: 0, lang: 'en-US', region: 'US' });
+    const raw = data.news || [];
+    const news = raw.map(n => ({
+      title: n.title || '',
+      publisher: n.publisher || '',
+      link: n.link || '',
+      providerPublishTime: n.providerPublishTime || Math.floor(Date.now() / 1000),
+      thumbnail: n.thumbnail?.resolutions?.[1]?.url || n.thumbnail?.resolutions?.[0]?.url || null,
+      relatedTickers: n.relatedTickers || []
+    })).filter(n => n.title && n.title.length > 3);
     setBoundedCache(stockSearchCache, cacheKey, { ts: Date.now(), data: news }, 200);
     res.json(news);
   } catch (err) {
@@ -2126,25 +2665,71 @@ app.get('/api', (req, res) => {
   res.json({
     status: 'ok',
     service: 'WealthSphere Backend API',
-    version: '11',
-    endpoints: [
-      '/api/health',
-      '/api/auth/steam',
-      '/api/users/me',
-      '/api/external/steam/price',
-      '/api/external/steam/inventory',
-      '/api/external/steam/float',
-      '/api/external/trading212/portfolio'
-    ]
+    version: '12',
+    endpoints: ['/api/health', '/api/auth/steam', '/api/users/me']
   });
+});
+
+// Crypto prices via CoinGecko (proxied to avoid CORS + auth interceptor issues)
+const cryptoPriceCache = new Map();
+app.get('/api/external/crypto/prices', async (req, res) => {
+  const ids = (req.query.ids || 'bitcoin,ethereum,solana,ripple,cardano,polkadot,chainlink,avalanche-2,matic-network,dogecoin').toString();
+  const cacheKey = ids;
+  const cached = cryptoPriceCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < 60 * 1000) return res.json(cached.data); // 1min cache
+  try {
+    const resp = await axios.get(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`,
+      { timeout: 8000 }
+    );
+    const data = resp.data || {};
+    setBoundedCache(cryptoPriceCache, cacheKey, { ts: Date.now(), data }, 10);
+    res.json(data);
+  } catch (err) {
+    console.warn('CoinGecko error:', err.message);
+    res.status(502).json({ error: 'CoinGecko unavailable' });
+  }
+});
+
+// ── Public Binance market data (no auth) ──
+const binanceMarketCache = new Map();
+function cachedBinance(key, url, ttlMs = 3000) {
+  const hit = binanceMarketCache.get(key);
+  if (hit && Date.now() - hit.ts < ttlMs) return Promise.resolve(hit.data);
+  return axios.get(url, { timeout: 6000 }).then(r => {
+    setBoundedCache(binanceMarketCache, key, { ts: Date.now(), data: r.data }, 100);
+    return r.data;
+  });
+}
+
+app.get('/api/external/crypto/orderbook', async (req, res) => {
+  try {
+    const symbol = (req.query.symbol || 'BTCUSDT').toString().toUpperCase();
+    const data = await cachedBinance(`ob_${symbol}`, `https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=15`);
+    res.json(data);
+  } catch (err) { res.status(502).json({ message: err.message }); }
+});
+
+app.get('/api/external/crypto/trades', async (req, res) => {
+  try {
+    const symbol = (req.query.symbol || 'BTCUSDT').toString().toUpperCase();
+    const data = await cachedBinance(`tr_${symbol}`, `https://api.binance.com/api/v3/trades?symbol=${symbol}&limit=25`, 2000);
+    res.json(data);
+  } catch (err) { res.status(502).json({ message: err.message }); }
+});
+
+app.get('/api/external/crypto/ticker24h', async (req, res) => {
+  try {
+    const symbol = (req.query.symbol || 'BTCUSDT').toString().toUpperCase();
+    const data = await cachedBinance(`tk_${symbol}`, `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`, 10000);
+    res.json(data);
+  } catch (err) { res.status(502).json({ message: err.message }); }
 });
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'WealthSphere Backend is running' });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`WealthSphere Backend running on port ${PORT}`);
 });
-

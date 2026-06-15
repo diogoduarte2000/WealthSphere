@@ -4,6 +4,8 @@ const snapshotSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true }, // 'YYYY-MM-DD'
   total: { type: Number, required: true },
+  positionsValue: { type: Number, default: 0 },
+  cash: { type: Number, default: 0 },
   invested: { type: Number, default: 0 },
   result: { type: Number, default: 0 },
   source: { type: String, default: 'trading212' },

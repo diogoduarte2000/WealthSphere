@@ -38,6 +38,7 @@ const postSchema = new mongoose.Schema({
   upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   downvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   views: { type: Number, default: 0 },
+  viewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   comments: [commentSchema],
   isPinned: { type: Boolean, default: false },
   expiresAt: { type: Date, default: () => new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) } // 3 months

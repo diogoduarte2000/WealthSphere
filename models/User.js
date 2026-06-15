@@ -16,8 +16,12 @@ const userSchema = new mongoose.Schema({
   binanceApiSecret: { type: String, select: false },
   krakenApiKey: { type: String, select: false },
   krakenApiSecret: { type: String, select: false },
+  coinbaseApiKey: { type: String, select: false },
+  coinbaseApiSecret: { type: String, select: false },
+  wiseApiToken: { type: String, select: false },
   paypalClientId: { type: String, select: false },
   paypalClientSecret: { type: String, select: false },
+  csFloatApiKey: { type: String, select: false },
   refreshTokens: {
     type: [String],
     default: [],
@@ -81,6 +85,12 @@ const userSchema = new mongoose.Schema({
       startDate: Date
     }
   }],
+  financialGoals: [{
+    label: { type: String, required: true },
+    target: { type: Number, required: true },
+    deadline: String,
+    notified: { type: Boolean, default: false }
+  }],
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 
@@ -98,9 +108,12 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     financialProfile: this.financialProfile,
     customSettings: this.customSettings,
     realEstate: this.realEstate,
+    financialGoals: this.financialGoals || [],
     hasTrading212ApiKey: !!this.trading212ApiKey,
     hasBinanceApiKey: !!this.binanceApiKey,
     hasKrakenApiKey: !!this.krakenApiKey,
+    hasCoinbaseApiKey: !!this.coinbaseApiKey,
+    hasWiseApiToken: !!this.wiseApiToken,
     hasPaypalClientId: !!this.paypalClientId,
     lastLogin: this.lastLogin,
     createdAt: this.createdAt,
