@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthSphere — Fórum</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#131210;--bg2:#1a1916;--bg3:#222019;--bg4:#2a2823;
+  --surface:#1f1e1a;--surface2:#282623;--surface3:#302e29;
+  --terra:#c96a45;--terra2:#b85c38;--terra-l:#e07a52;--terra-dim:rgba(201,106,69,0.12);
+  --sage:#5f8c5f;--sage-l:#7aaa7a;--sage-dim:rgba(95,140,95,0.12);
+  --lilac:#8b80c8;--lilac-dim:rgba(139,128,200,0.12);
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,0.10);
+  --red:#c94545;--red-dim:rgba(201,69,69,0.12);
+  --ink:#f0ebe0;--ink2:#d8d0c4;--muted:#7a7264;--muted2:#5a5248;
+  --border:rgba(240,235,224,0.07);--border2:rgba(240,235,224,0.12);
+  --shadow:0 2px 16px rgba(0,0,0,0.3);--shadow-lg:0 8px 40px rgba(0,0,0,0.5);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(19,18,16,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo-icon{width:30px;height:30px;background:var(--terra);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px}
+.logo-text{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--ink)}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-link{font-size:13px;color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;text-decoration:none}
+.nav-link:hover{color:var(--ink);background:var(--bg3)}
+.nav-link.active{color:var(--terra)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+.btn-primary{background:var(--terra);color:#fff}.btn-primary:hover{background:var(--terra2)}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--ink2)}.btn-ghost:hover{background:var(--bg3);border-color:var(--border2)}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0}
+.notif{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .15s}
+.notif:hover{background:var(--bg4)}
+.notif svg{width:15px;height:15px;color:var(--muted)}
+.notif-pip{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--terra);border:1.5px solid var(--bg)}
+
+/* ── PAGE LAYOUT ── */
+.page{display:grid;grid-template-columns:240px 1fr 280px;gap:0;min-height:calc(100vh - 56px)}
+
+/* ── LEFT SIDEBAR ── */
+.left-sidebar{border-right:1px solid var(--border);padding:20px 14px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.sidebar-section{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted2);padding:10px 10px 4px;font-weight:500}
+.sidebar-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--muted);border:none;background:none;width:100%;text-align:left;transition:all .15s;font-family:inherit}
+.sidebar-item:hover{background:var(--bg3);color:var(--ink)}
+.sidebar-item.active{background:var(--terra-dim);color:var(--terra);font-weight:500}
+.sidebar-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.sidebar-item.active svg{opacity:1}
+.tag-count{margin-left:auto;font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace}
+.sidebar-item.active .tag-count{color:var(--terra);opacity:.7}
+
+/* tag dots */
+.tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* online users */
+.online-users{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px}
+.online-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;position:relative;cursor:pointer}
+.online-dot{position:absolute;bottom:1px;right:1px;width:7px;height:7px;border-radius:50%;background:var(--sage);border:1.5px solid var(--bg)}
+
+/* my profile mini */
+.my-profile{background:var(--bg3);border-radius:10px;padding:12px;margin-top:auto;border:1px solid var(--border)}
+.mp-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.mp-name{font-size:13px;font-weight:500;color:var(--ink)}
+.mp-role{font-size:10px;color:var(--muted)}
+.mp-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.mp-stat{text-align:center;background:var(--bg4);border-radius:7px;padding:6px}
+.mp-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--terra)}
+.mp-stat-label{font-size:9px;color:var(--muted2);margin-top:1px}
+
+/* ── CENTER FEED ── */
+.center-feed{padding:20px 24px;border-right:1px solid var(--border)}
+
+/* FEED HEADER */
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+.search-wrap{flex:1;position:relative;max-width:420px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);pointer-events:none}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:9px 14px 9px 36px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;transition:border-color .15s}
+.search-input::placeholder{color:var(--muted2)}
+.search-input:focus{border-color:var(--terra);background:var(--surface3)}
+
+/* SORT TABS */
+.sort-tabs{display:flex;gap:2px;background:var(--bg3);border-radius:9px;padding:3px;margin-bottom:18px}
+.sort-tab{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit}
+.sort-tab.active{background:var(--bg4);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.3)}
+.sort-tab:hover:not(.active){color:var(--ink2)}
+
+/* POST CARD */
+.post-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .2s;position:relative}
+.post-card:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-1px)}
+.post-card.active{border-color:var(--terra);background:var(--surface2)}
+.post-card.pinned{border-color:rgba(201,168,76,.25);background:rgba(201,168,76,.04)}
+
+/* pin badge */
+.pin-badge{position:absolute;top:14px;right:14px;background:var(--gold-dim);color:var(--gold);font-size:9px;font-weight:600;padding:2px 7px;border-radius:100px;letter-spacing:.04em}
+
+/* post header */
+.post-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.post-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.post-user{font-size:13px;font-weight:500;color:var(--ink2)}
+.post-flair{font-size:9px;font-weight:600;padding:2px 7px;border-radius:100px;margin-left:4px}
+.pf-etf{background:var(--sage-dim);color:var(--sage)}
+.pf-trader{background:var(--gold-dim);color:var(--gold)}
+.pf-landlord{background:var(--terra-dim);color:var(--terra)}
+.pf-novato{background:var(--lilac-dim);color:var(--lilac)}
+.pf-fire{background:rgba(201,69,69,.12);color:var(--red)}
+.post-time{font-size:11px;color:var(--muted);margin-left:auto}
+
+/* post tags */
+.post-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.post-tag{font-size:10px;font-weight:500;padding:3px 9px;border-radius:100px;cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s}
+.pt-etf{background:var(--sage-dim);color:var(--sage)}.pt-etf:hover{background:var(--sage);color:#fff}
+.pt-cs2{background:var(--gold-dim);color:var(--gold)}.pt-cs2:hover{background:var(--gold);color:#fff}
+.pt-imoveis{background:var(--terra-dim);color:var(--terra-l)}.pt-imoveis:hover{background:var(--terra);color:#fff}
+.pt-fire{background:rgba(201,69,69,.12);color:var(--red)}.pt-fire:hover{background:var(--red);color:#fff}
+.pt-cripto{background:var(--lilac-dim);color:var(--lilac)}.pt-cripto:hover{background:var(--lilac);color:#fff}
+.pt-portugal{background:rgba(201,106,69,.12);color:var(--terra-l)}.pt-portugal:hover{background:var(--terra);color:#fff}
+.pt-poupanca{background:var(--bg3);color:var(--muted)}.pt-poupanca:hover{background:var(--bg4)}
+
+/* post title & excerpt */
+.post-title{font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--ink);line-height:1.35;margin-bottom:6px}
+.post-excerpt{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* post footer */
+.post-footer{display:flex;align-items:center;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.vote-wrap{display:flex;align-items:center;gap:2px}
+.vote-btn{width:26px;height:26px;border-radius:7px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.vote-btn svg{width:13px;height:13px;color:var(--muted)}
+.vote-btn:hover{background:var(--bg3)}
+.vote-btn.up-active{background:var(--terra-dim)}.vote-btn.up-active svg{color:var(--terra)}
+.vote-btn.dn-active{background:var(--red-dim)}.vote-btn.dn-active svg{color:var(--red)}
+.vote-count{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--ink2);min-width:22px;text-align:center}
+.post-stat{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:7px;transition:background .15s;border:none;background:none;font-family:inherit}
+.post-stat:hover{background:var(--bg3);color:var(--ink2)}
+.post-stat svg{width:13px;height:13px}
+.post-stat-actions{margin-left:auto;display:flex;gap:4px}
+.action-btn{width:28px;height:28px;border-radius:7px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.action-btn svg{width:14px;height:14px;color:var(--muted)}
+.action-btn:hover{background:var(--bg3)}.action-btn:hover svg{color:var(--ink2)}
+
+/* ── POST DETAIL (inline expand) ── */
+.post-detail{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:22px;margin-bottom:12px;display:none;animation:fadeDown .25s ease}
+.post-detail.open{display:block}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.pd-body{font-size:14px;color:var(--ink2);line-height:1.75;margin:14px 0 20px}
+.pd-body strong{color:var(--ink)}
+.pd-body code{background:var(--bg4);padding:1px 5px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;color:var(--terra-l)}
+
+/* COMMENTS */
+.comments-section{border-top:1px solid var(--border);padding-top:18px}
+.comments-title{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase}
+.comment{display:flex;gap:10px;margin-bottom:14px}
+.comment-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;margin-top:2px}
+.comment-body{flex:1;min-width:0}
+.comment-header{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.comment-user{font-size:12px;font-weight:500;color:var(--ink2)}
+.comment-time{font-size:10px;color:var(--muted)}
+.comment-text{font-size:13px;color:var(--muted);line-height:1.6}
+.comment-text strong{color:var(--ink2)}
+.comment-actions{display:flex;gap:10px;margin-top:6px}
+.c-action{font-size:11px;color:var(--muted2);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .15s;display:flex;align-items:center;gap:3px}
+.c-action:hover{color:var(--terra)}
+.c-action svg{width:11px;height:11px}
+
+/* nested comment */
+.comment-nested{margin-left:38px;margin-bottom:12px}
+
+/* reply compose */
+.reply-compose{background:var(--bg3);border-radius:10px;padding:12px;margin-top:12px;display:none}
+.reply-compose.open{display:block}
+.reply-textarea{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;resize:none;min-height:72px;transition:border-color .15s}
+.reply-textarea:focus{border-color:var(--terra)}
+.reply-textarea::placeholder{color:var(--muted2)}
+.reply-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+
+/* main compose */
+.main-compose{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:18px}
+.compose-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;transition:border-color .15s;cursor:pointer}
+.compose-input:focus{border-color:var(--terra);background:var(--bg4);cursor:text}
+.compose-input::placeholder{color:var(--muted2)}
+
+/* ── RIGHT SIDEBAR ── */
+.right-sidebar{padding:20px 16px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.rs-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.rs-title{font-family:'Lora',serif;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px}
+
+/* trending */
+.trend-item{display:flex;gap:10px;margin-bottom:10px;cursor:pointer;padding:6px;border-radius:8px;transition:background .15s}
+.trend-item:last-child{margin-bottom:0}
+.trend-item:hover{background:var(--bg3)}
+.trend-num{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--bg4);width:22px;flex-shrink:0;line-height:1.2}
+.trend-tag{font-size:9px;color:var(--terra);font-weight:500;margin-bottom:2px}
+.trend-title{font-size:12px;color:var(--ink2);line-height:1.35}
+.trend-meta{font-size:10px;color:var(--muted2);margin-top:2px}
+
+/* top users */
+.top-user{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.top-user:last-child{margin-bottom:0}
+.tu-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.tu-name{font-size:12px;font-weight:500;color:var(--ink2);flex:1}
+.tu-score{font-family:'DM Mono',monospace;font-size:11px;color:var(--terra)}
+.tu-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.td-online{background:var(--sage)}
+.td-offline{background:var(--muted2)}
+
+/* tags cloud */
+.tags-cloud{display:flex;flex-wrap:wrap;gap:6px}
+.tc-tag{font-size:11px;font-weight:500;padding:4px 10px;border-radius:100px;cursor:pointer;border:none;background:var(--bg3);color:var(--muted);font-family:inherit;transition:all .15s}
+.tc-tag:hover,.tc-tag.active{background:var(--terra);color:#fff}
+
+/* cta card */
+.cta-card{background:linear-gradient(135deg,var(--terra) 0%,#a04a28 100%);border-radius:12px;padding:16px;border:none}
+.cta-card h4{font-family:'Lora',serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+.cta-card p{font-size:12px;color:rgba(255,255,255,.75);line-height:1.5;margin-bottom:12px}
+.btn-white{background:#fff;color:var(--terra);font-size:12px;padding:7px 16px;border-radius:100px;border:none;cursor:pointer;font-family:inherit;font-weight:600;width:100%;transition:all .15s}
+.btn-white:hover{background:rgba(255,255,255,.9)}
+
+/* ── NEW POST MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,9,8,.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:26px;width:600px;max-width:94vw;box-shadow:var(--shadow-lg);animation:modalIn .2s ease;max-height:90vh;overflow-y:auto}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.modal-close:hover{background:var(--bg4)}
+.modal-close svg{width:14px;height:14px;color:var(--muted)}
+.modal-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;transition:border-color .15s;margin-bottom:10px}
+.modal-input:focus{border-color:var(--terra)}
+.modal-input::placeholder{color:var(--muted2)}
+.modal-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;resize:vertical;min-height:140px;transition:border-color .15s;margin-bottom:10px}
+.modal-textarea:focus{border-color:var(--terra)}
+.modal-textarea::placeholder{color:var(--muted2)}
+.modal-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:6px;display:block}
+.tag-select{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ts-tag{font-size:11px;font-weight:500;padding:5px 12px;border-radius:100px;cursor:pointer;border:1.5px solid var(--border2);background:none;color:var(--muted);font-family:inherit;transition:all .15s}
+.ts-tag.active,.ts-tag:hover{border-color:var(--terra);color:var(--terra);background:var(--terra-dim)}
+.modal-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.modal-footer-left{font-size:11px;color:var(--muted)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease both}
+.fd1{animation-delay:.04s}.fd2{animation-delay:.08s}.fd3{animation-delay:.12s}
+.fd4{animation-delay:.16s}.fd5{animation-delay:.20s}.fd6{animation-delay:.24s}
+
+/* ── MOBILE ── */
+@media(max-width:900px){
+  .left-sidebar,.right-sidebar{display:none}
+  .page{grid-template-columns:1fr}
+  .center-feed{padding:14px 16px}
+  nav{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <span class="logo-text">WealthSphere</span>
+  </a>
+  <div class="nav-links">
+    <a href="#" class="nav-link">Dashboard</a>
+    <a href="#" class="nav-link">Income</a>
+    <a href="#" class="nav-link">Simulador</a>
+    <a href="#" class="nav-link">Taxas</a>
+    <a href="#" class="nav-link active">Fórum</a>
+  </div>
+  <div class="nav-right">
+    <div class="notif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <div class="notif-pip"></div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo post
+    </button>
+    <div class="user-av">D</div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <aside class="left-sidebar">
+    <div class="sidebar-section">Feed</div>
+    <button class="sidebar-item active" onclick="filterFeed('all',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Todos os posts
+      <span class="tag-count">248</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('mine',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Os meus posts
+      <span class="tag-count">12</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('saved',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      Guardados
+      <span class="tag-count">7</span>
+    </button>
+
+    <div class="sidebar-section">Categorias</div>
+    <button class="sidebar-item" onclick="filterFeed('etf',this)">
+      <div class="tag-dot" style="background:var(--sage)"></div>ETF & Ações<span class="tag-count">89</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('imoveis',this)">
+      <div class="tag-dot" style="background:var(--terra)"></div>Imóveis & Rendas<span class="tag-count">61</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('cs2',this)">
+      <div class="tag-dot" style="background:var(--gold)"></div>CS2 & Steam<span class="tag-count">44</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('fire',this)">
+      <div class="tag-dot" style="background:var(--red)"></div>FIRE & Poupança<span class="tag-count">38</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('cripto',this)">
+      <div class="tag-dot" style="background:var(--lilac)"></div>Cripto<span class="tag-count">29</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('portugal',this)">
+      <div class="tag-dot" style="background:var(--terra-l)"></div>Portugal & IRS<span class="tag-count">52</span>
+    </button>
+    <button class="sidebar-item" onclick="filterFeed('novato',this)">
+      <div class="tag-dot" style="background:var(--muted)"></div>Novato<span class="tag-count">35</span>
+    </button>
+
+    <div class="sidebar-section" style="margin-top:8px">Online agora (6)</div>
+    <div class="online-users">
+      <div class="online-av" style="background:var(--terra)" title="miguel.f"><span>M</span><div class="online-dot"></div></div>
+      <div class="online-av" style="background:var(--sage)" title="pedro.inv"><span>P</span><div class="online-dot"></div></div>
+      <div class="online-av" style="background:var(--lilac)" title="afx_trade"><span>A</span><div class="online-dot"></div></div>
+      <div class="online-av" style="background:var(--gold)" title="carla.m"><span>C</span><div class="online-dot"></div></div>
+      <div class="online-av" style="background:#6a8fc9" title="rui.s"><span>R</span><div class="online-dot"></div></div>
+      <div class="online-av" style="background:#8f6ac9" title="sofia.p"><span>S</span><div class="online-dot"></div></div>
+    </div>
+
+    <div class="my-profile">
+      <div class="mp-top">
+        <div class="user-av" style="width:34px;height:34px;font-size:14px">D</div>
+        <div><div class="mp-name">Diogo Duarte</div><div class="mp-role">Membro · Lisboa</div></div>
+      </div>
+      <div class="mp-stats">
+        <div class="mp-stat"><div class="mp-stat-val">12</div><div class="mp-stat-label">Posts</div></div>
+        <div class="mp-stat"><div class="mp-stat-val">284</div><div class="mp-stat-label">Votos</div></div>
+        <div class="mp-stat"><div class="mp-stat-val">4.2k</div><div class="mp-stat-label">Views</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ CENTER FEED ═══ -->
+  <section class="center-feed">
+
+    <!-- SEARCH + NEW -->
+    <div class="feed-header fu">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" placeholder="Pesquisar no fórum...">
+      </div>
+    </div>
+
+    <!-- SORT TABS -->
+    <div class="sort-tabs fu fd1">
+      <button class="sort-tab active" onclick="setSort(this)">🔥 Trending</button>
+      <button class="sort-tab" onclick="setSort(this)">🕐 Recentes</button>
+      <button class="sort-tab" onclick="setSort(this)">⬆ Top</button>
+      <button class="sort-tab" onclick="setSort(this)">💬 Sem resposta</button>
+    </div>
+
+    <!-- QUICK COMPOSE -->
+    <div class="main-compose fu fd2">
+      <input class="compose-input" placeholder="Partilha uma ideia, pergunta ou estratégia..." onclick="openModal()" readonly>
+    </div>
+
+    <!-- ── POST 1 (PINNED, EXPANDED) ── -->
+    <div class="post-card pinned active fu fd2" onclick="togglePost('pd1',this)">
+      <span class="pin-badge">📌 Fixado</span>
+      <div class="post-header">
+        <div class="post-av" style="background:var(--terra)">M</div>
+        <div>
+          <span class="post-user">miguel.f</span>
+          <span class="post-flair pf-etf">Expert ETFs</span>
+        </div>
+        <span class="post-time">há 2h</span>
+      </div>
+      <div class="post-tags">
+        <button class="post-tag pt-etf">ETF</button>
+        <button class="post-tag pt-portugal">Portugal</button>
+      </div>
+      <div class="post-title">VWCE vs IWDA — qual escolher para DCA mensal em Portugal em 2025?</div>
+      <div class="post-excerpt">Estou a pensar começar com €200/mês mas não consigo decidir. O VWCE inclui emergentes mas tem ligeiramente mais TER. Para contexto fiscal PT, qual faz mais sentido?</div>
+      <div class="post-footer">
+        <div class="vote-wrap">
+          <button class="vote-btn up-active" onclick="vote(event,'v1',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <span class="vote-count" id="v1">84</span>
+          <button class="vote-btn" onclick="vote(event,'v1',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>37 respostas</button>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>1.2k views</button>
+        <div class="post-stat-actions">
+          <button class="action-btn" onclick="event.stopPropagation()" title="Guardar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+          <button class="action-btn" onclick="event.stopPropagation()" title="Partilhar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="post-detail open" id="pd1">
+      <div class="pd-body">
+        Tenho estado a investigar os dois ETFs e as diferenças são pequenas mas relevantes para o contexto fiscal português:<br><br>
+        <strong>VWCE (Vanguard FTSE All-World ACC)</strong> — Inclui ~10% emergentes, TER <code>0.22%</code>, domiciliado na Irlanda (favorável para Portugal).<br><br>
+        <strong>IWDA (iShares Core MSCI World)</strong> — Só mercados desenvolvidos, TER <code>0.20%</code>, também domiciliado na Irlanda.<br><br>
+        A principal diferença é a exposição a emergentes. A longo prazo, o VWCE tende a ser mais diversificado globalmente. Para DCA mensal, o custo de transação importa mais do que o TER. Qual a vossa experiência?
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">37 comentários</div>
+
+        <div class="comment">
+          <div class="comment-av" style="background:var(--sage)">P</div>
+          <div class="comment-body">
+            <div class="comment-header">
+              <span class="comment-user">pedro.invest</span>
+              <span class="post-flair pf-etf" style="font-size:9px">Expert ETFs</span>
+              <span class="comment-time">há 1h</span>
+            </div>
+            <div class="comment-text">Uso VWCE há 3 anos com DCA mensal. A inclusão de emergentes tem sido positiva — China e Índia têm puxado bem. O spread extra de <strong>0.02%</strong> no TER é irrelevante a longo prazo.</div>
+            <div class="comment-actions">
+              <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>42</button>
+              <button class="c-action" onclick="toggleReply('r1')">Responder</button>
+              <button class="c-action">Reportar</button>
+            </div>
+            <div class="reply-compose open" id="r1" style="display:block">
+              <div class="comment comment-nested" style="margin-left:0;margin-bottom:10px">
+                <div class="comment-av" style="background:var(--lilac)">A</div>
+                <div class="comment-body">
+                  <div class="comment-header"><span class="comment-user">afx_trade</span><span class="comment-time">há 45min</span></div>
+                  <div class="comment-text">Concordo. Adiciono que para PT o ponto chave é o <strong>regime fiscal de mais-valias</strong> — tanto VWCE como IWDA são eficientes se detidos mais de 2 anos (isenção 50%).</div>
+                  <div class="comment-actions">
+                    <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>18</button>
+                    <button class="c-action" onclick="toggleReply('r2')">Responder</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="comment">
+          <div class="comment-av" style="background:var(--gold)">C</div>
+          <div class="comment-body">
+            <div class="comment-header">
+              <span class="comment-user">carla.m</span>
+              <span class="post-flair pf-novato">Novata</span>
+              <span class="comment-time">há 30min</span>
+            </div>
+            <div class="comment-text">Comecei há 6 meses com IWDA. Escolhi porque é mais simples — só mercados desenvolvidos. Mas agora estou a considerar trocar para VWCE para diversificar mais. Faz sentido trocar ou manter?</div>
+            <div class="comment-actions">
+              <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>9</button>
+              <button class="c-action" onclick="toggleReply('r3')">Responder</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add comment -->
+        <div class="comment" style="margin-top:6px">
+          <div class="user-av" style="width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">D</div>
+          <div style="flex:1">
+            <textarea class="reply-textarea" placeholder="Adiciona o teu comentário..." rows="3"></textarea>
+            <div class="reply-actions">
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">Cancelar</button>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px">Comentar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POST 2 ── -->
+    <div class="post-card fu fd3" onclick="togglePost('pd2',this)">
+      <div class="post-header">
+        <div class="post-av" style="background:var(--lilac)">A</div>
+        <div>
+          <span class="post-user">afx_trade</span>
+          <span class="post-flair pf-trader">Skin Trader</span>
+        </div>
+        <span class="post-time">há 3h</span>
+      </div>
+      <div class="post-tags">
+        <button class="post-tag pt-cs2">CS2</button>
+      </div>
+      <div class="post-title">AK-47 Redline subiu 18% em 30 dias — tendência ou bolha?</div>
+      <div class="post-excerpt">Comprei há 3 meses a €28, agora está a €33.20 com float 0.19. O major de Agosto pode continuar a puxar o preço ou já é tarde para comprar mais?</div>
+      <div class="post-footer">
+        <div class="vote-wrap">
+          <button class="vote-btn" onclick="vote(event,'v2',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <span class="vote-count" id="v2">61</span>
+          <button class="vote-btn" onclick="vote(event,'v2',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>23 respostas</button>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>618 views</button>
+        <div class="post-stat-actions">
+          <button class="action-btn" onclick="event.stopPropagation()" title="Guardar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+          <button class="action-btn" onclick="event.stopPropagation()" title="Partilhar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="post-detail" id="pd2">
+      <div class="pd-body">
+        Tenho estado a seguir a Redline há meses. O aumento recente está correlacionado com dois fatores: o major que se aproxima (historicamente skins populares sobem antes de majors) e uma queda geral de stock disponível no mercado. Float 0.19 está na faixa ideal para FT — não é o float mais baixo mas tem boa liquidez. Vendo ou aguardo mais?
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">23 comentários</div>
+        <div class="comment">
+          <div class="comment-av" style="background:var(--terra)">M</div>
+          <div class="comment-body">
+            <div class="comment-header"><span class="comment-user">miguel.f</span><span class="comment-time">há 2h</span></div>
+            <div class="comment-text">Historicamente pós-major os preços corrigem 10-15%. Se és de longa duração, mantém. Se quiseres realizar, faz-o 2 semanas antes do evento.</div>
+            <div class="comment-actions">
+              <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>24</button>
+              <button class="c-action">Responder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POST 3 ── -->
+    <div class="post-card fu fd4" onclick="togglePost('pd3',this)">
+      <div class="post-header">
+        <div class="post-av" style="background:var(--sage)">P</div>
+        <div>
+          <span class="post-user">pedro.invest</span>
+          <span class="post-flair pf-landlord">Landlord</span>
+        </div>
+        <span class="post-time">há 6h</span>
+      </div>
+      <div class="post-tags">
+        <button class="post-tag pt-imoveis">Imóveis</button>
+        <button class="post-tag pt-portugal">IRS</button>
+      </div>
+      <div class="post-title">Rentabilidade líquida de imóvel em Lisboa depois de IRS e condomínio — o meu cálculo</div>
+      <div class="post-excerpt">T1 em Lisboa a render €1.200/mês. Calculei a rentabilidade real e os números surpreenderam-me. Partilho a metodologia completa para quem quiser replicar.</div>
+      <div class="post-footer">
+        <div class="vote-wrap">
+          <button class="vote-btn" onclick="vote(event,'v3',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <span class="vote-count" id="v3">52</span>
+          <button class="vote-btn" onclick="vote(event,'v3',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>18 respostas</button>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>840 views</button>
+        <div class="post-stat-actions">
+          <button class="action-btn" onclick="event.stopPropagation()" title="Guardar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+          <button class="action-btn" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="post-detail" id="pd3">
+      <div class="pd-body">
+        Metodologia que uso para calcular rentabilidade líquida real:<br><br>
+        <strong>Rendimento bruto anual:</strong> €1.200 × 12 = €14.400<br>
+        <strong>IRS predial (28%):</strong> -€4.032 (com deduções 35%: -€2.822)<br>
+        <strong>IMI:</strong> -€666/ano (Lisboa 0.45%)<br>
+        <strong>Condomínio:</strong> -€1.200/ano<br>
+        <strong>Manutenção estimada:</strong> -€500/ano<br>
+        <strong>Resultado: €9.212 líquidos → 6.2% sobre €148k</strong>
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">18 comentários</div>
+        <div class="comment">
+          <div class="comment-av" style="background:var(--lilac)">A</div>
+          <div class="comment-body">
+            <div class="comment-header"><span class="comment-user">afx_trade</span><span class="comment-time">há 4h</span></div>
+            <div class="comment-text">Boa análise. Falta incluir o seguro multirriscos (~€200/ano) e possível vacância (1-2 meses por contrato). Esses dois itens podem reduzir mais 0.3-0.5% na rentabilidade.</div>
+            <div class="comment-actions">
+              <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>15</button>
+              <button class="c-action">Responder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POST 4 ── -->
+    <div class="post-card fu fd4" onclick="togglePost('pd4',this)">
+      <div class="post-header">
+        <div class="post-av" style="background:var(--red)" style="background:#c94545">R</div>
+        <div>
+          <span class="post-user">rui.santos</span>
+          <span class="post-flair pf-fire">FIRE</span>
+        </div>
+        <span class="post-time">há 9h</span>
+      </div>
+      <div class="post-tags">
+        <button class="post-tag pt-fire">FIRE</button>
+        <button class="post-tag pt-poupanca">Poupança</button>
+      </div>
+      <div class="post-title">Reforma antecipada aos 45 com €1.800/mês de despesas — o meu plano detalhado</div>
+      <div class="post-excerpt">Tenho 32 anos, €85k investidos e pouo €1.400/mês. Pela regra dos 4%, preciso de €540k. Aqui está a minha projeção com diferentes cenários de retorno.</div>
+      <div class="post-footer">
+        <div class="vote-wrap">
+          <button class="vote-btn" onclick="vote(event,'v4',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <span class="vote-count" id="v4">128</span>
+          <button class="vote-btn" onclick="vote(event,'v4',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>94 respostas</button>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>3.4k views</button>
+        <div class="post-stat-actions">
+          <button class="action-btn" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+          <button class="action-btn" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="post-detail" id="pd4">
+      <div class="pd-body">
+        Aqui está a minha projeção com diferentes cenários de retorno anual:<br><br>
+        <strong>Cenário conservador (5%):</strong> Atingir €540k em ~13 anos → reforma aos 45<br>
+        <strong>Cenário base (7%):</strong> Atingir €540k em ~11 anos → reforma aos 43<br>
+        <strong>Cenário otimista (9%):</strong> Atingir €540k em ~9.5 anos → reforma aos 41.5<br><br>
+        O maior risco é a inflação corroer o poder de compra. Por isso estou a calcular com despesas reais indexadas a 2.5% ao ano. O número FIRE real seria mais próximo de €620k.
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">94 comentários</div>
+        <div class="comment">
+          <div class="comment-av" style="background:var(--terra)">M</div>
+          <div class="comment-body">
+            <div class="comment-header"><span class="comment-user">miguel.f</span><span class="comment-time">há 7h</span></div>
+            <div class="comment-text">Excelente plano. Uma nota: em Portugal o regime fiscal da reforma antecipada tem algumas nuances. O IRS sobre mais-valias pode ser relevante se liquidares posições grandes num único ano — considera diversificar os resgates.</div>
+            <div class="comment-actions">
+              <button class="c-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>31</button>
+              <button class="c-action">Responder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POST 5 ── -->
+    <div class="post-card fu fd5" onclick="togglePost('pd5',this)">
+      <div class="post-header">
+        <div class="post-av" style="background:#6a8fc9">S</div>
+        <div>
+          <span class="post-user">sofia.p</span>
+          <span class="post-flair pf-novato">Novata</span>
+        </div>
+        <span class="post-time">há 12h</span>
+      </div>
+      <div class="post-tags">
+        <button class="post-tag pt-cripto">Cripto</button>
+        <button class="post-tag pt-etf">ETF</button>
+      </div>
+      <div class="post-title">Bitcoin vs ETFs — faz sentido ter os dois na mesma carteira?</div>
+      <div class="post-excerpt">Tenho €5.000 para investir e estou dividida. €3.500 em VWCE e €1.500 em BTC parece equilibrado? Ou estou a assumir demasiado risco com cripto?</div>
+      <div class="post-footer">
+        <div class="vote-wrap">
+          <button class="vote-btn" onclick="vote(event,'v5',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <span class="vote-count" id="v5">37</span>
+          <button class="vote-btn" onclick="vote(event,'v5',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>41 respostas</button>
+        <button class="post-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>920 views</button>
+        <div class="post-stat-actions">
+          <button class="action-btn" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+          <button class="action-btn" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="post-detail" id="pd5"></div>
+
+  </section>
+
+  <!-- ═══ RIGHT SIDEBAR ═══ -->
+  <aside class="right-sidebar">
+
+    <!-- CTA -->
+    <div class="cta-card">
+      <h4>Participa na comunidade</h4>
+      <p>Partilha estratégias, faz perguntas e aprende com investidores experientes.</p>
+      <button class="btn-white" onclick="openModal()">Criar post →</button>
+    </div>
+
+    <!-- TRENDING -->
+    <div class="rs-card">
+      <div class="rs-title">🔥 Trending esta semana</div>
+      <div class="trend-item">
+        <div class="trend-num">01</div>
+        <div><div class="trend-tag">ETF · Portugal</div><div class="trend-title">Guia ETFs em Portugal 2025 — fiscal completo</div><div class="trend-meta">128 votos · 94 respostas</div></div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-num">02</div>
+        <div><div class="trend-tag" style="color:var(--gold)">CS2</div><div class="trend-title">Top 10 skins para investir com menos de €50</div><div class="trend-meta">97 votos · 61 respostas</div></div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-num">03</div>
+        <div><div class="trend-tag" style="color:var(--red)">FIRE</div><div class="trend-title">Reforma antecipada aos 45 — plano detalhado</div><div class="trend-meta">82 votos · 48 respostas</div></div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-num">04</div>
+        <div><div class="trend-tag" style="color:var(--terra-l)">Imóveis</div><div class="trend-title">Rentabilidade líquida real em Lisboa — metodologia</div><div class="trend-meta">74 votos · 39 respostas</div></div>
+      </div>
+    </div>
+
+    <!-- TOP USERS -->
+    <div class="rs-card">
+      <div class="rs-title">🏆 Top Contribuidores</div>
+      <div class="top-user">
+        <div class="tu-av" style="background:var(--terra)">M</div>
+        <div><div class="tu-name">miguel.f</div><div style="font-size:10px;color:var(--muted2)">Expert ETFs · 284 posts</div></div>
+        <span class="tu-score">4.8k</span>
+        <div class="tu-dot td-online"></div>
+      </div>
+      <div class="top-user">
+        <div class="tu-av" style="background:var(--sage)">P</div>
+        <div><div class="tu-name">pedro.invest</div><div style="font-size:10px;color:var(--muted2)">Landlord · 156 posts</div></div>
+        <span class="tu-score">3.2k</span>
+        <div class="tu-dot td-online"></div>
+      </div>
+      <div class="top-user">
+        <div class="tu-av" style="background:var(--lilac)">A</div>
+        <div><div class="tu-name">afx_trade</div><div style="font-size:10px;color:var(--muted2)">Skin Trader · 98 posts</div></div>
+        <span class="tu-score">2.1k</span>
+        <div class="tu-dot td-online"></div>
+      </div>
+      <div class="top-user">
+        <div class="tu-av" style="background:var(--red)">R</div>
+        <div><div class="tu-name">rui.santos</div><div style="font-size:10px;color:var(--muted2)">FIRE · 72 posts</div></div>
+        <span class="tu-score">1.8k</span>
+        <div class="tu-dot td-offline"></div>
+      </div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="rs-card">
+      <div class="rs-title">Explorar tags</div>
+      <div class="tags-cloud">
+        <button class="tc-tag active">ETF</button>
+        <button class="tc-tag">Imóveis</button>
+        <button class="tc-tag">CS2</button>
+        <button class="tc-tag">FIRE</button>
+        <button class="tc-tag">Portugal</button>
+        <button class="tc-tag">Cripto</button>
+        <button class="tc-tag">Poupança</button>
+        <button class="tc-tag">IRS</button>
+        <button class="tc-tag">Dividendos</button>
+        <button class="tc-tag">Steam</button>
+        <button class="tc-tag">Novato</button>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ═══ NEW POST MODAL ═══ -->
+<div class="modal-overlay" id="newPostModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">
+      Novo post
+      <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <span class="modal-label">Título</span>
+    <input class="modal-input" placeholder="Uma pergunta clara ou título descritivo...">
+    <span class="modal-label">Tags</span>
+    <div class="tag-select" style="margin-bottom:14px">
+      <button class="ts-tag active">ETF</button>
+      <button class="ts-tag">Imóveis</button>
+      <button class="ts-tag">CS2</button>
+      <button class="ts-tag">FIRE</button>
+      <button class="ts-tag">Cripto</button>
+      <button class="ts-tag">Portugal</button>
+      <button class="ts-tag">Poupança</button>
+      <button class="ts-tag">IRS</button>
+      <button class="ts-tag">Novato</button>
+    </div>
+    <span class="modal-label">Corpo do post</span>
+    <textarea class="modal-textarea" placeholder="Descreve a tua pergunta ou partilha a tua estratégia em detalhe. Podes usar Markdown para formatar."></textarea>
+    <div class="modal-footer">
+      <span class="modal-footer-left">Markdown suportado · Publicado para toda a comunidade</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal()">Publicar post</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Post toggle ──
+function togglePost(id, card) {
+  const detail = document.getElementById(id);
+  const isOpen = detail.classList.contains('open');
+  // close all
+  document.querySelectorAll('.post-detail').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.post-card').forEach(c => c.classList.remove('active'));
+  if (!isOpen) {
+    detail.classList.add('open');
+    card.classList.add('active');
+  }
+}
+
+// ── Vote ──
+function vote(e, id, dir) {
+  e.stopPropagation();
+  const el = document.getElementById(id);
+  const current = parseInt(el.textContent);
+  el.textContent = current + dir;
+  const btns = el.parentElement.querySelectorAll('.vote-btn');
+  btns.forEach(b => b.classList.remove('up-active', 'dn-active'));
+  if (dir === 1) btns[0].classList.add('up-active');
+  else btns[1].classList.add('dn-active');
+}
+
+// ── Sort tabs ──
+function setSort(btn) {
+  btn.closest('.sort-tabs').querySelectorAll('.sort-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Sidebar filter ──
+function filterFeed(tag, btn) {
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Reply toggle ──
+function toggleReply(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
+}
+
+// ── Tags cloud ──
+document.querySelectorAll('.tc-tag,.ts-tag').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('ts-tag')) {
+      btn.classList.toggle('active');
+    } else {
+      btn.closest('.tags-cloud').querySelectorAll('.tc-tag').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  });
+});
+
+// ── Modal ──
+function openModal() { document.getElementById('newPostModal').classList.add('open'); }
+function closeModal() { document.getElementById('newPostModal').classList.remove('open'); }
+</script>
+</body>
+</html>

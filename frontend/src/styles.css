@@ -3,42 +3,110 @@
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-:root {
-  --sand:   #f0ebe0;
-  --sand2:  #e6dfd1;
-  --sand3:  #d8cfc0;
-  --terra:  #c96a45;
-  --terra2: #b85c38;
-  --terra-l:#e07a52;
-  --sage:   #5f7e5f;
-  --sage-l: #7a9e7a;
-  --lilac:  #8b80c8;
-  --lilac-l:#a496d8;
-  --ink:    #1e1812;
-  --ink2:   #2e2418;
-  --brown:  #5a4a3a;
-  --muted:  #8a7a6a;
-  --white:  #faf9f6;
-  --border: rgba(90,74,58,0.14);
+/* ==========================================================
+   TEMA ESCURO (dark) — predefinido
+   Aplica-se automaticamente a toda a página por defeito.
+   Para mudar para tema claro usa: data-theme="light" no <html>.
+   ========================================================== */
+:root,
+[data-theme="dark"] {
+  /* --- Cores de fundo --- */
+  --sand:   #141210;          /* fundo principal da página */
+  --sand2:  #1c1916;          /* fundo secundário (barras, sidebars) */
+  --sand3:  #252118;          /* fundo terciário (separadores, números) */
+
+  /* --- Cor de destaque (terra-cotta / laranja) --- */
+  --terra:  #c96a45;          /* cor primária de destaque (botões, links ativos) */
+  --terra2: #b85c38;          /* variante mais escura do destaque (hover) */
+  --terra-l:#e07a52;          /* variante mais clara do destaque (textos em fundo escuro) */
+
+  /* --- Cor secundária (verde sage) --- */
+  --sage:   #5f7e5f;          /* verde para valores positivos e tags */
+  --sage-l: #7a9e7a;          /* verde claro (ícones ativos, dots) */
+
+  /* --- Cor terciária (lilás) --- */
+  --lilac:  #8b80c8;          /* lilás para avatares e tags especiais */
+  --lilac-l:#a496d8;          /* lilás claro */
+
+  /* --- Cores de texto --- */
+  --ink:    #f0ebe0;          /* texto principal (títulos, valores) */
+  --ink2:   #2e2418;          /* fundo do footer (mantém escuro no dark) */
+  --brown:  #b8a898;          /* texto secundário (parágrafos, labels) */
+  --muted:  #6a5e54;          /* texto muted (metadados, datas, stats) */
+
+  /* --- Superfícies de cards e componentes --- */
+  --white:  #1e1b18;          /* fundo de cards, modais, frames ("branco" do tema) */
+
+  /* --- Bordas --- */
+  --border: rgba(240,235,224,0.08); /* bordas subtis entre elementos */
+
+  /* --- Variáveis específicas do nav --- */
+  --nav-bg: rgba(20,18,16,0.88);    /* fundo translúcido da navbar */
+
+  /* --- Variáveis específicas do noise overlay --- */
+  --noise-opacity: 0.25;            /* opacidade do ruído de textura */
+}
+
+/* ==========================================================
+   TEMA CLARO (light) — ativado com data-theme="light"
+   Este era o tema original do projeto.
+   ========================================================== */
+[data-theme="light"] {
+  /* --- Cores de fundo --- */
+  --sand:   #f0ebe0;          /* fundo principal da página */
+  --sand2:  #e6dfd1;          /* fundo secundário (barras, sidebars) */
+  --sand3:  #d8cfc0;          /* fundo terciário (separadores, números) */
+
+  /* --- Cor de destaque (terra-cotta / laranja) --- */
+  --terra:  #c96a45;          /* cor primária de destaque */
+  --terra2: #b85c38;          /* variante hover do destaque */
+  --terra-l:#e07a52;          /* variante clara do destaque */
+
+  /* --- Cor secundária (verde sage) --- */
+  --sage:   #5f7e5f;          /* verde para valores positivos */
+  --sage-l: #7a9e7a;          /* verde claro */
+
+  /* --- Cor terciária (lilás) --- */
+  --lilac:  #8b80c8;          /* lilás */
+  --lilac-l:#a496d8;          /* lilás claro */
+
+  /* --- Cores de texto --- */
+  --ink:    #1e1812;          /* texto principal */
+  --ink2:   #2e2418;          /* fundo do footer */
+  --brown:  #5a4a3a;          /* texto secundário */
+  --muted:  #8a7a6a;          /* texto muted */
+
+  /* --- Superfícies de cards e componentes --- */
+  --white:  #faf9f6;          /* fundo de cards e modais */
+
+  /* --- Bordas --- */
+  --border: rgba(90,74,58,0.14);    /* bordas entre elementos */
+
+  /* --- Variáveis específicas do nav --- */
+  --nav-bg: rgba(240,235,224,0.85); /* fundo translúcido da navbar */
+
+  /* --- Variáveis específicas do noise overlay --- */
+  --noise-opacity: 0.4;             /* opacidade do ruído de textura */
 }
 
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--sand);
-  color: var(--ink);
+  background: var(--sand);       /* fundo geral da página — muda com o tema */
+  color: var(--ink);             /* cor de texto base — muda com o tema */
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease; /* transição suave ao trocar tema */
 }
 
 app-root {
   display: contents;
 }
 
-/* NOISE TEXTURE OVERLAY */
+/* NOISE TEXTURE OVERLAY — opacidade controlada por --noise-opacity */
 body::before {
   content: '';
   position: fixed;
@@ -46,7 +114,7 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 0;
-  opacity: 0.4;
+  opacity: var(--noise-opacity, 0.4);
 }
 
 /* NAV */
@@ -59,7 +127,7 @@ nav {
   justify-content: space-between;
   padding: 0 48px;
   height: 64px;
-  background: rgba(240,235,224,0.85);
+  background: var(--nav-bg);     /* fundo do nav — muda com o tema */
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -605,6 +673,11 @@ section { padding: 100px 48px; position: relative; }
   gap: 32px;
   margin-top: 56px;
   align-items: start;
+}
+
+.community-showcase.comments-only {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
 }
 
 

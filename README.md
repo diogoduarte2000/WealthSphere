@@ -22,19 +22,11 @@ WealthSphere é uma aplicação web moderna que permite:
 - **Lazy Loading**: Componentes carregados sob demanda
 - **Preloading**: Estratégia PreloadAllModules para performance
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Autenticação**: Passport.js com Steam OpenID
-- **Base de Dados**: MongoDB
-- **API REST**: Endpoints para dados financeiros
-
 ## 📦 Instalação
 
 ### Pré-requisitos
 - Node.js 18+
 - npm ou yarn
-- MongoDB (local ou cloud)
 
 ### Frontend
 ```bash
@@ -44,23 +36,7 @@ npm run build
 npm start
 ```
 
-### Backend
-```bash
-cd backend
-npm install
-npm start
-```
-
 ## 🔧 Configuração
-
-### Variáveis de Ambiente
-Crie um ficheiro `.env` no backend:
-```
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/wealthsphere
-STEAM_API_KEY=your_steam_api_key
-SESSION_SECRET=your_session_secret
-```
 
 ### Frontend Environment
 Configure em `frontend/src/environments/environment.ts`:
@@ -79,11 +55,6 @@ export const environment = {
    - Root Directory: `frontend`
    - Build Command: `npm run build`
    - Output Directory: `dist/frontend`
-
-### Backend (Render)
-1. Conectar repositório GitHub ao Render
-2. Configurar Web Service
-3. Adicionar variáveis de ambiente
 
 ## 📊 Funcionalidades
 
@@ -125,14 +96,6 @@ export const environment = {
 - Sessões seguras
 - Sync automático do inventário
 
-## 📈 API
-
-### Endpoints Principais
-- `GET /api/auth/steam` - Login Steam
-- `GET /api/rates` - Taxas em tempo real
-- `GET /api/user/:id` - Dados do utilizador
-- `GET /api/inventory/:steamId` - Inventário Steam
-
 ## 🤝 Contribuição
 
 1. Fork o repositório
@@ -145,19 +108,9 @@ export const environment = {
 
 Este projeto está em desenvolvimento.
 
-## 👥 Equipa
+## � Links
 
-- Diogo Duarte - Desenvolvimento
-
-## 📞 Contacto
-
-- GitHub: [@diogoduarte2000](https://github.com/diogoduarte2000)
-- Email: [contacto@wealthsphere.pt](mailto:contacto@wealthsphere.pt)
-
-## 🔗 Links
-
-- [Frontend Vercel](https://wealth-sphere-eblw8c1kq-diogosilvanoduarte-3890s-projects.vercel.app/)
-- [Backend Render](https://wealthsphere-backend.onrender.com)
+- [WealthSphere](https://wealth-sphere-eblw8c1kq-diogosilvanoduarte-3890s-projects.vercel.app/)
 - [Repositório GitHub](https://github.com/diogoduarte2000/WealthSphere)
 
 ---

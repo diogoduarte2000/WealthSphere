@@ -15,12 +15,32 @@
 
   <ul class="nav-links">
     <li><a href="#features">Funcionalidades</a></li>
-    <li><a href="#mercados">Mercados</a></li>
+      <li><a href="#taxas">Taxas</a></li>
     <li><a href="#comunidade">Comunidade</a></li>
-    <li><a href="#taxas">Taxas</a></li>
+    <li><a href="#mercados">Mercados</a></li>
   </ul>
 
   <div class="nav-cta">
+    <!-- Botão de alternância entre tema escuro e claro -->
+    <button
+      class="theme-toggle"
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      [title]="isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      id="theme-toggle-btn">
+      <!-- Ícone do sol (mostrado no tema escuro → clica para ir para claro) -->
+      <svg *ngIf="isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- Ícone da lua (mostrado no tema claro → clica para ir para escuro) -->
+      <svg *ngIf="!isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+      </svg>
+    </button>
     <a routerLink="/auth" class="btn btn-outline">Entrar</a>
     <a routerLink="/auth" class="btn btn-fill">Começar grátis</a>
   </div>
@@ -36,7 +56,7 @@
     <div class="motion-ring ring-one" data-parallax="0.10"></div>
     <div class="motion-ring ring-two" data-parallax="-0.08"></div>
     <div class="ticker-ribbon" data-parallax="0.16">
-      <span>EURIBOR 6M 2.55%</span>
+      <span>EURIBOR 6M 3.02%</span>
       <span>S&P 500 +1.2%</span>
       <span>BTC +2.1%</span>
       <span>VWCE +0.7%</span>
@@ -129,7 +149,7 @@
           <div class="pc-topbar">
             <div>
               <div class="pc-greeting">Bom dia, <span>Marta</span> 👋</div>
-              <div class="pc-date">Domingo, 10 de Maio · Euribor 6M: 2.55%</div>
+              <div class="pc-date">Domingo, 10 de Maio · Euribor 6M: 3.02%</div>
             </div>
             <div style="display:flex;gap:8px">
               <div style="width:28px;height:28px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:600">M</div>
@@ -219,7 +239,6 @@
       </div>
       <h3>Gestão de Rendas</h3>
       <p>Regista imóveis, acompanha rendas recebidas, calcula rentabilidade líquida e simula crédito habitação com taxas reais dos bancos portugueses.</p>
-      <span class="feature-tag">→ IRS predial incluído</span>
     </div>
 
     <div class="feature-card reveal" style="transition-delay:0.08s">
@@ -230,7 +249,6 @@
       </div>
       <h3>Simulador Avançado</h3>
       <p>Juros compostos, comparador de cenários, calculadora FIRE, simulador de dividendos e impacto da inflação. Resultados em gráficos interativos.</p>
-      <span class="feature-tag" style="color:var(--sage)">→ Calculadora FIRE incluída</span>
     </div>
 
     <div class="feature-card reveal" style="transition-delay:0.16s">
@@ -244,7 +262,6 @@
       </div>
       <h3>Comunidade</h3>
       <p>Fórum com tags, portfólios partilhados, sistema de reputação e discussões em tempo real sobre ações, ETFs, imóveis e mercados alternativos.</p>
-      <span class="feature-tag" style="color:var(--lilac)">→ Real-time com Socket.io</span>
     </div>
 
     <div class="feature-card reveal" style="transition-delay:0.0s">
@@ -256,7 +273,6 @@
       </div>
       <h3>Income Tracker</h3>
       <p>Regista salário, rendas, freelance e dividendos. Define orçamentos por categoria e exporta relatórios mensais em CSV ou PDF.</p>
-      <span class="feature-tag" style="color:#c9a45a">→ Export PDF incluído</span>
     </div>
 
     <div class="feature-card reveal" style="transition-delay:0.08s">
@@ -269,7 +285,6 @@
       </div>
       <h3>Taxas em Tempo Real</h3>
       <p>Euribor 3M/6M/12M, TEAG dos principais bancos, spreads de crédito habitação, câmbios e índices bolsistas atualizados automaticamente.</p>
-      <span class="feature-tag" style="color:var(--brown)">→ ECB + Banco de Portugal</span>
     </div>
 
     <div class="feature-card reveal" style="transition-delay:0.16s">
@@ -283,7 +298,6 @@
       </div>
       <h3>Mercados CS2 & Steam</h3>
       <p>Preços de skins em tempo real, histórico de tendências, calculadora de ROI e comparativo com ativos tradicionais. Watchlist pessoal incluída.</p>
-      <span class="feature-tag" style="color:var(--sage)">→ Steam + CSFloat API</span>
     </div>
   </div>
 </section>
@@ -300,7 +314,7 @@
     <div class="rate-card">
       <div class="rate-card-label">Banco Central Europeu</div>
       <div class="rate-card-name">Euribor 6 Meses</div>
-      <div class="rate-card-val">2.55<span class="rate-card-unit">%</span></div>
+      <div class="rate-card-val">3.02<span class="rate-card-unit">%</span></div>
       <div class="rate-card-change rate-dn">↓ -0.08% vs mês anterior</div>
     </div>
     <div class="rate-card">
@@ -356,7 +370,7 @@
     <p class="section-sub">Discussões reais sobre ações, ETFs, imóveis, cripto e mercados de CS2 — com pessoas que pensam como tu.</p>
   </div>
 
-  <div class="community-showcase">
+  <div class="community-showcase comments-only">
     <div class="comm-left reveal">
       <div class="forum-post">
         <div class="forum-post-header">
@@ -441,61 +455,6 @@
       </div>
     </div>
 
-    <div class="comm-right reveal" style="transition-delay:0.15s">
-      <div style="margin-bottom:28px">
-        <div class="trending-title">Explorar por tag</div>
-        <div class="tags-cloud">
-          <span class="forum-tag ft-terra cloud-tag active">#ações</span>
-          <span class="forum-tag ft-sage cloud-tag">#ETF</span>
-          <span class="forum-tag ft-lilac cloud-tag">#cs2-skins</span>
-          <span class="forum-tag ft-brown cloud-tag">#imóveis</span>
-          <span class="cloud-tag">#cripto</span>
-          <span class="cloud-tag">#poupança</span>
-          <span class="cloud-tag">#FIRE</span>
-          <span class="cloud-tag">#portugal</span>
-          <span class="cloud-tag">#steam</span>
-          <span class="cloud-tag">#novato</span>
-          <span class="cloud-tag">#dividendos</span>
-          <span class="cloud-tag">#rendas</span>
-        </div>
-      </div>
-
-      <div class="trending-title">Em destaque esta semana</div>
-      <div>
-        <div class="trending-item">
-          <div class="trending-num">01</div>
-          <div class="trending-info">
-            <div class="trending-tag">#ETF · #portugal</div>
-            <div class="trending-t">Investir em ETFs como residente fiscal em Portugal — guia completo 2025</div>
-            <div class="trending-meta">128 votos · 94 respostas</div>
-          </div>
-        </div>
-        <div class="trending-item">
-          <div class="trending-num">02</div>
-          <div class="trending-info">
-            <div class="trending-tag">#cs2-skins</div>
-            <div class="trending-t">Top 10 skins para investir com menos de €50 em 2025</div>
-            <div class="trending-meta">97 votos · 61 respostas</div>
-          </div>
-        </div>
-        <div class="trending-item">
-          <div class="trending-num">03</div>
-          <div class="trending-info">
-            <div class="trending-tag">#FIRE · #poupança</div>
-            <div class="trending-t">Quanto precisas de poupar por mês para atingir FIRE aos 45?</div>
-            <div class="trending-meta">82 votos · 48 respostas</div>
-          </div>
-        </div>
-        <div class="trending-item">
-          <div class="trending-num">04</div>
-          <div class="trending-info">
-            <div class="trending-tag">#imóveis · #rendas</div>
-            <div class="trending-t">Atualização de rendas 2025 — índice INE calculado: +2.16%</div>
-            <div class="trending-meta">74 votos · 39 respostas</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -614,32 +573,30 @@
     </div>
     <div class="footer-col">
       <h4>Produto</h4>
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/simulador">Simulador</a>
-      <a routerLink="/taxas">Taxas & Mercados</a>
-      <a routerLink="/mercados">CS2 & Steam</a>
-      <a routerLink="/forum">Comunidade</a>
+      <a routerLink="/dashboard-demo" [queryParams]="{ page: 'dashboard' }">Dashboard</a>
+      <a routerLink="/dashboard-demo" [queryParams]="{ page: 'simulador' }">Simulador</a>
+      <a routerLink="/dashboard-demo" [queryParams]="{ page: 'taxas' }">Taxas & Mercados</a>
+      <a routerLink="/dashboard-demo" [queryParams]="{ page: 'cs2' }">CS2 & Steam</a>
+      <a routerLink="/dashboard-demo" [queryParams]="{ page: 'comunidade' }">Comunidade</a>
     </div>
     <div class="footer-col">
       <h4>Empresa</h4>
-      <a href="#">Sobre nós</a>
-      <a href="#">Blog</a>
-      <a href="#">Carreiras</a>
-      <a href="#">Contacto</a>
+      <a href="#" (click)="openInfoModal('about', $event)">Sobre nós</a>
+      <a href="#" (click)="openInfoModal('contact', $event)">Contacto</a>
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
-      <a href="#">Termos de Uso</a>
-      <a href="#">Privacidade</a>
-      <a href="#">Cookies</a>
-      <a href="#">RGPD</a>
+      <a href="#" (click)="openInfoModal('terms', $event)">Termos de Uso</a>
+      <a href="#" (click)="openInfoModal('privacy', $event)">Privacidade</a>
+      <a href="#" (click)="openInfoModal('cookies', $event)">Cookies</a>
+      <a href="#" (click)="openInfoModal('rgpd', $event)">RGPD</a>
     </div>
   </div>
   <div class="footer-bottom">
     <span class="footer-copy">© 2025 WealthSphere. Feito em Portugal 🇵🇹</span>
     <div class="footer-legal">
-      <a href="#">Termos</a>
-      <a href="#">Privacidade</a>
+      <a href="#" (click)="openInfoModal('terms', $event)">Termos</a>
+      <a href="#" (click)="openInfoModal('privacy', $event)">Privacidade</a>
     </div>
   </div>
 </footer>
@@ -656,25 +613,25 @@
       <p>Escolha o que quer experimentar sem criar conta:</p>
       
       <div class="demo-options">
-        <a href="/dashboard-demo" class="demo-option-card" (click)="closeDemoModal()">
+        <a routerLink="/dashboard-demo" [queryParams]="{ page: 'dashboard' }" class="demo-option-card" (click)="closeDemoModal()">
           <div class="demo-option-icon">📊</div>
           <h4>Dashboard Completo</h4>
           <p>Veja o dashboard profissional com portfolio, transações e alertas</p>
         </a>
         
-        <a routerLink="/forum" class="demo-option-card" (click)="closeDemoModal()">
+        <a routerLink="/dashboard-demo" [queryParams]="{ page: 'comunidade' }" class="demo-option-card" (click)="closeDemoModal()">
           <div class="demo-option-icon">💬</div>
-          <h4>Fórum</h4>
+          <h4>Comunidade</h4>
           <p>Participe da comunidade, veja posts e comentários</p>
         </a>
         
-        <a routerLink="/income" class="demo-option-card" (click)="closeDemoModal()">
+        <a routerLink="/dashboard-demo" [queryParams]="{ page: 'cs2' }" class="demo-option-card" (click)="closeDemoModal()">
           <div class="demo-option-icon">💰</div>
-          <h4>Income Tracker</h4>
-          <p>Controle rendimentos e despesas com gráficos detalhados</p>
+          <h4>CS2 & Steam</h4>
+          <p>Acompanha inventário, ROI, watchlist e mercados alternativos</p>
         </a>
         
-        <a routerLink="/simulador" class="demo-option-card" (click)="closeDemoModal()">
+        <a routerLink="/dashboard-demo" [queryParams]="{ page: 'simulador' }" class="demo-option-card" (click)="closeDemoModal()">
           <div class="demo-option-icon">📈</div>
           <h4>Simulador</h4>
           <p>Simule investimentos com juros compostos e cenários</p>
@@ -688,6 +645,17 @@
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div class="info-modal-overlay" *ngIf="infoModal" (click)="closeInfoModal()">
+  <div class="info-modal-content" (click)="$event.stopPropagation()">
+    <div class="info-modal-header">
+      <h3>{{ infoModal.title }}</h3>
+      <button class="demo-modal-close" (click)="closeInfoModal()">×</button>
+    </div>
+    <p>{{ infoModal.body }}</p>
   </div>
 </div>
 

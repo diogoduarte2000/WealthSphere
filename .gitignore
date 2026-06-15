@@ -16,6 +16,7 @@ yarn-error.log*
 *.p12
 *.cert
 *.crt
+# NOTE: .env.example é um TEMPLATE e DEVE estar commitado no git!
 
 # Build output
 dist/
@@ -32,6 +33,8 @@ build/
 
 # OS files
 .DS_Store
+backend.log
+backend.err
 Thumbs.db
 desktop.ini
 
@@ -46,6 +49,11 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Project-specific exclusions
+backend/
+progress.md
+site\ preview\ v1/
 *.tmp
 *.temp
 
@@ -68,3 +76,56 @@ frontend/.angular/
 
 # Site preview
 "site preview v1/node_modules/"
+
+# Documentation and notes (not essential for frontend deployment)
+README.md
+process.md
+VERSION18_NOTES.md
+CONFIG_ENVS.md
+DEPLOY_GUIDE.md
+details.md
+*.md
+!SECURITY_SETUP.md
+
+# Backend and server files (not frontend)
+backend/
+server.js
+app.js
+setup_routes.js
+extract.js
+generate-environment.js
+test-db.js
+test-frontend.js
+test-steam.js
+models/
+src/
+
+# Test files
+test-*.js
+test-db-out.log
+
+# Deployment files (not frontend)
+Dockerfile
+docker-compose.yml
+render.yaml
+.vercelignore
+vercel.json
+.gitlab-ci.yml
+
+# Root level package files (use frontend specific ones)
+package.json
+package-lock.json
+node_modules/
+
+# Environment files
+.env.local
+
+# Log files
+*.log
+*.err
+
+# Misc
+.nvmrc
+.claude/
+.qodo/
+.sixth/
