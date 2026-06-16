@@ -119,6 +119,10 @@ export class UserService {
     return this.http.get(`${environment.apiUrl}/external/stocks/news?symbol=${encodeURIComponent(symbol)}`);
   }
 
+  warmUpBackend(): void {
+    this.http.get(`${environment.apiUrl}/health`).subscribe({ error: () => {} });
+  }
+
   getTrendingStocks(cat: string = 'tendencias'): Observable<any> {
     return this.http.get(`${environment.apiUrl}/external/stocks/trending?cat=${encodeURIComponent(cat)}`);
   }

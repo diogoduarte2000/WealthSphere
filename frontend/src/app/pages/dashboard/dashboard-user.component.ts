@@ -2822,6 +2822,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     }
     this.loadProfile();
     this.calcSimAll();
+    this.userService.warmUpBackend(); // wake up Render.com free-tier backend before news fetch
     this.loadDashNews();
     this.loadForumPosts();
     this.loadGoals();
@@ -5445,18 +5446,25 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.calcMaisValias();
   }
 
-  loadDashNews(topicKey?: string) {
+  loadDashNews(topicKey?: string, _retryCount = 0) {
     if (topicKey) this.dashNewsTopic = topicKey;
     const topic = this.dashNewsTopics.find(t => t.key === this.dashNewsTopic);
     if (!topic) return;
     this.dashNewsLoading = true;
-    this.dashNewsItems = [];
+    if (_retryCount === 0) this.dashNewsItems = [];
     this.userService.getStockNews(topic.symbol).subscribe({
       next: (items: any[]) => {
         this.dashNewsItems = items.slice(0, 8);
         this.dashNewsLoading = false;
       },
-      error: () => { this.dashNewsLoading = false; }
+      error: () => {
+        if (_retryCount < 3) {
+          // Backend (Render.com free tier) may be cold-starting — retry with backoff
+          setTimeout(() => this.loadDashNews(undefined, _retryCount + 1), 10000);
+        } else {
+          this.dashNewsLoading = false;
+        }
+      }
     });
   }
 
