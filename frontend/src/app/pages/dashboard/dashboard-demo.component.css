@@ -383,3 +383,49 @@ canvas{display:block}
 .fade-up{animation:fadeUp 0.5s ease both}
 .fd1{animation-delay:0.05s}.fd2{animation-delay:0.1s}.fd3{animation-delay:0.15s}
 .fd4{animation-delay:0.2s}.fd5{animation-delay:0.25s}
+
+/* ─── RESPONSIVE — MOBILE ─────────────────────────────────── */
+@media (max-width: 768px) {
+  /* hide sidebar, remove its offset from main */
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+
+  /* demo banner — stack on small screens */
+  .demo-banner { flex-direction: column; gap: 8px; align-items: flex-start; padding: 10px 16px; }
+
+  /* content padding */
+  .content { padding: 16px 14px 24px; }
+
+  /* topbar */
+  .topbar { padding: 0 16px; height: 52px; }
+  .topbar-right { gap: 6px; }
+
+  /* stat cards: 2 columns */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-val { font-size: 20px !important; }
+
+  /* all multi-column grids → single column */
+  .grid-2-1,
+  .grid-3,
+  .grid-2,
+  .grid-1-2 { grid-template-columns: 1fr !important; }
+
+  /* rates grid: 2 cols instead of 3 */
+  .rates-grid { grid-template-columns: 1fr 1fr; }
+
+  /* skin grid stays 2 cols — already good */
+
+  /* page tabs — scrollable */
+  .page-tabs { overflow-x: auto; width: 100%; }
+  .page-tab { white-space: nowrap; font-size: 12px; }
+
+  /* FIRE widget number slightly smaller */
+  .fire-number { font-size: 34px; }
+
+  /* donut wrap */
+  .donut-wrap { width: 80px; height: 80px; }
+  .donut-val { font-size: 14px; }
+
+  /* inputs */
+  input, select, textarea { font-size: 16px !important; }
+}
