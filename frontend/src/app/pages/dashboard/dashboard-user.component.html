@@ -1212,11 +1212,11 @@
                   <div style="display:flex;justify-content:space-around;gap:8px;margin-bottom:10px">
                     <div style="text-align:center" *ngIf="skinPriceOverview.lowest">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Mínimo</div>
-                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.lowest?.toFixed(2) }}</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.lowest.toFixed(2) }}</div>
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.median">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Mediana</div>
-                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.median?.toFixed(2) }}</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.median.toFixed(2) }}</div>
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.volume">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Volume</div>
