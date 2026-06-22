@@ -46,8 +46,33 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Middleware
 app.set('trust proxy', 1);
+const configuredOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:4200')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (configuredOrigins.includes(origin)) {
+    return true;
+  }
+
+  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+    || /^http:\/\/localhost:\d+$/i.test(origin);
+}
+
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : 'http://localhost:4200', 
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS origin blocked: ${origin}`));
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '1mb' }));
