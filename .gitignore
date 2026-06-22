@@ -97,7 +97,7 @@ test-db.js
 test-frontend.js
 test-steam.js
 models/
-src/
+/src/
 
 # Test files
 test-*.js

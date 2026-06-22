@@ -87,7 +87,7 @@
 
         <label *ngIf="isRegister" class="field">
           <span>Nacionalidade / Idioma</span>
-          <select formControlName="nationality" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--auth-border,#d0c9bc);background:var(--auth-input-bg,#faf8f5);color:#1a1a1a;font-size:14px;cursor:pointer;color-scheme:light">
+          <select formControlName="nationality" class="auth-select">
             <option value="">Seleciona o teu país</option>
             <option value="pt">🇵🇹 Portugal</option>
             <option value="br">🇧🇷 Brasil</option>
@@ -98,6 +98,16 @@
             <option value="es">🇪🇸 España</option>
             <option value="it">🇮🇹 Italia</option>
             <option value="nl">🇳🇱 Nederland</option>
+            <option value="ch">🇨🇭 Schweiz</option>
+            <option value="ie">🇮🇪 Ireland</option>
+            <option value="be">🇧🇪 België</option>
+            <option value="at">🇦🇹 Österreich</option>
+            <option value="se">🇸🇪 Sverige</option>
+            <option value="pl">🇵🇱 Polska</option>
+            <option value="ro">🇷🇴 România</option>
+            <option value="ca">🇨🇦 Canada</option>
+            <option value="au">🇦🇺 Australia</option>
+            <option value="jp">🇯🇵 Japan</option>
             <option value="other">🌍 Outro / Other</option>
           </select>
         </label>

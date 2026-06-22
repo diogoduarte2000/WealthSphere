@@ -117,6 +117,7 @@ function toPublicUser(user) {
     name: user.displayName || user.name || '',
     avatar: user.avatar,
     email: user.email,
+    nationality: user.nationality || '',
     inventory: user.inventory,
     financialProfile: user.financialProfile,
     customSettings: user.customSettings,
@@ -125,6 +126,8 @@ function toPublicUser(user) {
     hasBinanceApiKey: !!user.binanceApiKey,
     hasBinanceApiSecret: !!user.binanceApiSecret,
     hasKrakenApiKey: !!user.krakenApiKey,
+    hasCoinbaseApiKey: !!user.coinbaseApiKey,
+    hasWiseApiToken: !!user.wiseApiToken,
     hasCsFloatApiKey: !!user.csFloatApiKey,
     lastLogin: user.lastLogin,
     createdAt: user.createdAt,
@@ -607,7 +610,7 @@ passport.use(new SteamStrategy({
 // Auth Routes (Login/Register)
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, nationality } = req.body;
 
     if (!name || String(name).trim().length < 2) {
       return res.status(400).json({ message: 'Nome inválido' });
@@ -630,7 +633,8 @@ app.post('/api/auth/register', async (req, res) => {
     const user = await User.create({
       displayName: String(name).trim(),
       email: normalizedEmail,
-      password: hashedPassword
+      password: hashedPassword,
+      nationality: nationality ? String(nationality).toLowerCase().slice(0, 5) : 'pt'
     });
 
     const { accessToken, refreshToken } = await issueTokens(user);
@@ -946,6 +950,49 @@ app.delete('/api/users/me/goals/:id', async (req, res) => {
   }
 });
 
+// ── Transactions (Income Tracker) ──────────────────────
+app.get('/api/users/me/transactions', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    res.json(user.transactions || []);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+app.post('/api/users/me/transactions', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    const { type, description, amount, category, date } = req.body;
+    if (!type || !description || !amount || !date) {
+      return res.status(400).json({ message: 'type, description, amount e date são obrigatórios' });
+    }
+    if (!['receita', 'despesa'].includes(type)) {
+      return res.status(400).json({ message: 'type deve ser receita ou despesa' });
+    }
+    const entry = { type, description, amount: +amount, category: category || '', date, createdAt: new Date() };
+    user.transactions = user.transactions || [];
+    user.transactions.push(entry);
+    user.markModified('transactions');
+    await user.save();
+    res.status(201).json(user.transactions[user.transactions.length - 1]);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/users/me/transactions/:id', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    user.transactions = (user.transactions || []).filter(t => t._id.toString() !== req.params.id);
+    user.markModified('transactions');
+    await user.save();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
 app.post('/api/users/me/real-estate', async (req, res) => {
   try {
     const { user } = await authenticateRequest(req);
@@ -1122,7 +1169,8 @@ app.get('/api/external/steam/search', async (req, res) => {
             name,
             hash_name: name,
             price: item.min_price ?? item.suggested_price ?? null,
-            icon: null,
+            // Free Steam image CDN by market hash name (steamapis.com free image endpoint)
+            icon: `https://api.steamapis.com/image/item/730/${encodeURIComponent(name)}`,
             _score: nameLow.startsWith(searchQ) || nameNorm.startsWith(searchQ) ? 0 : 1
           });
         }

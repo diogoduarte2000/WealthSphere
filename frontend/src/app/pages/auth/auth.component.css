@@ -246,6 +246,25 @@
   color: var(--muted);
 }
 
+.auth-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  background: var(--sand2);
+  color: var(--ink);
+  font: 15px 'DM Sans', sans-serif;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.auth-select:focus {
+  border-color: var(--terra);
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgba(201, 106, 69, 0.12);
+}
+
 .password-field {
   position: relative;
 }

@@ -36,30 +36,31 @@
    que precisam de cor hard-coded (não usam variáveis CSS).
    ───────────────────────────────────────────────────────── */
 
-/* Ticker ribbon no hero — fundo e texto adaptam ao tema */
+/* Ticker ribbon — theme overrides */
 :root .ticker-ribbon,
 [data-theme="dark"] .ticker-ribbon {
-  background: rgba(30, 27, 24, 0.75);    /* fundo escuro translúcido */
-  border-color: rgba(70, 70, 70, 0.1);
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="light"] .ticker-ribbon {
-  background: rgba(250, 249, 246, 0.52); /* fundo claro translúcido (original) */
-  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(250, 249, 246, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Fall cards (ETF, Rendas, CS2) — glassmorphism adaptado */
+/* Fall cards — theme overrides (use !important to beat base rule order) */
 :root .fall-card,
 [data-theme="dark"] .fall-card {
-  background: rgba(30, 27, 24, 0.75);    /* card escuro */
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4);
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4) !important;
+  color: #f0ebe0 !important;
 }
 
 [data-theme="light"] .fall-card {
-  background: rgba(250, 249, 246, 0.62); /* card claro (original) */
-  border-color: rgba(255, 255, 255, 0.62);
-  box-shadow: 0 24px 50px rgba(42, 32, 24, 0.13);
+  background: rgba(250, 249, 246, 0.62) !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  box-shadow: 0 24px 50px rgba(42, 32, 24, 0.13) !important;
 }
 
 /* Motion rings — cor da borda adapta ao tema */
@@ -596,15 +597,14 @@
   }
 
   .nav-cta {
-    gap: 4px;
+    gap: 6px;
     flex-shrink: 0;
-    transform: translateX(-18px) scale(0.9);
-    transform-origin: right center;
   }
 
   .nav-cta .btn {
-    padding: 8px 7px;
-    font-size: 10.5px;
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 40px;
   }
 
   .theme-toggle {
@@ -720,22 +720,31 @@
     font-size: 10px;
   }
 
-  .preview-content {
-    padding: 14px;
-    gap: 12px;
+  /* Hide sidebar in demo preview on mobile */
+  .preview-sidebar {
+    display: none !important;
   }
 
-  .pc-topbar {
+  .preview-body {
+    display: block !important;
+  }
+
+  .preview-content {
+    padding: 12px;
     gap: 10px;
   }
 
+  .pc-topbar {
+    gap: 8px;
+  }
+
   .pc-greeting {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .pc-stats,
   .pc-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   section,

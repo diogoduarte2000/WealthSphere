@@ -922,6 +922,54 @@ footer {
 /* terra dim for community */
 .terra-dim { background: rgba(201,106,69,0.1); }
 
+/* ==========================================================
+   GLOBAL DARK MODE OVERRIDES — landing page animated elements
+   These MUST be in styles.css (global) because Angular's view
+   encapsulation adds [_ngcontent-...] to :root in component CSS,
+   preventing :root selectors from matching the <html> element.
+   ========================================================== */
+
+/* Fall cards — dark mode (default, no data-theme) */
+:root .fall-card {
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4) !important;
+  color: #f0ebe0 !important;
+}
+
+/* Fall cards — explicit dark */
+[data-theme="dark"] .fall-card {
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4) !important;
+  color: #f0ebe0 !important;
+}
+
+/* Fall cards — light mode */
+[data-theme="light"] .fall-card {
+  background: rgba(250, 249, 246, 0.62) !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  box-shadow: 0 24px 50px rgba(42, 32, 24, 0.13) !important;
+  color: inherit !important;
+}
+
+/* Ticker ribbon — dark mode */
+:root .ticker-ribbon {
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .ticker-ribbon {
+  background: rgba(30, 27, 24, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ticker ribbon — light mode */
+[data-theme="light"] .ticker-ribbon {
+  background: rgba(250, 249, 246, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   nav { padding: 0 24px; }

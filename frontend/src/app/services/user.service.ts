@@ -119,6 +119,10 @@ export class UserService {
     return this.http.get(`${environment.apiUrl}/external/stocks/news?symbol=${encodeURIComponent(symbol)}`);
   }
 
+  warmUpBackend(): void {
+    this.http.get(`${environment.apiUrl}/health`).subscribe({ error: () => {} });
+  }
+
   getTrendingStocks(cat: string = 'tendencias'): Observable<any> {
     return this.http.get(`${environment.apiUrl}/external/stocks/trending?cat=${encodeURIComponent(cat)}`);
   }
@@ -145,5 +149,18 @@ export class UserService {
 
   deleteGoal(id: string): Observable<any[]> {
     return this.http.delete<any[]>(`${this.apiUrl}/me/goals/${id}`);
+  }
+
+  // Income Tracker transactions
+  getTransactions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/me/transactions`);
+  }
+
+  addTransaction(tx: { type: string; description: string; amount: number; category?: string; date: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/me/transactions`, tx);
+  }
+
+  deleteTransaction(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/me/transactions/${id}`);
   }
 }
