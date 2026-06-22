@@ -71,7 +71,7 @@
       </div>
       <div>
         <div class="user-name">{{ userName }}</div>
-        <div class="user-role">Membro · Lisboa 🇵🇹</div>
+        <div class="user-role">Membro · {{ userNationalityDisplay }}</div>
       </div>
       <div class="user-menu" [style.display]="showUserMenu ? 'block' : 'none'">
         <button (click)="logout()">Logout</button>
@@ -447,7 +447,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                   <div style="display:flex;align-items:center;gap:8px">
                     <span style="width:10px;height:10px;border-radius:50%;display:inline-block" [style.background]="g.color"></span>
-                    <span style="font-size:13px;font-weight:600;color:var(--text)">{{ g.label }}</span>
+                    <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ g.label }}</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px">
                     <span style="font-size:12px;color:var(--muted)">{{ goalProgress(g) }}%</span>
@@ -485,43 +485,45 @@
               <div class="card-title">Portfólio de Ativos</div>
               <span class="card-action" (click)="showPage('investimentos')" style="cursor:pointer">Ver completo</span>
             </div>
-            <table class="port-table">
-              <thead>
-                <tr>
-                  <th>Fonte</th><th>Ticker</th><th>Nome</th><th>Valor</th><th>Peso</th>
-                </tr>
-              </thead>
-              <tbody>
-                <ng-container *ngIf="allPortfolioItems.length > 0">
-                  <tr *ngFor="let item of allPortfolioItems.slice(0,10)">
-                    <td>
-                      <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap"
-                            [style.background]="item.sourceColor + '22'"
-                            [style.color]="item.sourceColor">
-                        {{ item.source }}
-                      </span>
-                    </td>
-                    <td style="font-weight:600;color:var(--ink)">{{ item.ticker }}</td>
-                    <td style="color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.name }}</td>
-                    <td style="font-weight:600;color:var(--ink)">€{{ item.value | number:'1.2-2' }}</td>
-                    <td style="color:var(--muted)">
-                      {{ allocTotal > 0 ? ((item.value / allocTotal) * 100).toFixed(1) : '0.0' }}%
+            <div class="port-table-wrap">
+              <table class="port-table">
+                <thead>
+                  <tr>
+                    <th>Fonte</th><th>Ticker</th><th>Nome</th><th>Valor</th><th>Peso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ng-container *ngIf="allPortfolioItems.length > 0">
+                    <tr *ngFor="let item of allPortfolioItems.slice(0,10)">
+                      <td>
+                        <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap"
+                              [style.background]="item.sourceColor + '22'"
+                              [style.color]="item.sourceColor">
+                          {{ item.source }}
+                        </span>
+                      </td>
+                      <td style="font-weight:600;color:var(--ink)">{{ item.ticker }}</td>
+                      <td style="color:var(--muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.name }}</td>
+                      <td style="font-weight:600;color:var(--ink)">€{{ item.value | number:'1.2-2' }}</td>
+                      <td style="color:var(--muted)">
+                        {{ allocTotal > 0 ? ((item.value / allocTotal) * 100).toFixed(1) : '0.0' }}%
+                      </td>
+                    </tr>
+                    <tr *ngIf="allPortfolioItems.length > 10">
+                      <td colspan="5" style="text-align:center;padding:10px;color:var(--muted);font-size:11px">
+                        + {{ allPortfolioItems.length - 10 }} ativos adicionais —
+                        <span style="color:var(--terra);cursor:pointer" (click)="showPage('investimentos')">ver todos</span>
+                      </td>
+                    </tr>
+                  </ng-container>
+                  <tr *ngIf="allPortfolioItems.length === 0">
+                    <td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">
+                      Liga o Trading 212, Binance ou Kraken nas Integrações para ver os teus ativos aqui.
                     </td>
                   </tr>
-                  <tr *ngIf="allPortfolioItems.length > 10">
-                    <td colspan="5" style="text-align:center;padding:10px;color:var(--muted);font-size:11px">
-                      + {{ allPortfolioItems.length - 10 }} ativos adicionais —
-                      <span style="color:var(--terra);cursor:pointer" (click)="showPage('investimentos')">ver todos</span>
-                    </td>
-                  </tr>
-                </ng-container>
-                <tr *ngIf="allPortfolioItems.length === 0">
-                  <td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">
-                    Liga o Trading 212, Binance ou Kraken nas Integrações para ver os teus ativos aqui.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
           <div class="card">
             <div class="card-header">
@@ -1138,7 +1140,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
               <div>
                 <div style="font-size:11px;color:var(--muted)">{{ selectedSkin.type }}</div>
-                <div style="font-size:22px;font-weight:700" [style.color]="selectedSkin.price >= 50 ? '#e8813a' : 'var(--text)'">
+                <div style="font-size:22px;font-weight:700" [style.color]="selectedSkin.price >= 50 ? '#e8813a' : 'var(--ink)'">
                   <ng-container *ngIf="selectedSkin.price !== null">€{{ selectedSkin.price.toFixed(2) }}</ng-container>
                   <ng-container *ngIf="selectedSkin.price === null">N/A</ng-container>
                 </div>
@@ -1208,19 +1210,19 @@
               </ng-container>
               <div *ngIf="!skinHistoryLoading && !skinHistoryPolyline">
                 <!-- Price overview from Steam/Skinport when chart data is unavailable -->
-                <div *ngIf="skinPriceOverview" style="background:var(--card-bg,#f8f6f2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:4px 0 8px">
+                <div *ngIf="skinPriceOverview" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:4px 0 8px">
                   <div style="display:flex;justify-content:space-around;gap:8px;margin-bottom:10px">
                     <div style="text-align:center" *ngIf="skinPriceOverview.lowest">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Mínimo</div>
-                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.lowest.toFixed(2) }}</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--ink)">€{{ skinPriceOverview.lowest.toFixed(2) }}</div>
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.median">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Mediana</div>
-                      <div style="font-size:15px;font-weight:700;color:var(--text)">€{{ skinPriceOverview.median.toFixed(2) }}</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--ink)">€{{ skinPriceOverview.median.toFixed(2) }}</div>
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.volume">
                       <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Volume</div>
-                      <div style="font-size:15px;font-weight:700;color:var(--text)">{{ skinPriceOverview.volume }}</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--ink)">{{ skinPriceOverview.volume }}</div>
                     </div>
                   </div>
                   <div *ngIf="skinPriceOverview.skinport?.min" style="display:flex;justify-content:space-around;gap:8px;padding-top:8px;border-top:1px solid var(--border)">
@@ -1230,11 +1232,11 @@
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.skinport?.max">
                       <div style="font-size:8px;color:var(--muted);margin-bottom:2px">Skinport Max</div>
-                      <div style="font-size:12px;font-weight:600;color:var(--text)">€{{ (skinPriceOverview.skinport?.max ?? 0).toFixed(2) }}</div>
+                      <div style="font-size:12px;font-weight:600;color:var(--ink)">€{{ (skinPriceOverview.skinport?.max ?? 0).toFixed(2) }}</div>
                     </div>
                     <div style="text-align:center" *ngIf="skinPriceOverview.skinport?.quantity">
                       <div style="font-size:8px;color:var(--muted);margin-bottom:2px">Disponíveis</div>
-                      <div style="font-size:12px;font-weight:600;color:var(--text)">{{ skinPriceOverview.skinport?.quantity }}</div>
+                      <div style="font-size:12px;font-weight:600;color:var(--ink)">{{ skinPriceOverview.skinport?.quantity }}</div>
                     </div>
                   </div>
                   <a *ngIf="skinPriceOverview.steamUrl" [href]="skinPriceOverview.steamUrl" target="_blank" rel="noopener"
@@ -1295,10 +1297,10 @@
                 (click)="openSkinFromSearch(item)"
                 style="background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;transition:border-color 0.15s"
                 class="hover-card">
-                <div style="text-align:center;margin-bottom:6px">
-                  <img *ngIf="item.icon" [src]="item.icon" style="height:48px;object-fit:contain" loading="lazy"
-                    onerror="this.style.display='none'">
-                  <div *ngIf="!item.icon" style="height:48px;display:flex;align-items:center;justify-content:center;font-size:24px">📦</div>
+                <div style="text-align:center;margin-bottom:6px;height:48px;display:flex;align-items:center;justify-content:center">
+                  <img [src]="item.icon" style="height:48px;object-fit:contain" loading="lazy"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                  <div style="display:none;width:40px;height:40px;border-radius:8px;background:var(--sand2);align-items:center;justify-content:center;font-size:18px;color:var(--muted)">🔫</div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--ink);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">{{item.name}}</div>
                 <div style="font-size:11px;color:var(--sage);font-weight:700;margin-top:3px">€{{item.price?.toFixed(2)||'—'}}</div>
@@ -1383,19 +1385,19 @@
               <div class="roi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px;">
                 <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
                   <div class="roi-item-val" [class.pos]="roiCalc.results.lucro >= 0" [class.neg]="roiCalc.results.lucro < 0" style="font-size: 20px; font-weight: 700;">€{{ (roiCalc.results.lucro).toFixed(2) }}</div>
-                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Bruto</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Bruto <button class="info-icon">?<span class="info-tooltip">Diferença entre preço de venda e preço de compra, multiplicada pela quantidade. Não inclui taxas.</span></button></div>
                 </div>
                 <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
                   <div class="roi-item-val" [class.pos]="roiCalc.results.liquido >= 0" [class.neg]="roiCalc.results.liquido < 0" style="font-size: 20px; font-weight: 700;">€{{ (roiCalc.results.liquido).toFixed(2) }}</div>
-                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Líquido</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lucro Líquido <button class="info-icon">?<span class="info-tooltip">Lucro bruto depois de descontadas as taxas da plataforma (Steam: 13%, outros: 0%). É o que realmente recebes.</span></button></div>
                 </div>
                 <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
                   <div class="roi-item-val" [class.pos]="roiCalc.results.roi >= 0" [class.neg]="roiCalc.results.roi < 0" style="font-size: 20px; font-weight: 700;">{{ roiCalc.results.roi.toFixed(1) }}%</div>
-                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">ROI</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">ROI <button class="info-icon">?<span class="info-tooltip">Return on Investment: (Lucro Líquido ÷ Custo Total) × 100. Percentagem de retorno sobre o que investiste.</span></button></div>
                 </div>
                 <div class="roi-item" style="padding: 24px; text-align: center; background: var(--sand); border-radius: 12px;">
                   <div class="roi-item-val" style="font-size: 20px; font-weight: 700;">30 dias</div>
-                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Prazos Médios</div>
+                  <div class="roi-item-label" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Prazos Médios <button class="info-icon">?<span class="info-tooltip">Tempo médio de liquidez no mercado Steam. Skins comuns vendem em ~7 dias, raras podem demorar meses.</span></button></div>
                 </div>
               </div>
             </div>
@@ -3160,15 +3162,15 @@
                 <div class="roi-results" style="margin-top:24px">
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--sage)">€{{ simJuros.results.total.toLocaleString('pt-PT') }}</div>
-                    <div class="roi-item-label">Total Final</div>
+                    <div class="roi-item-label">Total Final <button class="info-icon">?<span class="info-tooltip">Capital inicial + todos os depósitos periódicos + juros acumulados ao longo do período. Valor bruto antes de impostos.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">€{{ simJuros.results.invested.toLocaleString('pt-PT') }}</div>
-                    <div class="roi-item-label">Total Investido</div>
+                    <div class="roi-item-label">Total Investido <button class="info-icon">?<span class="info-tooltip">Soma de todo o dinheiro que entraste: capital inicial + depósitos periódicos × número de períodos. Não inclui juros.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--sage)">€{{ simJuros.results.profit.toLocaleString('pt-PT') }}</div>
-                    <div class="roi-item-label">Lucro (Juros)</div>
+                    <div class="roi-item-label">Lucro (Juros) <button class="info-icon">?<span class="info-tooltip">Total Final − Total Investido. São os juros que o teu dinheiro gerou por si próprio — o poder dos juros compostos.</span></button></div>
                   </div>
                 </div>
 
@@ -3223,19 +3225,19 @@
                 <div class="roi-results" style="margin-top:24px">
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--terra)">€{{ simCH.results.prestacao.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}) }}</div>
-                    <div class="roi-item-label">Prestação Mensal</div>
+                    <div class="roi-item-label">Prestação Mensal <button class="info-icon">?<span class="info-tooltip">Valor fixo mensal calculado pela fórmula PMT: depende do capital, prazo e taxa. Em crédito variável muda quando a Euribor muda.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">€{{ (simCH.results.prestacao * simCH.years * 12).toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0}) }}</div>
-                    <div class="roi-item-label">Total a Pagar</div>
+                    <div class="roi-item-label">Total a Pagar <button class="info-icon">?<span class="info-tooltip">Prestação × número de meses. Inclui capital + juros totais. A diferença face ao capital inicial é o custo real do crédito.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--terra)">€{{ simCH.results.totalJuros.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0}) }}</div>
-                    <div class="roi-item-label">Total Juros</div>
+                    <div class="roi-item-label">Total Juros <button class="info-icon">?<span class="info-tooltip">Total a Pagar − Capital Emprestado. É quanto pagas ao banco pelo serviço do crédito ao longo de todo o prazo.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">{{ (simCH.euribor + simCH.spread).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}) }}%</div>
-                    <div class="roi-item-label">Taxa Efetiva</div>
+                    <div class="roi-item-label">Taxa Efetiva <button class="info-icon">?<span class="info-tooltip">TAN = Euribor + Spread. É a taxa real que pagas. A TAEG (taxa anual de encargos efetiva global) pode ser mais alta pois inclui seguros e comissões.</span></button></div>
                   </div>
                 </div>
 
@@ -3316,15 +3318,15 @@
                 <div class="roi-results" style="margin-top:24px">
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--sage)">€{{ simFIRE.results.target.toLocaleString('pt-PT') }}</div>
-                    <div class="roi-item-label">Teu "Número FIRE"</div>
+                    <div class="roi-item-label">Teu "Número FIRE" <button class="info-icon">?<span class="info-tooltip">Calculado pela Regra dos 25×: Gastos Anuais × 25. É o montante que, investido a 4% ao ano, sustenta indefinidamente o teu estilo de vida.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">{{ simFIRE.results.yearsToFire.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:1}) }} anos</div>
-                    <div class="roi-item-label">Tempo Restante</div>
+                    <div class="roi-item-label">Tempo Restante <button class="info-icon">?<span class="info-tooltip">Anos necessários para o teu portfólio atingir o Número FIRE, assumindo que continuas a poupar e investir ao ritmo atual com os retornos indicados.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">{{ simFIRE.results.fireDate }}</div>
-                    <div class="roi-item-label">Data da Liberdade</div>
+                    <div class="roi-item-label">Data da Liberdade <button class="info-icon">?<span class="info-tooltip">Ano estimado em que atinges a independência financeira. A partir daqui, os teus investimentos geram rendimento suficiente para cobrires as tuas despesas sem trabalhar.</span></button></div>
                   </div>
                 </div>
 
@@ -3344,19 +3346,19 @@
                 <div class="roi-results" style="margin-top:24px">
                   <div class="roi-item">
                     <div class="roi-item-val" style="color:var(--sage)">{{ simRendas.results.yieldBruto.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}) }}%</div>
-                    <div class="roi-item-label">Yield Bruto Anual</div>
+                    <div class="roi-item-label">Yield Bruto Anual <button class="info-icon">?<span class="info-tooltip">Renda Anual ÷ Valor do Imóvel × 100. Rentabilidade bruta sem descontar despesas, impostos ou crédito habitação.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val" [style.color]="simRendas.results.yieldLiquido >= 4 ? 'var(--sage)' : 'var(--terra)'">{{ simRendas.results.yieldLiquido.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}) }}%</div>
-                    <div class="roi-item-label">Yield Líquido Anual</div>
+                    <div class="roi-item-label">Yield Líquido Anual <button class="info-icon">?<span class="info-tooltip">Yield após deduzir despesas anuais (condomínio, IMI, seguros, manutenção). Acima de 4% é considerado bom em Portugal.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val" [style.color]="simRendas.results.cashflow >= 0 ? 'var(--sage)' : 'var(--terra)'">€{{ simRendas.results.cashflow.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0}) }}/mês</div>
-                    <div class="roi-item-label">Cashflow Mensal</div>
+                    <div class="roi-item-label">Cashflow Mensal <button class="info-icon">?<span class="info-tooltip">Renda mensal − despesas mensais − prestação do crédito. Valor positivo = o imóvel paga-se a si próprio e ainda sobra.</span></button></div>
                   </div>
                   <div class="roi-item">
                     <div class="roi-item-val">{{ simRendas.results.payback.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:1}) }} anos</div>
-                    <div class="roi-item-label">Payback</div>
+                    <div class="roi-item-label">Payback <button class="info-icon">?<span class="info-tooltip">Anos para recuperar o investimento inicial apenas com rendas líquidas. Quanto menor, mais rápido recuperas o capital investido.</span></button></div>
                   </div>
                 </div>
                 <!-- Gráfico Rendas -->
@@ -3955,7 +3957,7 @@
           <div class="stat-card">
             <div class="stat-label">Membro desde</div>
             <div class="stat-val" style="font-size:18px">{{ getMemberSince() }}</div>
-            <div class="stat-sub">Lisboa 🇵🇹</div>
+            <div class="stat-sub">{{ userNationalityDisplay }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Integrações ativas</div>
@@ -3993,38 +3995,65 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Integrações</div></div>
             <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sand)">
+              <!-- Trading 212 -->
+              <div class="profile-integ-row">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:14px">📊</span>
+                  <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#00b386"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="13" font-weight="700" font-family="Arial">T</text></svg>
                   <div>
                     <div style="font-size:12px;font-weight:500;color:var(--ink)">Trading 212</div>
                     <div style="font-size:10px;color:var(--muted)">Portfólio & evolução</div>
                   </div>
                 </div>
-                <span *ngIf="userT212Linked" style="font-size:10px;color:var(--sage);font-weight:600;background:var(--sage-dim);padding:2px 8px;border-radius:10px">● Ligado</span>
+                <span *ngIf="userT212Linked" class="profile-integ-badge">● Ligado</span>
                 <button *ngIf="!userT212Linked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openT212Modal()">Ligar</button>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sand)">
+              <!-- Binance -->
+              <div class="profile-integ-row">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:14px">🟡</span>
+                  <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#F3BA2F"/><path d="M16 7l2.45 2.45-6.7 6.7L9.3 13.7 16 7zm-4.9 4.9L13.55 14.35l-2.45 2.45L8.65 14.35l2.45-2.45zm9.8 0L23.35 14.35l-2.45 2.45-2.45-2.45 2.45-2.45zM16 19.1L18.45 21.55l-2.45 2.45-2.45-2.45L16 19.1zm-4.9-4.9L13.55 16.65 16 14.2l2.45 2.45 2.45-2.45 2.45 2.45-2.45 2.45 2.45 2.45-2.45 2.45L18.45 21.55 16 19.1l-2.45 2.45L11.1 19.1l2.45-2.45-2.45-2.45 2.45-2.45z" fill="#1A1A1A" opacity="0.8"/></svg>
                   <div>
                     <div style="font-size:12px;font-weight:500;color:var(--ink)">Binance</div>
                     <div style="font-size:10px;color:var(--muted)">Crypto spot</div>
                   </div>
                 </div>
-                <span *ngIf="userBinanceLinked" style="font-size:10px;color:var(--sage);font-weight:600;background:var(--sage-dim);padding:2px 8px;border-radius:10px">● Ligado</span>
+                <span *ngIf="userBinanceLinked" class="profile-integ-badge">● Ligado</span>
                 <button *ngIf="!userBinanceLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openBinanceModal()">Ligar</button>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sand)">
+              <!-- Kraken -->
+              <div class="profile-integ-row">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:14px">🐙</span>
+                  <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#5741D9"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Arial">KRK</text></svg>
                   <div>
                     <div style="font-size:12px;font-weight:500;color:var(--ink)">Kraken</div>
                     <div style="font-size:10px;color:var(--muted)">Crypto exchange</div>
                   </div>
                 </div>
-                <span *ngIf="userKrakenLinked" style="font-size:10px;color:var(--sage);font-weight:600;background:var(--sage-dim);padding:2px 8px;border-radius:10px">● Ligado</span>
+                <span *ngIf="userKrakenLinked" class="profile-integ-badge">● Ligado</span>
                 <button *ngIf="!userKrakenLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openKrakenModal()">Ligar</button>
+              </div>
+              <!-- Coinbase -->
+              <div class="profile-integ-row">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#0052FF"/><path d="M16 8a8 8 0 100 16A8 8 0 0016 8zm0 3a5 5 0 013.5 8.5l-1.4-1.4A3 3 0 1013 16v-.07a3 3 0 012.93-2.93H16a3 3 0 012.12.88l1.42-1.42A5 5 0 0116 11z" fill="white"/></svg>
+                  <div>
+                    <div style="font-size:12px;font-weight:500;color:var(--ink)">Coinbase</div>
+                    <div style="font-size:10px;color:var(--muted)">Crypto wallet</div>
+                  </div>
+                </div>
+                <span *ngIf="userCoinbaseLinked" class="profile-integ-badge">● Ligado</span>
+                <button *ngIf="!userCoinbaseLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openCoinbaseModal()">Ligar</button>
+              </div>
+              <!-- Wise -->
+              <div class="profile-integ-row">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#9FE870"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#163300" font-size="11" font-weight="800" font-family="Arial">W</text></svg>
+                  <div>
+                    <div style="font-size:12px;font-weight:500;color:var(--ink)">Wise</div>
+                    <div style="font-size:10px;color:var(--muted)">Transferências internacionais</div>
+                  </div>
+                </div>
+                <span *ngIf="userWiseLinked" class="profile-integ-badge">● Ligado</span>
+                <button *ngIf="!userWiseLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openWiseModal()">Ligar</button>
               </div>
             </div>
           </div>
@@ -4067,103 +4096,103 @@
         <!-- Integrações API -->
         <div class="card fade-up fd2" style="margin-bottom:18px">
           <div class="card-header"><div><div class="card-title">Integrações API</div><div class="card-subtitle">Conecta as tuas plataformas para dados em tempo real</div></div></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+          <div class="api-integ-grid">
 
             <!-- T212 -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:20px">📊</span>
+            <div class="api-integ-card">
+              <div class="api-integ-info">
+                <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#00b386"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="13" font-weight="700" font-family="Arial">T</text></svg>
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--ink)">Trading 212</div>
-                  <div style="font-size:10px;color:var(--muted)">Portfolio & histórico</div>
+                  <div class="api-integ-name">Trading 212</div>
+                  <div class="api-integ-sub">Portfolio & histórico</div>
                 </div>
               </div>
-              <div>
-                <span *ngIf="userT212Linked" style="font-size:10px;color:var(--sage);font-weight:600">● Ligado</span>
-                <button *ngIf="!userT212Linked" class="btn btn-primary" style="font-size:11px;padding:5px 14px" (click)="openT212Modal()">Ligar</button>
+              <div class="api-integ-action">
+                <span *ngIf="userT212Linked" class="badge-linked">✓ Ligado</span>
+                <button *ngIf="!userT212Linked" class="btn-connect" (click)="openT212Modal()">Ligar</button>
               </div>
             </div>
 
             <!-- Binance -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:20px">🟡</span>
+            <div class="api-integ-card">
+              <div class="api-integ-info">
+                <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#F3BA2F"/><polygon points="16,5 19.5,8.5 12.5,15.5 9,12" fill="#1A1A1A"/><polygon points="16,27 12.5,23.5 19.5,16.5 23,20" fill="#1A1A1A"/><polygon points="7,16 10.5,12.5 14,16 10.5,19.5" fill="#1A1A1A"/><polygon points="25,16 21.5,12.5 18,16 21.5,19.5" fill="#1A1A1A"/><polygon points="16,12 20,16 16,20 12,16" fill="#1A1A1A"/></svg>
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--ink)">Binance</div>
-                  <div style="font-size:10px;color:var(--muted)">Crypto spot</div>
+                  <div class="api-integ-name">Binance</div>
+                  <div class="api-integ-sub">Crypto spot</div>
                 </div>
               </div>
-              <div>
-                <span *ngIf="userBinanceLinked" style="font-size:10px;color:var(--sage);font-weight:600">● Ligado</span>
-                <button *ngIf="!userBinanceLinked" class="btn btn-primary" style="font-size:11px;padding:5px 14px" (click)="openBinanceModal()">Ligar</button>
+              <div class="api-integ-action">
+                <span *ngIf="userBinanceLinked" class="badge-linked">✓ Ligado</span>
+                <button *ngIf="!userBinanceLinked" class="btn-connect" (click)="openBinanceModal()">Ligar</button>
               </div>
             </div>
 
             <!-- Kraken -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:20px">🐙</span>
+            <div class="api-integ-card">
+              <div class="api-integ-info">
+                <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#5741D9"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Arial">KRK</text></svg>
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--ink)">Kraken</div>
-                  <div style="font-size:10px;color:var(--muted)">Crypto exchange</div>
+                  <div class="api-integ-name">Kraken</div>
+                  <div class="api-integ-sub">Crypto exchange</div>
                 </div>
               </div>
-              <div>
-                <span *ngIf="userKrakenLinked" style="font-size:10px;color:var(--sage);font-weight:600">● Ligado</span>
-                <button *ngIf="!userKrakenLinked" class="btn btn-primary" style="font-size:11px;padding:5px 14px" (click)="openKrakenModal()">Ligar</button>
+              <div class="api-integ-action">
+                <span *ngIf="userKrakenLinked" class="badge-linked">✓ Ligado</span>
+                <button *ngIf="!userKrakenLinked" class="btn-connect" (click)="openKrakenModal()">Ligar</button>
               </div>
             </div>
 
             <!-- Coinbase -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:20px">🔵</span>
+            <div class="api-integ-card">
+              <div class="api-integ-info">
+                <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#0052FF"/><path d="M16 8a8 8 0 100 16A8 8 0 0016 8zm0 2.8a5.2 5.2 0 013.7 8.8l-1.7-1.7A2.9 2.9 0 1013.1 16v-.1a2.9 2.9 0 012.8-2.8H16a2.9 2.9 0 012 .8l1.7-1.7A5.2 5.2 0 0016 10.8z" fill="white"/></svg>
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--ink)">Coinbase</div>
-                  <div style="font-size:10px;color:var(--muted)">Crypto (API v2)</div>
+                  <div class="api-integ-name">Coinbase</div>
+                  <div class="api-integ-sub">Crypto (API v2)</div>
                 </div>
               </div>
-              <div>
-                <span *ngIf="userCoinbaseLinked" style="font-size:10px;color:var(--sage);font-weight:600">● Ligado</span>
-                <button *ngIf="!userCoinbaseLinked" class="btn btn-primary" style="font-size:11px;padding:5px 14px" (click)="openCoinbaseModal()">Ligar</button>
+              <div class="api-integ-action">
+                <span *ngIf="userCoinbaseLinked" class="badge-linked">✓ Ligado</span>
+                <button *ngIf="!userCoinbaseLinked" class="btn-connect" (click)="openCoinbaseModal()">Ligar</button>
               </div>
             </div>
 
             <!-- Wise -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:20px">💚</span>
+            <div class="api-integ-card">
+              <div class="api-integ-info">
+                <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#9FE870"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#163300" font-size="14" font-weight="800" font-family="Arial">W</text></svg>
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--ink)">Wise</div>
-                  <div style="font-size:10px;color:var(--muted)">Multi-moeda (API token)</div>
+                  <div class="api-integ-name">Wise</div>
+                  <div class="api-integ-sub">Multi-moeda</div>
                 </div>
               </div>
-              <div>
-                <span *ngIf="userWiseLinked" style="font-size:10px;color:var(--sage);font-weight:600">● Ligado</span>
-                <button *ngIf="!userWiseLinked" class="btn btn-primary" style="font-size:11px;padding:5px 14px" (click)="openWiseModal()">Ligar</button>
+              <div class="api-integ-action">
+                <span *ngIf="userWiseLinked" class="badge-linked">✓ Ligado</span>
+                <button *ngIf="!userWiseLinked" class="btn-connect" (click)="openWiseModal()">Ligar</button>
               </div>
             </div>
 
             <!-- DEGIRO (CSV Import) -->
-            <div style="border:1px solid var(--border);border-radius:12px;padding:14px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:20px">📊</span>
+            <div class="api-integ-card degiro" style="flex-direction:column;align-items:flex-start;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                <div class="api-integ-info">
+                  <svg class="api-integ-icon" width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="4" fill="#FF6600"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Arial">DEGIRO</text></svg>
                   <div>
-                    <div style="font-size:13px;font-weight:600;color:var(--ink)">DEGIRO</div>
-                    <div style="font-size:10px;color:var(--muted)">Importar via CSV exportado do DEGIRO</div>
+                    <div class="api-integ-name">DEGIRO</div>
+                    <div class="api-integ-sub">Importar via CSV</div>
                   </div>
                 </div>
-                <label class="btn btn-primary" style="font-size:11px;padding:5px 14px;cursor:pointer">
-                  📂 Importar CSV
+                <label class="btn-connect" style="cursor:pointer">
+                  📂 CSV
                   <input type="file" accept=".csv" style="display:none" (change)="onDegrioFileUpload($event)">
                 </label>
               </div>
-              <div *ngIf="degrioImportResult" style="font-size:11px;color:var(--sage);margin-top:4px">
-                ✓ {{degrioImportResult.count}} transações importadas · Total: €{{degrioImportResult.totalValue?.toFixed(2)}}
+              <div *ngIf="degrioImportResult" style="font-size:11px;color:var(--sage)">
+                ✓ {{degrioImportResult.count}} transações · €{{degrioImportResult.totalValue?.toFixed(2)}}
               </div>
-              <div *ngIf="degrioImportError" style="font-size:11px;color:#f87171;margin-top:4px">{{degrioImportError}}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:4px">No DEGIRO: Conta → Atividade → Exportar (CSV)</div>
+              <div *ngIf="degrioImportError" style="font-size:11px;color:#f87171">{{degrioImportError}}</div>
+              <div style="font-size:10px;color:var(--muted)">Conta → Atividade → Exportar (CSV)</div>
             </div>
 
           </div>
@@ -4192,18 +4221,15 @@
               </div>
             </div>
             <div>
-              <div class="form-label" style="margin-bottom:8px">Tema</div>
-              <div style="display:flex;gap:8px">
-                <button (click)="setTheme('light')"
-                  [style.background]="!isDark?'var(--terra)':'var(--sand)'"
-                  [style.color]="!isDark?'#fff':'var(--ink)'"
-                  [style.border]="!isDark?'1px solid var(--terra)':'1px solid var(--border)'"
-                  style="padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">☀️ Light</button>
-                <button (click)="setTheme('dark')"
-                  [style.background]="isDark?'var(--terra)':'var(--sand)'"
-                  [style.color]="isDark?'#fff':'var(--ink)'"
-                  [style.border]="isDark?'1px solid var(--terra)':'1px solid var(--border)'"
-                  style="padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">🌙 Dark</button>
+              <div class="form-label" style="margin-bottom:12px">Tema</div>
+              <div class="theme-pill">
+                <div class="theme-pill-slider" [class.slide-right]="!isDark"></div>
+                <div class="theme-pill-option" [class.active]="isDark" (click)="setTheme('dark')">
+                  <span>🌙</span> Escuro
+                </div>
+                <div class="theme-pill-option" [class.active]="!isDark" (click)="setTheme('light')">
+                  <span>☀️</span> Claro
+                </div>
               </div>
             </div>
           </div>

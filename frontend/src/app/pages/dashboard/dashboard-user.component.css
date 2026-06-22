@@ -179,7 +179,8 @@ canvas{display:block}
 .budget-bar{height:8px;background:var(--sand2);border-radius:4px;overflow:hidden}
 .budget-fill{height:100%;border-radius:4px;transition:width 1s ease}
 
-.port-table{width:100%;border-collapse:collapse}
+.port-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.port-table{width:100%;border-collapse:collapse;min-width:360px}
 .port-table th{font-size:9px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500}
 .port-table td{padding:10px 10px;border-bottom:1px solid rgba(90,74,58,0.06);font-size:13px;vertical-align:middle}
 .port-table tr:last-child td{border-bottom:none}
@@ -1000,6 +1001,217 @@ canvas{display:block;width:100%!important}
   }
 }
 
+/* ── API Integration Cards ────────────────────────── */
+.api-integ-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.api-integ-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  transition: border-color 0.15s;
+}
+
+.api-integ-card:hover {
+  border-color: var(--terra);
+}
+
+.api-integ-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.api-integ-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.api-integ-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.api-integ-sub {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.api-integ-action {
+  flex-shrink: 0;
+}
+
+.btn-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: 1.5px solid var(--terra);
+  background: transparent;
+  color: var(--terra);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-connect:hover {
+  background: var(--terra);
+  color: #fff;
+}
+
+.badge-linked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sage);
+  background: rgba(95, 126, 95, 0.12);
+  border: 1px solid rgba(95, 126, 95, 0.25);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* Profile integrations list */
+.profile-integ-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--sand);
+}
+
+.profile-integ-badge {
+  font-size: 10px;
+  color: var(--sage);
+  font-weight: 600;
+  background: rgba(95, 126, 95, 0.12);
+  border: 1px solid rgba(95, 126, 95, 0.25);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* DEGIRO card variant (full-width in grid) */
+.api-integ-card.degiro {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  .api-integ-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .api-integ-card.degiro {
+    grid-column: auto;
+  }
+
+  .api-integ-name {
+    font-size: 14px;
+  }
+}
+
+/* ── Liquid Glass Theme Toggle ────────────────────── */
+.theme-pill {
+  display: inline-flex;
+  position: relative;
+  background: rgba(120, 100, 80, 0.12);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom-color: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.22),
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 -1px 0 rgba(0,0,0,0.12) inset;
+  user-select: none;
+}
+
+[data-theme="light"] .theme-pill {
+  background: rgba(255, 255, 255, 0.52);
+  border-color: rgba(201, 106, 69, 0.18);
+  border-bottom-color: rgba(201,106,69,0.1);
+  box-shadow:
+    0 6px 28px rgba(42,32,24,0.10),
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 rgba(0,0,0,0.04) inset;
+}
+
+.theme-pill-option {
+  position: relative;
+  z-index: 1;
+  padding: 9px 24px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.28s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex: 1;
+  justify-content: center;
+}
+
+.theme-pill-option.active {
+  color: #fff;
+}
+
+[data-theme="light"] .theme-pill-option.active {
+  color: #fff;
+}
+
+.theme-pill-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: linear-gradient(145deg, #d4723a 0%, var(--terra) 50%, #c96a45 100%);
+  box-shadow:
+    0 2px 16px rgba(201,106,69,0.55),
+    0 1px 0 rgba(255,255,255,0.3) inset,
+    0 -1px 0 rgba(0,0,0,0.1) inset;
+  transition: transform 0.32s cubic-bezier(.34,1.3,.64,1);
+  pointer-events: none;
+}
+
+.theme-pill-slider.slide-right {
+  transform: translateX(calc(100% + 4px));
+}
+
 /* ── Mobile Bottom Navigation ─────────────────────── */
 .mobile-bottom-nav {
   display: none;
@@ -1322,6 +1534,205 @@ canvas{display:block;width:100%!important}
     height: 22px;
   }
 }
+
+/* ── Global form inputs — themed ──────────────────── */
+
+/* Label wrapper used throughout simulators & forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > span,
+.field > label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Base input style — applies to .field children, .sim-input, and
+   any plain input/select/textarea inside .form-group or .roi-grid */
+.field input,
+.field select,
+.field textarea,
+.sim-input,
+.form-input,
+.form-select,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.roi-grid input,
+.roi-grid select,
+.modal input:not([type="checkbox"]):not([type="radio"]),
+.modal select,
+.modal textarea {
+  width: 100%;
+  padding: 9px 13px;
+  background: var(--sand);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover,
+.sim-input:hover,
+.form-input:hover,
+.form-select:hover,
+.form-group input:hover,
+.form-group select:hover,
+.roi-grid input:hover,
+.roi-grid select:hover,
+.modal input:not([type="checkbox"]):not([type="radio"]):hover,
+.modal select:hover {
+  border-color: var(--sand3);
+  background: var(--sand2);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.sim-input:focus,
+.form-input:focus,
+.form-select:focus,
+.form-group input:focus,
+.form-group select:focus,
+.roi-grid input:focus,
+.roi-grid select:focus,
+.modal input:not([type="checkbox"]):not([type="radio"]):focus,
+.modal select:focus,
+.modal textarea:focus {
+  border-color: var(--terra);
+  background: var(--card);
+  box-shadow: 0 0 0 3px var(--terra-dim);
+}
+
+/* Number inputs — hide spinners (they look terrible) */
+.field input[type="number"],
+.sim-input[type="number"],
+.form-input[type="number"],
+.roi-grid input[type="number"],
+.form-group input[type="number"] {
+  -moz-appearance: textfield;
+}
+.field input[type="number"]::-webkit-inner-spin-button,
+.field input[type="number"]::-webkit-outer-spin-button,
+.sim-input[type="number"]::-webkit-inner-spin-button,
+.sim-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button,
+.form-input[type="number"]::-webkit-outer-spin-button,
+.roi-grid input[type="number"]::-webkit-inner-spin-button,
+.roi-grid input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Select arrow */
+.field select,
+.form-select,
+.sim-input[tagName="SELECT"],
+.form-group select,
+.roi-grid select,
+.modal select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+/* Placeholder */
+.field input::placeholder,
+.sim-input::placeholder,
+.form-input::placeholder,
+.form-group input::placeholder,
+.roi-grid input::placeholder,
+.modal input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* ── roi-results — result display strip ───────────── */
+.roi-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.roi-item {
+  background: var(--sand);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+  transition: background 0.15s;
+}
+.roi-item:hover { background: var(--sand2); }
+
+/* ── Info tooltip "?" icon ────────────────────────── */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--sand3);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.info-icon:hover { background: var(--terra-dim); color: var(--terra); }
+
+.info-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  width: 220px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  text-align: left;
+  pointer-events: none;
+  white-space: normal;
+}
+.info-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--card);
+}
+.info-icon:hover .info-tooltip,
+.info-icon:focus .info-tooltip { display: block; }
 
 /* ── Toast notifications ───────────────────────────── */
 @keyframes fadeInUp {

@@ -35,6 +35,36 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   userSteamId: string = '';
   userSteamName: string = '';
   userSteamAvatar: string = '';
+  userNationality: string = 'pt';
+
+  readonly nationalityMap: Record<string, { flag: string; label: string }> = {
+    pt: { flag: '🇵🇹', label: 'Portugal' },
+    br: { flag: '🇧🇷', label: 'Brasil' },
+    en: { flag: '🇬🇧', label: 'United Kingdom' },
+    gb: { flag: '🇬🇧', label: 'United Kingdom' },
+    us: { flag: '🇺🇸', label: 'United States' },
+    fr: { flag: '🇫🇷', label: 'France' },
+    de: { flag: '🇩🇪', label: 'Deutschland' },
+    es: { flag: '🇪🇸', label: 'España' },
+    it: { flag: '🇮🇹', label: 'Italia' },
+    nl: { flag: '🇳🇱', label: 'Nederland' },
+    ch: { flag: '🇨🇭', label: 'Schweiz' },
+    ie: { flag: '🇮🇪', label: 'Ireland' },
+    pl: { flag: '🇵🇱', label: 'Polska' },
+    ro: { flag: '🇷🇴', label: 'România' },
+    se: { flag: '🇸🇪', label: 'Sverige' },
+    be: { flag: '🇧🇪', label: 'België' },
+    at: { flag: '🇦🇹', label: 'Österreich' },
+    ca: { flag: '🇨🇦', label: 'Canada' },
+    au: { flag: '🇦🇺', label: 'Australia' },
+    jp: { flag: '🇯🇵', label: 'Japan' },
+    other: { flag: '🌍', label: 'Outro' }
+  };
+
+  get userNationalityDisplay(): string {
+    const n = this.nationalityMap[this.userNationality];
+    return n ? `${n.flag} ${n.label}` : '🌍 —';
+  }
 
   // New Variables for Rendas Internal Tabs
   currentRendasTab: string = 'imoveis';
@@ -50,16 +80,16 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   titles: { [key: string]: [string, string] } = {
     dashboard: ['Dashboard', this.getTodaySubtitle()],
-    income: ['Income Tracker', 'Maio 2025 · €1.920 de receitas'],
+    income: ['Income Tracker', ''],
     taxas: ['Taxas & Mercados', 'Dados em tempo real · BCE · Banco de Portugal'],
-    cs2: ['CS2 & Steam', 'Inventário sincronizado · 14 itens · €624'],
-    comunidade: ['Comunidade', '487 membros ativos · 1.240 posts'],
-    rendas: ['Rendas & Imóveis', '2 imóveis · €1.200/mês'],
+    cs2: ['CS2 & Steam', 'Inventário Steam sincronizado'],
+    comunidade: ['Comunidade', 'Partilha e discute finanças pessoais'],
+    rendas: ['Rendas & Imóveis', 'Gestão do teu portfólio imobiliário'],
     'add-renda': ['Adicionar Imóvel', 'Adiciona um novo ativo imobiliário à tua carteira'],
     simulador: ['Simulador', 'Juros compostos · FIRE · Amortizações'],
     investimentos: ['Investimentos', 'Portfólio Trading 212 · Pesquisar ações'],
     cripto: ['Cripto', 'Portfólio de criptomoedas · Binance + Trading 212'],
-    perfil: ['Perfil', 'Lisboa 🇵🇹'],
+    perfil: ['Perfil', ''],
     definicoes: ['Definições', 'Configura os teus rendimentos, despesas e chaves API'],
   };
 
@@ -2814,13 +2844,22 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
           this.userAvatar = user.avatar || '';
           this.userEmail = user.email || '';
           this.userSteamId = user.steamId || '';
-          this.titles['perfil'] = ['Perfil', `${this.userName} · Lisboa 🇵🇹`];
+          this.titles['perfil'] = ['Perfil', this.userName];
         }
       } catch (e) {
         console.error('Error parsing user', e);
       }
     }
+    // Restore last visited page on reload
+    const savedPage = localStorage.getItem('ws_last_page');
+    const validPages = ['dashboard','income','simulador','cs2','investimentos','cripto','comunidade','metas','rendas','taxas','definicoes','perfil'];
+    if (savedPage && validPages.includes(savedPage)) {
+      this.currentPage = savedPage;
+      // Trigger any page-specific data loads
+      setTimeout(() => this.showPage(savedPage), 0);
+    }
     this.loadProfile();
+    this.loadTransactions();
     this.calcSimAll();
     this.userService.warmUpBackend(); // wake up Render.com free-tier backend before news fetch
     this.loadDashNews();
@@ -2952,7 +2991,17 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         this.userSteamId = user.steamId || '';
         this.userSteamName = user.steamName || '';
         this.userSteamAvatar = user.steamAvatar || '';
-        
+        this.userNationality = user.nationality || 'pt';
+        this.titles['perfil'] = ['Perfil', `${this.userName} · ${this.userNationalityDisplay}`];
+        // Auto-select salary calculator country from user's registered nationality
+        const natToCountry: Record<string, string> = {
+          pt: 'PT', br: 'BR', en: 'GB', gb: 'GB', us: 'US', fr: 'FR', de: 'DE',
+          es: 'ES', it: 'IT', nl: 'NL', ch: 'CH', ie: 'IE', be: 'BE', at: 'AT',
+          se: 'SE', pl: 'PL', ro: 'RO', ca: 'CA', au: 'AU', jp: 'JP'
+        };
+        const mapped = natToCountry[this.userNationality];
+        if (mapped) this.salaryCalc.country = mapped;
+
         this.t212ApiKey = '';
         this.binanceKey = '';
         this.binanceSecret = '';
@@ -3336,6 +3385,14 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     { code: 'NL', label: '🇳🇱 Países Baixos' },
     { code: 'IE', label: '🇮🇪 Irlanda' },
     { code: 'CH', label: '🇨🇭 Suíça' },
+    { code: 'BE', label: '🇧🇪 Bélgica' },
+    { code: 'AT', label: '🇦🇹 Áustria' },
+    { code: 'SE', label: '🇸🇪 Suécia' },
+    { code: 'PL', label: '🇵🇱 Polónia' },
+    { code: 'RO', label: '🇷🇴 Roménia' },
+    { code: 'CA', label: '🇨🇦 Canadá' },
+    { code: 'AU', label: '🇦🇺 Austrália' },
+    { code: 'JP', label: '🇯🇵 Japão' },
     { code: 'BR', label: '🇧🇷 Brasil' },
   ];
 
@@ -3654,6 +3711,241 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
         { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
       ];
+    } else if (country === 'BE') {
+      // Bélgica: cotizações sociais empregado 13.07%
+      ss = grossMonthly * 0.1307;
+      const rendAnual = grossMonthly * 12 - ss * 12;
+      // IPP belga 2025 — isenção €9.270, depois escalões
+      const exempt = 9270;
+      const brackets = [
+        { limit: exempt, rate: 0 },
+        { limit: 15200, rate: 0.25 },
+        { limit: 26830, rate: 0.40 },
+        { limit: 46440, rate: 0.45 },
+        { limit: Infinity, rate: 0.50 }
+      ];
+      let ippAnual = 0, prev = 0;
+      for (const b of brackets) {
+        if (rendAnual <= prev) break;
+        ippAnual += (Math.min(rendAnual, b.limit) - prev) * b.rate;
+        prev = b.limit;
+      }
+      irsTax = ippAnual / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'SS empregado: 13,07%. SS empregador: 27%. IPP (imposto pessoas físicas) estimado para solteiro sem dependentes. Communal tax (~7%) não incluída.';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'Cotisações Sociais (13,07%)', value: -ss, type: 'deduction' },
+        { label: 'IPP estimado', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'AT') {
+      // Áustria: 14 salários. SS empregado ~18.07% (pensão 10.25%, saúde 3.87%, desemprego 3%, outros 0.95%)
+      ss = grossMonthly * 0.1807;
+      const annualEur = grossMonthly * 14 - ss * 14;
+      // ESt 2025 (Einkommensteuer)
+      const brackets = [
+        { limit: 11693, rate: 0 },
+        { limit: 19134, rate: 0.20 },
+        { limit: 32075, rate: 0.30 },
+        { limit: 62080, rate: 0.41 },
+        { limit: 93120, rate: 0.48 },
+        { limit: 1000000, rate: 0.50 },
+        { limit: Infinity, rate: 0.55 }
+      ];
+      let estAnual = 0, prev = 0;
+      for (const b of brackets) {
+        if (annualEur <= prev) break;
+        estAnual += (Math.min(annualEur, b.limit) - prev) * b.rate;
+        prev = b.limit;
+      }
+      irsTax = estAnual / 14;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 14;
+      notes = 'Base: 14 salários (Urlaubs- e Weihnachtsgeld). SS empregador: ~21.48%. Einkommensteuer 2025 estimado — use bmf.gv.at para valor exato.';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'Contribuições Sociais (~18,07%)', value: -ss, type: 'deduction' },
+        { label: 'Einkommensteuer estimado', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×14)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'SE') {
+      // Suécia: pensão pública (allmän pension) 7% pago pelo empregado
+      ss = grossMonthly * 0.07;
+      const annualEur = grossMonthly * 12;
+      // Imposto municipal médio ~32% + imposto estatal 20% acima de ~€53.000
+      const stateThreshold = 53000;
+      let itAnual = 0;
+      // Grundavdrag (dedução básica) ~€2.500 simplificado
+      const taxable = Math.max(0, annualEur - 2500);
+      if (annualEur <= stateThreshold) {
+        itAnual = taxable * 0.32;
+      } else {
+        itAnual = (stateThreshold - 2500) * 0.32 + (annualEur - stateThreshold) * (0.32 + 0.20);
+      }
+      irsTax = itAnual / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'Imposto municipal médio ~32% (varia por município). Imposto estatal 20% acima de ~€53.000. Jobbskatteavdrag (crédito trabalho) não aplicado — cálculo conservador.';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'Pensão Pública (7%)', value: -ss, type: 'deduction' },
+        { label: 'Kommunalskatt + Statlig skatt', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'PL') {
+      // Polónia: ZUS empregado ~22.71% (emerytalne 9.76%, rentowe 1.5%, chorobowe 2.45%, zdrowotne 9%)
+      ss = grossMonthly * 0.1871; // 9.76+1.5+2.45+5% saúde dedutível
+      const baseZdrowotna = grossMonthly - ss * (0.1371 / 0.1871); // base saúde separada
+      const annualEur = grossMonthly * 12;
+      // PIT 2025: isenção €6.588 (30.000 PLN ≈ €7.050), escalões
+      const exempt = 7050;
+      const upperBracket = 28235; // 120.000 PLN ≈ €28.235
+      let pitAnual = 0;
+      const taxable = Math.max(0, annualEur - exempt);
+      if (annualEur <= upperBracket) {
+        pitAnual = taxable * 0.12;
+      } else {
+        pitAnual = (upperBracket - exempt) * 0.12 + (annualEur - upperBracket) * 0.32;
+      }
+      irsTax = pitAnual / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'ZUS empregado ~18,71% (sem zdrowotna total). PIT 2025 estimado. 1 EUR ≈ 4,25 PLN (ref.). SS empregador: ~20,48%.';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'ZUS (contribuições sociais)', value: -ss, type: 'deduction' },
+        { label: 'PIT estimado', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'RO') {
+      // Roménia: CAS 25% + CASS 10% (empregado paga tudo)
+      const cas = grossMonthly * 0.25;
+      const cass = grossMonthly * 0.10;
+      ss = cas + cass;
+      // CASS dedutível (10% sobre bruto − CAS)
+      const baseImpozit = Math.max(0, grossMonthly - cas - cass);
+      // Imposto de rendimento: 10% flat
+      irsTax = baseImpozit * 0.10;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'CAS: 25%, CASS: 10% (ambos pagos pelo empregado). Imposto de rendimento: 10% flat. Deducție personală não aplicada (simplificado).';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'CAS (25%)', value: -cas, type: 'deduction' },
+        { label: 'CASS (10%)', value: -cass, type: 'deduction' },
+        { label: 'Imposto de Rendimento (10%)', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'CA') {
+      // Canadá: CPP 5.95% + EI 1.66%
+      const annualEur = grossMonthly * 12;
+      const cppMax = 3867; // máximo anual CPP (≈$4.055 CAD convertido)
+      const eiMax = 1049;  // máximo anual EI (≈$1.049 CAD)
+      const cppEmployee = Math.min(annualEur * 0.0595, cppMax);
+      const eiEmployee = Math.min(annualEur * 0.0166, eiMax);
+      ss = (cppEmployee + eiEmployee) / 12;
+      // Federal income tax 2025 (basic personal amount ~€12.100)
+      const bpa = 12100;
+      const taxable = Math.max(0, annualEur - bpa);
+      const brackets = [
+        { limit: 57375, rate: 0.15 },
+        { limit: 114750, rate: 0.205 },
+        { limit: 158519, rate: 0.26 },
+        { limit: 220000, rate: 0.29 },
+        { limit: Infinity, rate: 0.33 }
+      ];
+      let fedTaxAnual = 0, prev = 0;
+      for (const b of brackets) {
+        if (taxable <= prev) break;
+        fedTaxAnual += (Math.min(taxable, b.limit) - prev) * b.rate;
+        prev = b.limit;
+      }
+      irsTax = fedTaxAnual / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'Federal tax apenas. Provincial tax adicional (5%–21% conforme província). CPP e EI limitados ao máximo anual. 1 CAD ≈ 0,68 EUR (ref.).';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'CPP + EI', value: -ss, type: 'deduction' },
+        { label: 'Federal Income Tax', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês (federal)', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total (federal)', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'AU') {
+      // Austrália: Medicare Levy 2% (sem SS adicional do empregado; Super pago pelo empregador)
+      ss = grossMonthly * 0.02;
+      const annualEur = grossMonthly * 12;
+      // Income tax 2024-25 (limiar isenção AUD 18.200 ≈ €11.200)
+      const exempt = 11200;
+      const taxable = Math.max(0, annualEur - exempt);
+      let itAnual = 0;
+      if (annualEur <= 11200) itAnual = 0;
+      else if (annualEur <= 27700) itAnual = (annualEur - 11200) * 0.19;
+      else if (annualEur <= 83000) itAnual = 3135 + (annualEur - 27700) * 0.325;
+      else if (annualEur <= 116900) itAnual = 21087 + (annualEur - 83000) * 0.37;
+      else itAnual = 33641 + (annualEur - 116900) * 0.45;
+      irsTax = itAnual / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'Medicare Levy: 2%. Superannuation (11,5%) pago pelo empregador, não descontado. LITO (Low Income Tax Offset) não aplicado. 1 AUD ≈ 0,61 EUR (ref.).';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'Medicare Levy (2%)', value: -ss, type: 'deduction' },
+        { label: 'Income Tax', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
+    } else if (country === 'JP') {
+      // Japão: seguro saúde ~5% + pensão ~9.15% empregado
+      ss = grossMonthly * 0.1415;
+      const annualEur = grossMonthly * 12 - ss * 12;
+      // Imposto nacional 2025 (yuuyo shotoku kojo €350/mês ≈ €4.200/ano descontado)
+      const employeeDeduct = Math.min(annualEur * 0.20 + 4200, 19500);
+      const taxBase = Math.max(0, annualEur - employeeDeduct);
+      // Escalões nacionais (JPY convertido; 1 EUR ≈ 155 JPY ref.)
+      const brackets = [
+        { limit: 12581, rate: 0.05 },
+        { limit: 21290, rate: 0.10 },
+        { limit: 44839, rate: 0.20 },
+        { limit: 58065, rate: 0.23 },
+        { limit: 116129, rate: 0.33 },
+        { limit: 232258, rate: 0.40 },
+        { limit: Infinity, rate: 0.45 }
+      ];
+      let nationalTax = 0, prev = 0;
+      for (const b of brackets) {
+        if (taxBase <= prev) break;
+        nationalTax += (Math.min(taxBase, b.limit) - prev) * b.rate;
+        prev = b.limit;
+      }
+      // Imposto local (juminzei): ~10% sobre base tributável
+      const localTax = taxBase * 0.10;
+      irsTax = (nationalTax + localTax) / 12;
+      netMonthly = grossMonthly - ss - irsTax;
+      netAnnual = netMonthly * 12;
+      notes = 'Seguro saúde ~5% + pensão ~9,15%. Imposto local (juminzei) ~10% incluído. 1 EUR ≈ 155 JPY (ref.). Use simulador da NTA Japan para valor exato.';
+      breakdown = [
+        { label: 'Salário Bruto', value: grossMonthly, type: 'gross' },
+        { label: 'Saúde + Pensão (~14,15%)', value: -ss, type: 'deduction' },
+        { label: 'Shotokuzei + Juminzei', value: -irsTax, type: 'deduction' },
+        { label: 'Salário Líquido / mês', value: netMonthly, type: 'net' },
+        { label: 'Rendimento Anual Líquido (×12)', value: netAnnual, type: 'annual' },
+        { label: 'Taxa efetiva total', value: ((ss + irsTax) / grossMonthly * 100), type: 'rate' },
+      ];
     }
 
     this.salaryCalc.results = { breakdown, notes, netMonthly, netAnnual, ss, irsTax };
@@ -3661,10 +3953,25 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   // ── Income Tracker ──
   txModalOpen: boolean = false;
+  txSaving: boolean = false;
   incomeTxFilter: string = 'todos';
   incomeFilterMonth: string = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
-  txEntries: any[] = JSON.parse(localStorage.getItem('ws_tx_entries') || '[]');
+  txEntries: any[] = [];
   newTx: any = { type: 'receita', description: '', amount: 0, date: new Date().toISOString().slice(0, 10), category: 'Salário' };
+
+  loadTransactions() {
+    this.userService.getTransactions().subscribe({
+      next: (txs) => {
+        this.txEntries = txs;
+        // Sync to localStorage as offline cache
+        localStorage.setItem('ws_tx_entries', JSON.stringify(txs));
+      },
+      error: () => {
+        // Fallback to localStorage if backend unreachable
+        this.txEntries = JSON.parse(localStorage.getItem('ws_tx_entries') || '[]');
+      }
+    });
+  }
 
   get incomeMonths(): { value: string; label: string }[] {
     const months: { value: string; label: string }[] = [];
@@ -3704,7 +4011,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       const inMonth = t.date?.startsWith(this.incomeFilterMonth);
       const typeMatch = this.incomeTxFilter === 'todos' || t.type === this.incomeTxFilter;
       return inMonth && typeMatch;
-    }).sort((a, b) => b.date?.localeCompare(a.date || '') || 0);
+    }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }
 
   get categoryTotals(): any[] {
@@ -3730,16 +4037,49 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   saveTxEntry() {
-    if (!this.newTx.description.trim() || !this.newTx.amount || this.newTx.amount <= 0) return;
-    const entry = { ...this.newTx, id: Date.now(), amount: +this.newTx.amount };
-    this.txEntries.push(entry);
-    localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
-    this.txModalOpen = false;
+    if (!this.newTx.description.trim() || !this.newTx.amount || this.newTx.amount <= 0 || this.txSaving) return;
+    this.txSaving = true;
+    this.userService.addTransaction({
+      type: this.newTx.type,
+      description: this.newTx.description,
+      amount: +this.newTx.amount,
+      category: this.newTx.category,
+      date: this.newTx.date
+    }).subscribe({
+      next: (saved) => {
+        this.txEntries.push(saved);
+        localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+        this.txModalOpen = false;
+        this.txSaving = false;
+      },
+      error: () => {
+        // Offline fallback — save locally
+        const entry = { ...this.newTx, _id: 'local_' + Date.now(), amount: +this.newTx.amount };
+        this.txEntries.push(entry);
+        localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+        this.txModalOpen = false;
+        this.txSaving = false;
+      }
+    });
   }
 
   deleteTxEntry(tx: any) {
-    this.txEntries = this.txEntries.filter(t => t.id !== tx.id);
-    localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+    const id = tx._id || tx.id;
+    if (id && !String(id).startsWith('local_')) {
+      this.userService.deleteTransaction(id).subscribe({
+        next: () => {
+          this.txEntries = this.txEntries.filter(t => (t._id || t.id) !== id);
+          localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+        },
+        error: () => {
+          this.txEntries = this.txEntries.filter(t => (t._id || t.id) !== id);
+          localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+        }
+      });
+    } else {
+      this.txEntries = this.txEntries.filter(t => (t._id || t.id) !== id);
+      localStorage.setItem('ws_tx_entries', JSON.stringify(this.txEntries));
+    }
   }
 
   exportIncomeCSV() {
@@ -4211,6 +4551,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   showPage(name: string) {
     this.currentPage = name;
+    localStorage.setItem('ws_last_page', name);
     if (name === 'dashboard' && this.chartCanvas) {
       setTimeout(() => this.drawPatrimonioChart(this.data[this.currentChartPeriod as keyof typeof this.data]), 50);
     }

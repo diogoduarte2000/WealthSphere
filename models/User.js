@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   displayName: String,
   name: String, // Legacy support
   avatar: String,
+  nationality: String, // country code from registration (e.g. 'pt', 'br', 'en')
   email: { type: String, unique: true, sparse: true },
   password: { type: String, select: false }, // New field
   passwordHash: String, // Legacy support
@@ -91,6 +92,14 @@ const userSchema = new mongoose.Schema({
     deadline: String,
     notified: { type: Boolean, default: false }
   }],
+  transactions: [{
+    type: { type: String, enum: ['receita', 'despesa'], required: true },
+    description: { type: String, required: true },
+    amount: { type: Number, required: true },
+    category: String,
+    date: { type: String, required: true }, // 'YYYY-MM-DD'
+    createdAt: { type: Date, default: Date.now }
+  }],
   lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 
@@ -104,6 +113,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     name: this.displayName || this.name || '',
     avatar: this.avatar,
     email: this.email,
+    nationality: this.nationality || '',
     inventory: this.inventory,
     financialProfile: this.financialProfile,
     customSettings: this.customSettings,
