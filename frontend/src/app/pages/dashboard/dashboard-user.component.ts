@@ -25,6 +25,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   currentPage: string = 'dashboard';
   modalOpen: boolean = false;
   currentChartPeriod: string = '6m';
+  patrimonioChartMode: 'line' | 'candle' = 'line';
   showUserMenu: boolean = false;
   isDark: boolean = true;
   
@@ -4146,90 +4147,86 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const steamVal = this.steamInventoryTotalValue || 0;
     const savingsVal = this.totalSavings || 0;
 
-    // Seeded pseudo-random using a simple LCG so chart is stable across renders
+    const now = new Date();
+    const nowMs = now.getTime();
+    // Account creation = the floor of all history. Nothing existed before this.
+    const creation = this.userCreatedAt ? new Date(this.userCreatedAt) : new Date(nowMs - 180 * 86400000);
+    const creationMs = creation.getTime();
+    const span = Math.max(nowMs - creationMs, 1);
+
+    // Seeded pseudo-random (stable across renders) for mild, realistic noise
     const seed = (networthVal * 13 + 7) | 0;
     const lcg = (s: number) => { let v = s; return () => { v = (v * 1664525 + 1013904223) & 0xffffffff; return (v >>> 0) / 0xffffffff; }; };
     const rand = lcg(seed);
 
-    const makeCurve = (len: number, finalVal: number, baselinePercent: number = 0.85) => {
-      if (finalVal <= 0) return Array(len).fill(0);
-      // Build a random walk starting from baselinePercent*finalVal ending at finalVal
-      const start = finalVal * baselinePercent;
-      const rawWalk: number[] = [];
-      let v = start;
-      for (let i = 0; i < len; i++) {
-        rawWalk.push(v);
-        // Each step: drift toward end + random noise ±3-5% of finalVal
-        const progress = i / (len - 1);
-        const drift = (finalVal - v) * (0.3 + progress * 0.4);
-        const volatility = finalVal * (0.025 + (1 - progress) * 0.03);
-        v += drift + (rand() - 0.5) * 2 * volatility;
-        if (v < 0) v = 0;
-      }
-      // Force last point to be exactly finalVal
-      rawWalk[len - 1] = finalVal;
-      return rawWalk.map(p => Number(p.toFixed(2)));
+    // Real value at a given date: 0 before the account existed, growing to the
+    // current value at "now". No fabricated wealth before account creation.
+    const valueAt = (dateMs: number, finalVal: number, noise = 0.03) => {
+      if (finalVal <= 0) return 0;
+      const t = (dateMs - creationMs) / span;
+      if (t <= 0) return 0;          // before account existed → nothing
+      if (t >= 0.999) return finalVal; // today → exact current value
+      const base = finalVal * Math.pow(t, 1.08); // slightly convex growth
+      const n = 1 + (rand() - 0.5) * 2 * noise;
+      return Math.max(0, Number((base * n).toFixed(2)));
     };
 
-    // 1D (Hoje) - 8 points (hourly)
-    this.data['1d'] = {
-      networth: makeCurve(8, networthVal, 0.99),
-      etf: makeCurve(8, etfVal, 0.99),
-      rendas: Array(8).fill(rendasVal),
-      steam: makeCurve(8, steamVal, 0.99),
-      savings: makeCurve(8, savingsVal, 0.99),
-      labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00', '23:00']
+    // Build all 5 series + labels for a set of dates ending today
+    const buildFor = (dates: Date[], labelFn: (d: Date, i: number) => string) => {
+      const last = dates.length - 1;
+      const series = (finalVal: number) => dates.map((d, i) =>
+        i === last ? (finalVal > 0 ? Number(finalVal.toFixed(2)) : 0) : valueAt(d.getTime(), finalVal));
+      return {
+        networth: series(networthVal),
+        etf: series(etfVal),
+        rendas: series(rendasVal),
+        steam: series(steamVal),
+        savings: series(savingsVal),
+        labels: dates.map(labelFn)
+      };
     };
 
-    // 1W (1 Semana) - 7 days
-    this.data['1w'] = {
-      networth: makeCurve(7, networthVal, 0.98),
-      etf: makeCurve(7, etfVal, 0.97),
-      rendas: makeCurve(7, rendasVal, 1.0),
-      steam: makeCurve(7, steamVal, 0.98),
-      savings: makeCurve(7, savingsVal, 0.98),
-      labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+    const DAY = 86400000;
+    const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+    // Generate `count` dates spaced `stepMs` apart, ending now
+    const daysBack = (count: number, stepMs: number) => {
+      const out: Date[] = [];
+      for (let i = count - 1; i >= 0; i--) out.push(new Date(nowMs - i * stepMs));
+      return out;
+    };
+    // Generate `count` monthly dates ending this month
+    const monthsBack = (count: number) => {
+      const out: Date[] = [];
+      for (let i = count - 1; i >= 0; i--) out.push(new Date(now.getFullYear(), now.getMonth() - i, Math.min(now.getDate(), 28)));
+      return out;
     };
 
-    // 6M (6 Meses) - 7 months
-    this.data['6m'] = {
-      networth: makeCurve(7, networthVal, 0.88),
-      etf: makeCurve(7, etfVal, 0.82),
-      rendas: makeCurve(7, rendasVal, 0.95),
-      steam: makeCurve(7, steamVal, 0.85),
-      savings: makeCurve(7, savingsVal, 0.80),
-      labels: ['Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai']
-    };
+    // 1D - 8 hourly points today
+    this.data['1d'] = buildFor(
+      Array.from({ length: 8 }, (_, i) => new Date(nowMs - (7 - i) * 2 * 3600000)),
+      (d) => `${String(d.getHours()).padStart(2, '0')}:00`
+    );
 
-    // 1A (1 Ano) - 12 months
-    this.data['1a'] = {
-      networth: makeCurve(12, networthVal, 0.78),
-      etf: makeCurve(12, etfVal, 0.68),
-      rendas: makeCurve(12, rendasVal, 0.90),
-      steam: makeCurve(12, steamVal, 0.75),
-      savings: makeCurve(12, savingsVal, 0.70),
-      labels: ['Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai']
-    };
+    // 1W - last 7 days
+    this.data['1w'] = buildFor(daysBack(7, DAY), (d) => WEEK[d.getDay()]);
 
-    // 3A (3 Anos) - 24 points (bi-monthly approx)
-    this.data['3a'] = {
-      networth: makeCurve(24, networthVal, 0.55),
-      etf: makeCurve(24, etfVal, 0.40),
-      rendas: makeCurve(24, rendasVal, 0.75),
-      steam: makeCurve(24, steamVal, 0.50),
-      savings: makeCurve(24, savingsVal, 0.45),
-      labels: ['2024 Q1', 'Q2', 'Q3', 'Q4', '2025 Q1', 'Q2', 'Q3', 'Q4', '2026 Q1', 'Q2']
-    };
+    // 6M - last 7 months
+    this.data['6m'] = buildFor(monthsBack(7), (d) => MONTHS[d.getMonth()]);
 
-    // MAX (Máximo) - 36 points
-    this.data['max'] = {
-      networth: makeCurve(36, networthVal, 0.35),
-      etf: makeCurve(36, etfVal, 0.20),
-      rendas: makeCurve(36, rendasVal, 0.60),
-      steam: makeCurve(36, steamVal, 0.30),
-      savings: makeCurve(36, savingsVal, 0.25),
-      labels: ['2023', '2024', '2025', '2026']
-    };
+    // 1A - last 12 months
+    this.data['1a'] = buildFor(monthsBack(12), (d) => MONTHS[d.getMonth()]);
+
+    // 3A - last 36 months
+    this.data['3a'] = buildFor(monthsBack(36),
+      (d) => d.getMonth() === 0 || d.getMonth() === 6 ? `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}` : '');
+
+    // MAX - from account creation to now (monthly), capped at 60 points
+    const monthsSinceCreation = Math.max(2, Math.min(60,
+      (now.getFullYear() - creation.getFullYear()) * 12 + (now.getMonth() - creation.getMonth()) + 1));
+    this.data['max'] = buildFor(monthsBack(monthsSinceCreation),
+      (d) => d.getMonth() === 0 ? String(d.getFullYear()) : (d.getMonth() === 6 ? MONTHS[d.getMonth()] : ''));
   }
 
   get totalExpenses() {
@@ -5012,8 +5009,19 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     }
   }
 
+  setPatrimonioMode(mode: 'line' | 'candle') {
+    this.patrimonioChartMode = mode;
+    if (this.chartCanvas) {
+      this.drawPatrimonioChart(this.data[this.currentChartPeriod as keyof typeof this.data]);
+    }
+  }
+
   private drawPatrimonioChart(chartData: any) {
     if (!this.chartCanvas) return;
+    if (this.patrimonioChartMode === 'candle') {
+      this.drawPatrimonioCandle(chartData);
+      return;
+    }
     this.chartCurrentData = chartData;
     const canvas = this.chartCanvas.nativeElement;
     const ctx = canvas.getContext('2d');
@@ -5247,6 +5255,143 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       tooltip.style.display = 'none';
     };
 
+    canvas.addEventListener('mousemove', this.chartMouseHandler as EventListener);
+    canvas.addEventListener('mouseleave', this.chartLeaveHandler as EventListener);
+  }
+
+  // Candlestick view of Net Worth evolution.
+  // Each candle = one period point; open = previous value, close = current value.
+  private drawPatrimonioCandle(chartData: any) {
+    if (!this.chartCanvas) return;
+    this.chartCurrentData = chartData;
+    const canvas = this.chartCanvas.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.offsetWidth || 800;
+    const H = 220;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.height = H + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const pad = { t: 16, r: 20, b: 28, l: 52 };
+    const cW = W - pad.l - pad.r;
+    const cH = H - pad.t - pad.b;
+
+    const series: number[] = (chartData?.networth || []) as number[];
+    const labels: string[] = chartData?.labels || [];
+    if (series.length < 2) {
+      ctx.fillStyle = 'rgba(180,160,130,0.55)';
+      ctx.font = '12px DM Sans,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Sem dados suficientes para velas', W / 2, H / 2);
+      return;
+    }
+
+    // Build OHLC: open = previous close, close = current value
+    const ohlc = series.map((v, i) => {
+      const o = i === 0 ? v : series[i - 1];
+      const c = v;
+      const hi = Math.max(o, c);
+      const lo = Math.min(o, c);
+      const wick = (hi - lo) * 0.15 + Math.max(hi, 1) * 0.004;
+      return { o, c, h: hi + wick, l: Math.max(0, lo - wick), label: labels[i] || '' };
+    });
+
+    const n = ohlc.length;
+    const rawMin = Math.min(...ohlc.map(d => d.l));
+    const rawMax = Math.max(...ohlc.map(d => d.h));
+    const range = rawMax - rawMin || 1;
+    const minV = Math.max(0, rawMin - range * 0.04);
+    const maxV = rawMax + range * 0.08;
+
+    const slotW = cW / n;
+    const bodyW = Math.max(2, Math.min(slotW * 0.6, 14));
+    const xOf = (i: number) => pad.l + (i + 0.5) * slotW;
+    const yOf = (v: number) => pad.t + cH - ((v - minV) / (maxV - minV)) * cH;
+
+    const GREEN = '#4a9e6b';
+    const RED = '#c97b6a';
+    const tooltip = this.chartTooltip?.nativeElement;
+
+    const redraw = (hoverIdx: number | null) => {
+      ctx.clearRect(0, 0, W, H);
+      // Grid + Y labels
+      for (let g = 0; g <= 4; g++) {
+        const y = pad.t + (g / 4) * cH;
+        const v = maxV - (g / 4) * (maxV - minV);
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(180,160,130,0.55)';
+        ctx.font = '10px DM Sans,sans-serif';
+        ctx.textAlign = 'right';
+        const lbl = v >= 1000 ? '€' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : '€' + v.toFixed(0);
+        ctx.fillText(lbl, pad.l - 6, y + 3.5);
+      }
+      // X labels
+      ctx.fillStyle = 'rgba(180,160,130,0.55)';
+      ctx.font = '10px DM Sans,sans-serif';
+      ctx.textAlign = 'center';
+      const show = Math.min(n, 7);
+      for (let k = 0; k < show; k++) {
+        const idx = Math.round(k * (n - 1) / Math.max(show - 1, 1));
+        ctx.fillText(ohlc[idx].label, xOf(idx), H - 5);
+      }
+      // Candles
+      ohlc.forEach((d, i) => {
+        const x = xOf(i);
+        const bull = d.c >= d.o;
+        const col = bull ? GREEN : RED;
+        if (hoverIdx === i) {
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.fillRect(x - slotW / 2, pad.t, slotW, cH);
+        }
+        // Wick
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, yOf(d.h)); ctx.lineTo(x, yOf(d.l)); ctx.stroke();
+        // Body
+        const yO = yOf(d.o), yC = yOf(d.c);
+        const yTop = Math.min(yO, yC);
+        const bodyH = Math.max(1, Math.abs(yC - yO));
+        ctx.fillStyle = col;
+        ctx.fillRect(x - bodyW / 2, yTop, bodyW, bodyH);
+      });
+    };
+
+    redraw(null);
+
+    if (this.chartMouseHandler) canvas.removeEventListener('mousemove', this.chartMouseHandler);
+    if (this.chartLeaveHandler) canvas.removeEventListener('mouseleave', this.chartLeaveHandler);
+
+    this.chartMouseHandler = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      if (mx < pad.l || mx > pad.l + cW) { redraw(null); if (tooltip) tooltip.style.display = 'none'; return; }
+      const idx = Math.min(Math.max(Math.floor((mx - pad.l) / slotW), 0), n - 1);
+      redraw(idx);
+      if (!tooltip) return;
+      const d = ohlc[idx];
+      const delta = d.c - d.o;
+      const deltaPct = d.o > 0 ? (delta / d.o) * 100 : 0;
+      const dcol = delta >= 0 ? GREEN : RED;
+      tooltip.innerHTML = `<div style="font-weight:700;color:#c9a84c;margin-bottom:6px;font-size:11px">${d.label}</div>
+        <div style="display:flex;gap:6px;margin:2px 0"><span style="color:rgba(200,180,150,0.7);min-width:50px">Valor</span><span style="font-weight:600;color:#e8d5b0">€${d.c.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+        <div style="display:flex;gap:6px;margin:2px 0"><span style="color:rgba(200,180,150,0.7);min-width:50px">Variação</span><span style="font-weight:600;color:${dcol}">${delta >= 0 ? '+' : ''}€${delta.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})} (${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}%)</span></div>`;
+      tooltip.style.display = 'block';
+      const ttW = 220;
+      let left = xOf(idx) + 12;
+      if (left + ttW > W - 8) left = xOf(idx) - ttW - 12;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = Math.max(pad.t, Math.min(my - 20, H - 110)) + 'px';
+    };
+    this.chartLeaveHandler = () => { redraw(null); if (tooltip) tooltip.style.display = 'none'; };
     canvas.addEventListener('mousemove', this.chartMouseHandler as EventListener);
     canvas.addEventListener('mouseleave', this.chartLeaveHandler as EventListener);
   }

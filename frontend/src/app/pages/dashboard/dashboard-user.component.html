@@ -316,13 +316,19 @@
                 <div class="card-title">Evolução Patrimonial</div>
                 <div class="card-subtitle">Net worth acumulado ao longo do tempo</div>
               </div>
-              <div class="period-tabs">
-                <button class="period-tab" [class.active]="currentChartPeriod === '1d'" (click)="updateChart('1d')">1D</button>
-                <button class="period-tab" [class.active]="currentChartPeriod === '1w'" (click)="updateChart('1w')">1W</button>
-                <button class="period-tab" [class.active]="currentChartPeriod === '6m'" (click)="updateChart('6m')">6M</button>
-                <button class="period-tab" [class.active]="currentChartPeriod === '1a'" (click)="updateChart('1a')">1A</button>
-                <button class="period-tab" [class.active]="currentChartPeriod === '3a'" (click)="updateChart('3a')">3A</button>
-                <button class="period-tab" [class.active]="currentChartPeriod === 'max'" (click)="updateChart('max')">MAX</button>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <div class="period-tabs">
+                  <button class="period-tab" [class.active]="patrimonioChartMode === 'line'" (click)="setPatrimonioMode('line')" title="Linha">📈</button>
+                  <button class="period-tab" [class.active]="patrimonioChartMode === 'candle'" (click)="setPatrimonioMode('candle')" title="Velas">📊</button>
+                </div>
+                <div class="period-tabs">
+                  <button class="period-tab" [class.active]="currentChartPeriod === '1d'" (click)="updateChart('1d')">1D</button>
+                  <button class="period-tab" [class.active]="currentChartPeriod === '1w'" (click)="updateChart('1w')">1W</button>
+                  <button class="period-tab" [class.active]="currentChartPeriod === '6m'" (click)="updateChart('6m')">6M</button>
+                  <button class="period-tab" [class.active]="currentChartPeriod === '1a'" (click)="updateChart('1a')">1A</button>
+                  <button class="period-tab" [class.active]="currentChartPeriod === '3a'" (click)="updateChart('3a')">3A</button>
+                  <button class="period-tab" [class.active]="currentChartPeriod === 'max'" (click)="updateChart('max')">MAX</button>
+                </div>
               </div>
             </div>
             <div style="position:relative">
