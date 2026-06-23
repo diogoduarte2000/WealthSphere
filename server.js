@@ -465,25 +465,45 @@ function buildTrading212AuthHeaders(user) {
   return { Authorization: String(user.trading212ApiKey).trim() };
 }
 
-async function fetchTrading212Resource(baseUrl, pathName, headers) {
-  try {
-    const response = await axios.get(`${baseUrl}${pathName}`, { headers, timeout: 10000 });
-    return response.data;
-  } catch (err) {
-    if (pathName === '/equity/positions' && err.response && [404, 405].includes(err.response.status)) {
-      const response = await axios.get(`${baseUrl}/equity/portfolio`, { headers, timeout: 10000 });
-      return response.data;
+// Try a T212 endpoint with plain key and Bearer fallback
+async function t212Get(baseUrl, pathName, key) {
+  const authVariants = [key, `Bearer ${key}`];
+  let lastErr;
+  for (const auth of authVariants) {
+    try {
+      const r = await axios.get(`${baseUrl}${pathName}`, {
+        headers: { Authorization: auth },
+        timeout: 10000
+      });
+      return r.data;
+    } catch (err) {
+      lastErr = err;
+      if (!err.response || err.response.status !== 401) throw err;
     }
-    if (pathName === '/equity/account/summary' && err.response && [404, 405].includes(err.response.status)) {
-      const response = await axios.get(`${baseUrl}/equity/account/cash`, { headers, timeout: 10000 });
-      return response.data;
+  }
+  throw lastErr;
+}
+
+async function fetchTrading212Resource(baseUrl, pathName, key) {
+  try {
+    return await t212Get(baseUrl, pathName, key);
+  } catch (err) {
+    const status = err.response?.status;
+    if ([404, 405].includes(status)) {
+      const fallback = pathName === '/equity/portfolio' ? '/equity/positions'
+        : pathName === '/equity/positions' ? '/equity/portfolio'
+        : pathName === '/equity/account/cash' ? '/equity/account/summary'
+        : pathName === '/equity/account/summary' ? '/equity/account/cash'
+        : null;
+      if (fallback) return await t212Get(baseUrl, fallback, key);
     }
     throw err;
   }
 }
 
-function calculateTrading212Total(positions, summary) {
-  const explicitTotal = Number(summary?.total ?? summary?.totalValue ?? summary?.portfolioValue ?? summary?.accountValue);
+function calculateTrading212Total(positions, cashInfo) {
+  // /equity/account/cash returns { free, total, invested, ppl, result, pieCash, blocked }
+  const explicitTotal = Number(cashInfo?.total ?? cashInfo?.totalValue ?? cashInfo?.portfolioValue ?? cashInfo?.accountValue);
   if (Number.isFinite(explicitTotal) && explicitTotal > 0) {
     return explicitTotal;
   }
@@ -492,12 +512,12 @@ function calculateTrading212Total(positions, summary) {
   const positionsTotal = openPositions.reduce((sum, position) => {
     const quantity = Number(position.quantity ?? 0);
     const price = Number(position.currentPrice ?? position.averagePrice ?? 0);
-    const value = Number(position.value ?? position.currentValue ?? position.marketValue);
+    const value = Number(position.currentValue ?? position.value ?? position.marketValue);
     return sum + (Number.isFinite(value) ? value : quantity * price);
   }, 0);
 
-  const cash = Number(summary?.free ?? summary?.cash ?? summary?.availableCash ?? 0);
-  return positionsTotal + (Number.isFinite(cash) ? cash : 0);
+  const free = Number(cashInfo?.free ?? cashInfo?.cash ?? cashInfo?.availableCash ?? 0);
+  return positionsTotal + (Number.isFinite(free) ? free : 0);
 }
 
 function createAccessToken(user) {
@@ -1703,7 +1723,7 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
       return res.json(cached.payload);
     }
 
-    const headers = buildTrading212AuthHeaders(user);
+    const key = String(user.trading212ApiKey).trim();
     let data = null;
     let environmentName = 'live';
 
@@ -1715,8 +1735,8 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     let lastErr = null;
     for (const env of ENVIRONMENTS) {
       try {
-        const positions = await fetchTrading212Resource(env.baseUrl, '/equity/positions', headers);
-        const summary = await fetchTrading212Resource(env.baseUrl, '/equity/account/summary', headers);
+        const positions = await fetchTrading212Resource(env.baseUrl, '/equity/portfolio', key);
+        const summary = await fetchTrading212Resource(env.baseUrl, '/equity/account/cash', key);
         data = { positions, summary };
         environmentName = env.name;
         lastErr = null;
@@ -1738,22 +1758,20 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
 
     const total = calculateTrading212Total(data.positions, data.summary);
 
-    // Uninvested cash sitting in the T212 account
+    // /equity/account/cash response: { free, total, invested, ppl, result, pieCash, blocked }
     const cash = Number(data.summary?.free ?? data.summary?.cash ?? data.summary?.availableCash ?? 0);
 
-    // Cost basis in EUR: currentValue (EUR) - unrealisedPnL (EUR)
-    // This avoids the multi-currency problem of averagePricePaid × qty (which is in instrument currency)
     const positions = Array.isArray(data.positions) ? data.positions : [];
     const positionsValue = positions.reduce((sum, p) => {
-      const val = Number(p.walletImpact?.currentValue ?? p.currentPrice * p.quantity ?? 0);
+      const val = Number(p.currentValue ?? p.currentPrice * p.quantity ?? 0);
       return sum + val;
     }, 0);
     const totalPpl = positions.reduce((sum, p) => {
-      return sum + Number(p.walletImpact?.unrealizedProfitLoss ?? p.ppl ?? 0);
+      return sum + Number(p.ppl ?? p.unrealizedProfitLoss ?? 0);
     }, 0);
-    // invested = amount actually put into stocks (in EUR)
-    const invested = Math.max(0, positionsValue - totalPpl);
-    const result = totalPpl;
+    // T212 /equity/account/cash already has invested and result fields
+    const invested = Number(data.summary?.invested ?? Math.max(0, positionsValue - totalPpl));
+    const result = Number(data.summary?.result ?? totalPpl);
 
     const payload = {
       success: true,
@@ -1814,19 +1832,27 @@ app.get('/api/external/trading212/test', async (req, res) => {
     const results = [];
 
     for (const baseUrl of ['https://live.trading212.com/api/v0', 'https://demo.trading212.com/api/v0']) {
-      try {
-        const r = await axios.get(`${baseUrl}/equity/account/summary`, {
-          headers: { Authorization: key },
-          timeout: 10000
-        });
-        results.push({ env: baseUrl.includes('live') ? 'live' : 'demo', status: r.status, data: r.data });
-      } catch (e) {
-        results.push({
-          env: baseUrl.includes('live') ? 'live' : 'demo',
-          status: e.response?.status || null,
-          error: e.message,
-          t212Response: e.response?.data
-        });
+      for (const [path, auth] of [
+        ['/equity/account/cash', key],
+        ['/equity/account/cash', `Bearer ${key}`],
+        ['/equity/portfolio', key],
+      ]) {
+        const env = baseUrl.includes('live') ? 'live' : 'demo';
+        try {
+          const r = await axios.get(`${baseUrl}${path}`, {
+            headers: { Authorization: auth },
+            timeout: 10000
+          });
+          results.push({ env, path, auth: auth.startsWith('Bearer') ? 'Bearer' : 'plain', status: r.status, data: r.data });
+          break;
+        } catch (e) {
+          results.push({
+            env, path, auth: auth.startsWith('Bearer') ? 'Bearer' : 'plain',
+            status: e.response?.status || null,
+            error: e.message,
+            t212Response: e.response?.data
+          });
+        }
       }
     }
 
