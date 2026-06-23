@@ -148,6 +148,7 @@ function toPublicUser(user) {
     customSettings: user.customSettings,
     realEstate: user.realEstate,
     hasTrading212ApiKey: !!user.trading212ApiKey,
+    hasTrading212ApiSecret: !!user.trading212ApiSecret,
     hasBinanceApiKey: !!user.binanceApiKey,
     hasBinanceApiSecret: !!user.binanceApiSecret,
     hasKrakenApiKey: !!user.krakenApiKey,
@@ -461,32 +462,29 @@ function getRarityRank(desc) {
   return ranks.find(([name]) => internalName.includes(name))?.[1] || 0;
 }
 
-function buildTrading212AuthHeaders(user) {
-  return { Authorization: String(user.trading212ApiKey).trim() };
-}
-
-// Try a T212 endpoint with plain key and Bearer fallback
-async function t212Get(baseUrl, pathName, key) {
-  const authVariants = [key, `Bearer ${key}`];
-  let lastErr;
-  for (const auth of authVariants) {
-    try {
-      const r = await axios.get(`${baseUrl}${pathName}`, {
-        headers: { Authorization: auth },
-        timeout: 10000
-      });
-      return r.data;
-    } catch (err) {
-      lastErr = err;
-      if (!err.response || err.response.status !== 401) throw err;
-    }
+// Trading 212 uses HTTP Basic auth: Authorization: Basic base64(API_KEY:API_SECRET)
+// Legacy keys (single token) are supported by sending the token alone.
+function buildTrading212Auth(user) {
+  const key = String(user.trading212ApiKey || '').trim();
+  const secret = String(user.trading212ApiSecret || '').trim();
+  if (key && secret) {
+    return 'Basic ' + Buffer.from(`${key}:${secret}`).toString('base64');
   }
-  throw lastErr;
+  // Fallback for legacy single-token keys
+  return key;
 }
 
-async function fetchTrading212Resource(baseUrl, pathName, key) {
+async function t212Get(baseUrl, pathName, authHeader) {
+  const r = await axios.get(`${baseUrl}${pathName}`, {
+    headers: { Authorization: authHeader },
+    timeout: 10000
+  });
+  return r.data;
+}
+
+async function fetchTrading212Resource(baseUrl, pathName, authHeader) {
   try {
-    return await t212Get(baseUrl, pathName, key);
+    return await t212Get(baseUrl, pathName, authHeader);
   } catch (err) {
     const status = err.response?.status;
     if ([404, 405].includes(status)) {
@@ -495,7 +493,7 @@ async function fetchTrading212Resource(baseUrl, pathName, key) {
         : pathName === '/equity/account/cash' ? '/equity/account/summary'
         : pathName === '/equity/account/summary' ? '/equity/account/cash'
         : null;
-      if (fallback) return await t212Get(baseUrl, fallback, key);
+      if (fallback) return await t212Get(baseUrl, fallback, authHeader);
     }
     throw err;
   }
@@ -572,7 +570,7 @@ async function authenticateRequest(req) {
     throw error;
   }
 
-  const user = await User.findById(userId).select('+trading212ApiKey +binanceApiKey +binanceApiSecret +krakenApiKey +krakenApiSecret +csFloatApiKey');
+  const user = await User.findById(userId).select('+trading212ApiKey +trading212ApiSecret +binanceApiKey +binanceApiSecret +krakenApiKey +krakenApiSecret +csFloatApiKey');
   if (!user) {
     const error = new Error('User not found');
     error.statusCode = 401;
@@ -842,10 +840,11 @@ app.patch('/api/users/me', async (req, res) => {
 app.patch('/api/users/me/external-apis', async (req, res) => {
   try {
     const { user } = await authenticateRequest(req);
-    const { steamId, trading212ApiKey, binanceApiKey, binanceApiSecret, krakenApiKey, krakenApiSecret, paypalClientId, paypalClientSecret } = req.body;
+    const { steamId, trading212ApiKey, trading212ApiSecret, binanceApiKey, binanceApiSecret, krakenApiKey, krakenApiSecret, paypalClientId, paypalClientSecret } = req.body;
 
     if (steamId !== undefined) user.steamId = steamId || undefined;
     if (trading212ApiKey !== undefined) user.trading212ApiKey = trading212ApiKey ? String(trading212ApiKey).trim() : undefined;
+    if (trading212ApiSecret !== undefined) user.trading212ApiSecret = trading212ApiSecret ? String(trading212ApiSecret).trim() : undefined;
     if (binanceApiKey !== undefined) user.binanceApiKey = binanceApiKey || undefined;
     if (binanceApiSecret !== undefined) user.binanceApiSecret = binanceApiSecret || undefined;
     if (krakenApiKey !== undefined) user.krakenApiKey = krakenApiKey || undefined;
@@ -1723,7 +1722,7 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
       return res.json(cached.payload);
     }
 
-    const key = String(user.trading212ApiKey).trim();
+    const authHeader = buildTrading212Auth(user);
     let data = null;
     let environmentName = 'live';
 
@@ -1735,8 +1734,8 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     let lastErr = null;
     for (const env of ENVIRONMENTS) {
       try {
-        const positions = await fetchTrading212Resource(env.baseUrl, '/equity/portfolio', key);
-        const summary = await fetchTrading212Resource(env.baseUrl, '/equity/account/cash', key);
+        const positions = await fetchTrading212Resource(env.baseUrl, '/equity/portfolio', authHeader);
+        const summary = await fetchTrading212Resource(env.baseUrl, '/equity/account/cash', authHeader);
         data = { positions, summary };
         environmentName = env.name;
         lastErr = null;
@@ -1828,26 +1827,28 @@ app.get('/api/external/trading212/test', async (req, res) => {
     const { user } = await authenticateRequest(req);
     if (!user?.trading212ApiKey) return res.status(400).json({ message: 'No T212 key saved' });
 
-    const key = String(user.trading212ApiKey).trim();
+    const key = String(user.trading212ApiKey || '').trim();
+    const secret = String(user.trading212ApiSecret || '').trim();
+    const basic = key && secret ? 'Basic ' + Buffer.from(`${key}:${secret}`).toString('base64') : null;
     const results = [];
 
+    const authVariants = [];
+    if (basic) authVariants.push(['Basic', basic]);
+    authVariants.push(['plain', key]);
+
     for (const baseUrl of ['https://live.trading212.com/api/v0', 'https://demo.trading212.com/api/v0']) {
-      for (const [path, auth] of [
-        ['/equity/account/cash', key],
-        ['/equity/account/cash', `Bearer ${key}`],
-        ['/equity/portfolio', key],
-      ]) {
+      for (const [authLabel, auth] of authVariants) {
         const env = baseUrl.includes('live') ? 'live' : 'demo';
         try {
-          const r = await axios.get(`${baseUrl}${path}`, {
+          const r = await axios.get(`${baseUrl}/equity/account/cash`, {
             headers: { Authorization: auth },
             timeout: 10000
           });
-          results.push({ env, path, auth: auth.startsWith('Bearer') ? 'Bearer' : 'plain', status: r.status, data: r.data });
+          results.push({ env, auth: authLabel, status: r.status, data: r.data });
           break;
         } catch (e) {
           results.push({
-            env, path, auth: auth.startsWith('Bearer') ? 'Bearer' : 'plain',
+            env, auth: authLabel,
             status: e.response?.status || null,
             error: e.message,
             t212Response: e.response?.data
@@ -1856,7 +1857,12 @@ app.get('/api/external/trading212/test', async (req, res) => {
       }
     }
 
-    res.json({ keyLength: key.length, keyPreview: key.slice(0, 6) + '...' + key.slice(-4), results });
+    res.json({
+      keyLength: key.length,
+      secretLength: secret.length,
+      hasBasicAuth: !!basic,
+      results
+    });
   } catch (err) {
     res.status(err.statusCode || 500).json({ message: err.message });
   }

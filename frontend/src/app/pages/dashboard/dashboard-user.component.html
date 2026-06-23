@@ -4492,23 +4492,27 @@
     </div>
     <div class="modal-title">{{ userT212Linked ? 'Editar API Key Trading 212' : 'Ligar Trading 212' }}</div>
     <div class="modal-text">
-      Introduz a tua API Key para sincronizarmos os teus investimentos.
-      Podes gerar uma em <a href="https://live.trading212.com/settings/api-management" target="_blank" style="color:var(--terra)">Definições > API</a>.
+      Ao gerar a chave no T212 vais receber <b>dois</b> valores: o <b>ID da Chave API</b> e a <b>Chave Secreta</b>. Cola os dois aqui.
+      Gera em <a href="https://live.trading212.com/settings/api-management" target="_blank" style="color:var(--terra)">Definições > API</a>.
     </div>
 
     <div class="modal-form" style="margin-top: 24px; text-align: left;">
       <label class="field">
-        <span>Trading 212 API Key{{ userT212Linked ? ' (nova)' : '' }}</span>
-        <input type="password" [(ngModel)]="t212ApiKey" placeholder="v1.eyJhbGciOi..." autocomplete="new-password" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <span>ID da Chave API{{ userT212Linked ? ' (novo)' : '' }}</span>
+        <input type="text" [(ngModel)]="t212ApiKey" placeholder="21457987ZtDZVP..." autocomplete="off" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+      </label>
+      <label class="field" style="margin-top:14px; display:block;">
+        <span>Chave Secreta{{ userT212Linked ? ' (nova)' : '' }}</span>
+        <input type="password" [(ngModel)]="t212ApiSecret" placeholder="iJBAFQcRDLJx..." autocomplete="new-password" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
       </label>
       <p style="font-size:11px; color:var(--muted); margin-top:8px">
-        Recomendamos uma key com permissões apenas de <b>leitura</b>. A key anterior será substituída.
+        Recomendamos uma key com permissões apenas de <b>leitura</b>. As credenciais anteriores serão substituídas.
       </p>
     </div>
 
     <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
       <button class="btn btn-ghost" (click)="closeT212Modal()" style="flex:1">Cancelar</button>
-      <button class="btn btn-primary" (click)="saveT212()" [disabled]="savingApis || !t212ApiKey.trim()" style="flex:2">
+      <button class="btn btn-primary" (click)="saveT212()" [disabled]="savingApis || !t212ApiKey.trim() || !t212ApiSecret.trim()" style="flex:2">
         {{ savingApis ? 'A guardar...' : (userT212Linked ? 'Atualizar Key' : 'Ligar Conta') }}
       </button>
     </div>

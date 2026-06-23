@@ -965,6 +965,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   newDisplayName: string = '';
   t212ApiKey: string = '';
+  t212ApiSecret: string = '';
   binanceKey: string = '';
   binanceSecret: string = '';
   krakenKey: string = '';
@@ -3318,6 +3319,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
   openT212Modal() {
     this.t212ApiKey = '';
+    this.t212ApiSecret = '';
     this.t212ModalOpen = true;
   }
 
@@ -3326,9 +3328,12 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   saveT212() {
-    if (!this.t212ApiKey.trim()) return;
+    if (!this.t212ApiKey.trim() || !this.t212ApiSecret.trim()) return;
     this.savingApis = true;
-    this.userService.updateExternalApis({ trading212ApiKey: this.t212ApiKey }).subscribe({
+    this.userService.updateExternalApis({
+      trading212ApiKey: this.t212ApiKey.trim(),
+      trading212ApiSecret: this.t212ApiSecret.trim()
+    }).subscribe({
       next: (res) => {
         this.savingApis = false;
         this.userT212Linked = true;

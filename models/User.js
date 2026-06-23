@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   passwordHash: String, // Legacy support
   inventory: { type: Array, default: [] },
   trading212ApiKey: { type: String, select: false },
+  trading212ApiSecret: { type: String, select: false },
   binanceApiKey: { type: String, select: false },
   binanceApiSecret: { type: String, select: false },
   krakenApiKey: { type: String, select: false },
@@ -120,6 +121,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     realEstate: this.realEstate,
     financialGoals: this.financialGoals || [],
     hasTrading212ApiKey: !!this.trading212ApiKey,
+    hasTrading212ApiSecret: !!this.trading212ApiSecret,
     hasBinanceApiKey: !!this.binanceApiKey,
     hasKrakenApiKey: !!this.krakenApiKey,
     hasCoinbaseApiKey: !!this.coinbaseApiKey,

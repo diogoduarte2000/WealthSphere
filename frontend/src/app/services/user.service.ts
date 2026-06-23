@@ -33,6 +33,7 @@ export class UserService {
   updateExternalApis(data: {
     steamId?: string;
     trading212ApiKey?: string;
+    trading212ApiSecret?: string;
     binanceApiKey?: string;
     binanceApiSecret?: string;
     krakenApiKey?: string;
