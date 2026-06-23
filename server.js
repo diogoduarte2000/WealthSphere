@@ -896,6 +896,17 @@ app.get('/api/users/me', async (req, res) => {
   }
 });
 
+app.delete('/api/users/me', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    await user.deleteOne();
+    res.json({ message: 'Conta eliminada com sucesso' });
+  } catch (err) {
+    const statusCode = err.statusCode || 401;
+    res.status(statusCode).json({ message: err.message || 'Invalid token' });
+  }
+});
+
 app.patch('/api/users/me/settings', async (req, res) => {
   try {
     const { user } = await authenticateRequest(req);

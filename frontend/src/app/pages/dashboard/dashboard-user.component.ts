@@ -1006,8 +1006,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   saveCoinbaseKeys() {
     if (!this.coinbaseApiKeyInput.trim() || !this.coinbaseApiSecretInput.trim() || this.coinbaseSaving) return;
     this.coinbaseSaving = true;
-    const token = localStorage.getItem('ws_token');
-    fetch(`${(window as any).__WS_API__ || 'http://localhost:5000'}/api/users/me/coinbase`, {
+    const token = localStorage.getItem('wealthsphere_access_token');
+    fetch(`${environment.apiUrl}/users/me/coinbase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ apiKey: this.coinbaseApiKeyInput.trim(), apiSecret: this.coinbaseApiSecretInput.trim() })
@@ -1045,8 +1045,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   saveWiseToken() {
     if (!this.wiseTokenInput.trim() || this.wiseSaving) return;
     this.wiseSaving = true;
-    const token = localStorage.getItem('ws_token');
-    fetch(`${(window as any).__WS_API__ || 'http://localhost:5000'}/api/users/me/wise`, {
+    const token = localStorage.getItem('wealthsphere_access_token');
+    fetch(`${environment.apiUrl}/users/me/wise`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ apiToken: this.wiseTokenInput.trim() })
