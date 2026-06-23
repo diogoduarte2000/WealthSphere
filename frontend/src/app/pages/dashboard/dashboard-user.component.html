@@ -1669,8 +1669,21 @@
         <!-- ── PORTFÓLIO TAB ───────────────────────────────────────────────── -->
         <div [style.display]="invTab==='portfolio' ? 'block' : 'none'">
 
+          <!-- Loading -->
+          <div *ngIf="t212Loading" style="text-align:center;padding:48px 24px;color:var(--muted)">
+            <div style="font-size:13px">A carregar dados Trading 212...</div>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="!t212Loading && t212Error && !t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
+            <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--ink)">Erro ao carregar Trading 212</div>
+            <div style="font-size:13px;margin-bottom:20px;color:var(--terra)">{{ t212Error }}</div>
+            <button class="btn btn-primary" (click)="loadT212Portfolio()">Tentar novamente</button>
+          </div>
+
           <!-- No T212 linked -->
-          <div *ngIf="!t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
+          <div *ngIf="!t212Loading && !t212Error && !t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
             <div style="font-size:40px;margin-bottom:12px">📊</div>
             <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--ink)">Sem conta Trading 212</div>
             <div style="font-size:13px;margin-bottom:20px">Conecta a tua API key read-only nas Definições.</div>

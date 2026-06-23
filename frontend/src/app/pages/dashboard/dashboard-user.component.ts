@@ -975,6 +975,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   deleteAccountError: string = '';
 
   userT212Linked: boolean = false;
+  t212Loading: boolean = false;
+  t212Error: string = '';
   userBinanceLinked: boolean = false;
   userKrakenLinked: boolean = false;
   userCoinbaseLinked: boolean = false;
@@ -3235,8 +3237,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   loadT212Portfolio() {
+    this.t212Loading = true;
+    this.t212Error = '';
     this.userService.getT212Portfolio().subscribe({
       next: (res: any) => {
+        this.t212Loading = false;
         if (res && res.success) {
           this.t212Portfolio = res.data;
           // Normalize positions: flatten nested T212 API structure into flat fields
@@ -3266,6 +3271,9 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         }
       },
       error: (err) => {
+        this.t212Loading = false;
+        this.t212Error = err.error?.message || 'Erro ao carregar dados Trading 212. Verifica a tua API key.';
+        this.toast(this.t212Error, 'error');
         console.error('Error loading Trading212 portfolio:', err);
       }
     });

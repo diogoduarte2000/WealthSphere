@@ -1778,8 +1778,13 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
 
     res.json(payload);
   } catch (err) {
-    console.error('Trading 212 API Error:', err.response?.data || err.message);
-    res.status(500).json({ message: 'Failed to fetch Trading 212 data' });
+    const status = err.response?.status;
+    const data = err.response?.data;
+    console.error(`Trading 212 API Error [${status}]:`, data || err.message);
+    const msg = status === 401 || status === 403
+      ? 'API key Trading 212 inválida ou sem permissões. Cria uma key read-only no app T212.'
+      : `Erro ao comunicar com Trading 212 (${status || err.message})`;
+    res.status(500).json({ message: msg });
   }
 });
 
