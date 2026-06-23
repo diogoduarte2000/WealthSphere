@@ -4149,8 +4149,9 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
 
     const now = new Date();
     const nowMs = now.getTime();
+    const DAY = 86400000;
     // Account creation = the floor of all history. Nothing existed before this.
-    const creation = this.userCreatedAt ? new Date(this.userCreatedAt) : new Date(nowMs - 180 * 86400000);
+    const creation = this.userCreatedAt ? new Date(this.userCreatedAt) : new Date(nowMs - 180 * DAY);
     const creationMs = creation.getTime();
     const span = Math.max(nowMs - creationMs, 1);
 
@@ -4159,23 +4160,33 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     const lcg = (s: number) => { let v = s; return () => { v = (v * 1664525 + 1013904223) & 0xffffffff; return (v >>> 0) / 0xffffffff; }; };
     const rand = lcg(seed);
 
-    // Real value at a given date: 0 before the account existed, growing to the
-    // current value at "now". No fabricated wealth before account creation.
-    const valueAt = (dateMs: number, finalVal: number, noise = 0.03) => {
-      if (finalVal <= 0) return 0;
+    const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+    // Growth fraction 0→1 from account creation to now (slightly convex)
+    const fracAt = (dateMs: number) => {
       const t = (dateMs - creationMs) / span;
-      if (t <= 0) return 0;          // before account existed → nothing
-      if (t >= 0.999) return finalVal; // today → exact current value
-      const base = finalVal * Math.pow(t, 1.08); // slightly convex growth
-      const n = 1 + (rand() - 0.5) * 2 * noise;
-      return Math.max(0, Number((base * n).toFixed(2)));
+      if (t <= 0) return 0;
+      if (t >= 1) return 1;
+      return Math.pow(t, 1.08);
     };
 
-    // Build all 5 series + labels for a set of dates ending today
-    const buildFor = (dates: Date[], labelFn: (d: Date, i: number) => string) => {
-      const last = dates.length - 1;
-      const series = (finalVal: number) => dates.map((d, i) =>
-        i === last ? (finalVal > 0 ? Number(finalVal.toFixed(2)) : 0) : valueAt(d.getTime(), finalVal));
+    // Build a period: window clamped to the account's real age, with `count`
+    // evenly-spaced points. ALL series share the same growth fraction and the
+    // same per-point noise, so ratios are preserved — Net Worth is never below
+    // any of its own components (ETF, Rendas, etc.).
+    const buildWindow = (windowMs: number, count: number, labelFn: (d: Date, i: number) => string) => {
+      const start = Math.max(nowMs - windowMs, creationMs);
+      const step = (nowMs - start) / Math.max(count - 1, 1);
+      const dates = Array.from({ length: count }, (_, i) => new Date(start + i * step));
+      const last = count - 1;
+      // one shared noise factor per point (±2%), endpoints clean
+      const noise = dates.map((_, i) => (i === last ? 1 : 1 + (rand() - 0.5) * 2 * 0.02));
+      const series = (finalVal: number) => dates.map((d, i) => {
+        if (finalVal <= 0) return 0;
+        if (i === last) return Number(finalVal.toFixed(2));
+        return Math.max(0, Number((finalVal * fracAt(d.getTime()) * noise[i]).toFixed(2)));
+      });
       return {
         networth: series(networthVal),
         etf: series(etfVal),
@@ -4186,47 +4197,22 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
       };
     };
 
-    const DAY = 86400000;
-    const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const monthLbl = (d: Date) => d.getMonth() === 0 ? `${MONTHS[0]} ${String(d.getFullYear()).slice(2)}` : MONTHS[d.getMonth()];
 
-    // Generate `count` dates spaced `stepMs` apart, ending now
-    const daysBack = (count: number, stepMs: number) => {
-      const out: Date[] = [];
-      for (let i = count - 1; i >= 0; i--) out.push(new Date(nowMs - i * stepMs));
-      return out;
-    };
-    // Generate `count` monthly dates ending this month
-    const monthsBack = (count: number) => {
-      const out: Date[] = [];
-      for (let i = count - 1; i >= 0; i--) out.push(new Date(now.getFullYear(), now.getMonth() - i, Math.min(now.getDate(), 28)));
-      return out;
-    };
-
-    // 1D - 8 hourly points today
-    this.data['1d'] = buildFor(
-      Array.from({ length: 8 }, (_, i) => new Date(nowMs - (7 - i) * 2 * 3600000)),
-      (d) => `${String(d.getHours()).padStart(2, '0')}:00`
-    );
-
-    // 1W - last 7 days
-    this.data['1w'] = buildFor(daysBack(7, DAY), (d) => WEEK[d.getDay()]);
-
-    // 6M - last 7 months
-    this.data['6m'] = buildFor(monthsBack(7), (d) => MONTHS[d.getMonth()]);
-
-    // 1A - last 12 months
-    this.data['1a'] = buildFor(monthsBack(12), (d) => MONTHS[d.getMonth()]);
-
-    // 3A - last 36 months
-    this.data['3a'] = buildFor(monthsBack(36),
-      (d) => d.getMonth() === 0 || d.getMonth() === 6 ? `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}` : '');
-
-    // MAX - from account creation to now (monthly), capped at 60 points
-    const monthsSinceCreation = Math.max(2, Math.min(60,
-      (now.getFullYear() - creation.getFullYear()) * 12 + (now.getMonth() - creation.getMonth()) + 1));
-    this.data['max'] = buildFor(monthsBack(monthsSinceCreation),
-      (d) => d.getMonth() === 0 ? String(d.getFullYear()) : (d.getMonth() === 6 ? MONTHS[d.getMonth()] : ''));
+    // 1D - 8 hourly points today (net worth is effectively flat intraday)
+    this.data['1d'] = buildWindow(14 * 3600000, 8, (d) => `${String(d.getHours()).padStart(2, '0')}:00`);
+    // 1W - 7 daily points
+    this.data['1w'] = buildWindow(6 * DAY, 7, (d) => WEEK[d.getDay()]);
+    // 6M - ~26 weekly points (detailed)
+    this.data['6m'] = buildWindow(182 * DAY, 26, monthLbl);
+    // 1A - ~24 bi-weekly points
+    this.data['1a'] = buildWindow(365 * DAY, 24, monthLbl);
+    // 3A - 36 monthly points
+    this.data['3a'] = buildWindow(1095 * DAY, 36, monthLbl);
+    // MAX - from account creation to now, monthly density (capped 72 points)
+    const monthsSinceCreation = Math.max(2, Math.min(72,
+      (now.getFullYear() - creation.getFullYear()) * 12 + (now.getMonth() - creation.getMonth()) + 2));
+    this.data['max'] = buildWindow(span, monthsSinceCreation, monthLbl);
   }
 
   get totalExpenses() {
