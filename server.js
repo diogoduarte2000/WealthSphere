@@ -678,6 +678,11 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email e password são obrigatórios' });
+    }
+
     const normalizedEmail = normalizeEmail(email);
 
     const user = await User.findOne({ email: normalizedEmail }).select('+password +refreshTokens');
@@ -890,6 +895,17 @@ app.get('/api/users/me', async (req, res) => {
   try {
     const { user } = await authenticateRequest(req);
     res.json({ profile: toPublicUser(user) });
+  } catch (err) {
+    const statusCode = err.statusCode || 401;
+    res.status(statusCode).json({ message: err.message || 'Invalid token' });
+  }
+});
+
+app.delete('/api/users/me', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    await user.deleteOne();
+    res.json({ message: 'Conta eliminada com sucesso' });
   } catch (err) {
     const statusCode = err.statusCode || 401;
     res.status(statusCode).json({ message: err.message || 'Invalid token' });
@@ -1762,8 +1778,13 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
 
     res.json(payload);
   } catch (err) {
-    console.error('Trading 212 API Error:', err.response?.data || err.message);
-    res.status(500).json({ message: 'Failed to fetch Trading 212 data' });
+    const status = err.response?.status;
+    const data = err.response?.data;
+    console.error(`Trading 212 API Error [${status}]:`, data || err.message);
+    const msg = status === 401 || status === 403
+      ? 'API key Trading 212 inválida ou sem permissões. Cria uma key read-only no app T212.'
+      : `Erro ao comunicar com Trading 212 (${status || err.message})`;
+    res.status(500).json({ message: msg });
   }
 });
 
