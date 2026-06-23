@@ -462,7 +462,7 @@ function getRarityRank(desc) {
 }
 
 function buildTrading212AuthHeaders(user) {
-  return { Authorization: user.trading212ApiKey };
+  return { Authorization: String(user.trading212ApiKey).trim() };
 }
 
 async function fetchTrading212Resource(baseUrl, pathName, headers) {
@@ -825,7 +825,7 @@ app.patch('/api/users/me/external-apis', async (req, res) => {
     const { steamId, trading212ApiKey, binanceApiKey, binanceApiSecret, krakenApiKey, krakenApiSecret, paypalClientId, paypalClientSecret } = req.body;
 
     if (steamId !== undefined) user.steamId = steamId || undefined;
-    if (trading212ApiKey !== undefined) user.trading212ApiKey = trading212ApiKey || undefined;
+    if (trading212ApiKey !== undefined) user.trading212ApiKey = trading212ApiKey ? String(trading212ApiKey).trim() : undefined;
     if (binanceApiKey !== undefined) user.binanceApiKey = binanceApiKey || undefined;
     if (binanceApiSecret !== undefined) user.binanceApiSecret = binanceApiSecret || undefined;
     if (krakenApiKey !== undefined) user.krakenApiKey = krakenApiKey || undefined;
@@ -1707,22 +1707,30 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     let data = null;
     let environmentName = 'live';
 
-    try {
-      const baseUrl = 'https://live.trading212.com/api/v0';
-      const positions = await fetchTrading212Resource(baseUrl, '/equity/positions', headers);
-      const summary = await fetchTrading212Resource(baseUrl, '/equity/account/summary', headers);
-      data = { positions, summary };
-    } catch (liveErr) {
-      if (liveErr.response && (liveErr.response.status === 401 || liveErr.response.status === 403)) {
-        const baseUrl = 'https://demo.trading212.com/api/v0';
-        const positions = await fetchTrading212Resource(baseUrl, '/equity/positions', headers);
-        const summary = await fetchTrading212Resource(baseUrl, '/equity/account/summary', headers);
+    const ENVIRONMENTS = [
+      { name: 'live', baseUrl: 'https://live.trading212.com/api/v0' },
+      { name: 'demo', baseUrl: 'https://demo.trading212.com/api/v0' },
+    ];
+
+    let lastErr = null;
+    for (const env of ENVIRONMENTS) {
+      try {
+        const positions = await fetchTrading212Resource(env.baseUrl, '/equity/positions', headers);
+        const summary = await fetchTrading212Resource(env.baseUrl, '/equity/account/summary', headers);
         data = { positions, summary };
-        environmentName = 'demo';
-      } else {
-        throw liveErr;
+        environmentName = env.name;
+        lastErr = null;
+        break;
+      } catch (envErr) {
+        lastErr = envErr;
+        const status = envErr.response?.status;
+        // Only fall through to demo if live returned 401/403 (could be a demo-only key)
+        if (env.name === 'live' && status !== 401 && status !== 403) throw envErr;
+        // If demo also fails, propagate with T212's actual error message attached
+        if (env.name === 'demo') throw envErr;
       }
     }
+    if (lastErr) throw lastErr;
 
     if (!data) {
       return res.json({ success: false });
@@ -1779,11 +1787,19 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
     res.json(payload);
   } catch (err) {
     const status = err.response?.status;
-    const data = err.response?.data;
-    console.error(`Trading 212 API Error [${status}]:`, data || err.message);
-    const msg = status === 401 || status === 403
-      ? 'API key Trading 212 inválida ou sem permissões. Cria uma key read-only no app T212.'
-      : `Erro ao comunicar com Trading 212 (${status || err.message})`;
+    const t212Body = err.response?.data;
+    const t212Msg = t212Body?.message || (typeof t212Body === 'string' ? t212Body : null);
+    console.error(`Trading 212 API Error [${status}]:`, t212Body || err.message);
+    let msg;
+    if (status === 401) {
+      msg = `API key Trading 212 inválida (401${t212Msg ? ': ' + t212Msg : ''}). Verifica se copiaste a key corretamente.`;
+    } else if (status === 403) {
+      msg = `API key Trading 212 sem permissões (403${t212Msg ? ': ' + t212Msg : ''}). A key precisa de ter permissão "Equity" habilitada.`;
+    } else if (status === 429) {
+      msg = 'Trading 212 rate limit atingido — tenta novamente em 1 minuto.';
+    } else {
+      msg = `Erro ao comunicar com Trading 212 (${status || err.message}${t212Msg ? ': ' + t212Msg : ''})`;
+    }
     res.status(500).json({ message: msg });
   }
 });
