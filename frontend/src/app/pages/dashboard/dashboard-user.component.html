@@ -1669,8 +1669,21 @@
         <!-- ── PORTFÓLIO TAB ───────────────────────────────────────────────── -->
         <div [style.display]="invTab==='portfolio' ? 'block' : 'none'">
 
+          <!-- Loading -->
+          <div *ngIf="t212Loading" style="text-align:center;padding:48px 24px;color:var(--muted)">
+            <div style="font-size:13px">A carregar dados Trading 212...</div>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="!t212Loading && t212Error && !t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
+            <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--ink)">Erro ao carregar Trading 212</div>
+            <div style="font-size:13px;margin-bottom:20px;color:var(--terra)">{{ t212Error }}</div>
+            <button class="btn btn-primary" (click)="loadT212Portfolio()">Tentar novamente</button>
+          </div>
+
           <!-- No T212 linked -->
-          <div *ngIf="!t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
+          <div *ngIf="!t212Loading && !t212Error && !t212Portfolio" style="text-align:center;padding:48px 24px;color:var(--muted)">
             <div style="font-size:40px;margin-bottom:12px">📊</div>
             <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--ink)">Sem conta Trading 212</div>
             <div style="font-size:13px;margin-bottom:20px">Conecta a tua API key read-only nas Definições.</div>
@@ -4004,8 +4017,13 @@
                     <div style="font-size:10px;color:var(--muted)">Portfólio & evolução</div>
                   </div>
                 </div>
-                <span *ngIf="userT212Linked" class="profile-integ-badge">● Ligado</span>
-                <button *ngIf="!userT212Linked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openT212Modal()">Ligar</button>
+                <ng-container *ngIf="userT212Linked; else profT212Connect">
+                  <span class="profile-integ-badge">● Ligado</span>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openT212Modal()">Editar</button>
+                </ng-container>
+                <ng-template #profT212Connect>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openT212Modal()">Ligar</button>
+                </ng-template>
               </div>
               <!-- Binance -->
               <div class="profile-integ-row">
@@ -4016,8 +4034,13 @@
                     <div style="font-size:10px;color:var(--muted)">Crypto spot</div>
                   </div>
                 </div>
-                <span *ngIf="userBinanceLinked" class="profile-integ-badge">● Ligado</span>
-                <button *ngIf="!userBinanceLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openBinanceModal()">Ligar</button>
+                <ng-container *ngIf="userBinanceLinked; else profBinanceConnect">
+                  <span class="profile-integ-badge">● Ligado</span>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openBinanceModal()">Editar</button>
+                </ng-container>
+                <ng-template #profBinanceConnect>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openBinanceModal()">Ligar</button>
+                </ng-template>
               </div>
               <!-- Kraken -->
               <div class="profile-integ-row">
@@ -4028,8 +4051,13 @@
                     <div style="font-size:10px;color:var(--muted)">Crypto exchange</div>
                   </div>
                 </div>
-                <span *ngIf="userKrakenLinked" class="profile-integ-badge">● Ligado</span>
-                <button *ngIf="!userKrakenLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openKrakenModal()">Ligar</button>
+                <ng-container *ngIf="userKrakenLinked; else profKrakenConnect">
+                  <span class="profile-integ-badge">● Ligado</span>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openKrakenModal()">Editar</button>
+                </ng-container>
+                <ng-template #profKrakenConnect>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openKrakenModal()">Ligar</button>
+                </ng-template>
               </div>
               <!-- Coinbase -->
               <div class="profile-integ-row">
@@ -4040,8 +4068,13 @@
                     <div style="font-size:10px;color:var(--muted)">Crypto wallet</div>
                   </div>
                 </div>
-                <span *ngIf="userCoinbaseLinked" class="profile-integ-badge">● Ligado</span>
-                <button *ngIf="!userCoinbaseLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openCoinbaseModal()">Ligar</button>
+                <ng-container *ngIf="userCoinbaseLinked; else profCoinbaseConnect">
+                  <span class="profile-integ-badge">● Ligado</span>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openCoinbaseModal()">Editar</button>
+                </ng-container>
+                <ng-template #profCoinbaseConnect>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openCoinbaseModal()">Ligar</button>
+                </ng-template>
               </div>
               <!-- Wise -->
               <div class="profile-integ-row">
@@ -4052,8 +4085,13 @@
                     <div style="font-size:10px;color:var(--muted)">Transferências internacionais</div>
                   </div>
                 </div>
-                <span *ngIf="userWiseLinked" class="profile-integ-badge">● Ligado</span>
-                <button *ngIf="!userWiseLinked" class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openWiseModal()">Ligar</button>
+                <ng-container *ngIf="userWiseLinked; else profWiseConnect">
+                  <span class="profile-integ-badge">● Ligado</span>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openWiseModal()">Editar</button>
+                </ng-container>
+                <ng-template #profWiseConnect>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" (click)="openWiseModal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
           </div>
@@ -4108,8 +4146,13 @@
                 </div>
               </div>
               <div class="api-integ-action">
-                <span *ngIf="userT212Linked" class="badge-linked">✓ Ligado</span>
-                <button *ngIf="!userT212Linked" class="btn-connect" (click)="openT212Modal()">Ligar</button>
+                <ng-container *ngIf="userT212Linked; else t212Connect">
+                  <span class="badge-linked">✓ Ligado</span>
+                  <button class="btn-edit-key" (click)="openT212Modal()">Editar</button>
+                </ng-container>
+                <ng-template #t212Connect>
+                  <button class="btn-connect" (click)="openT212Modal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
 
@@ -4123,8 +4166,13 @@
                 </div>
               </div>
               <div class="api-integ-action">
-                <span *ngIf="userBinanceLinked" class="badge-linked">✓ Ligado</span>
-                <button *ngIf="!userBinanceLinked" class="btn-connect" (click)="openBinanceModal()">Ligar</button>
+                <ng-container *ngIf="userBinanceLinked; else binanceConnect">
+                  <span class="badge-linked">✓ Ligado</span>
+                  <button class="btn-edit-key" (click)="openBinanceModal()">Editar</button>
+                </ng-container>
+                <ng-template #binanceConnect>
+                  <button class="btn-connect" (click)="openBinanceModal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
 
@@ -4138,8 +4186,13 @@
                 </div>
               </div>
               <div class="api-integ-action">
-                <span *ngIf="userKrakenLinked" class="badge-linked">✓ Ligado</span>
-                <button *ngIf="!userKrakenLinked" class="btn-connect" (click)="openKrakenModal()">Ligar</button>
+                <ng-container *ngIf="userKrakenLinked; else krakenConnect">
+                  <span class="badge-linked">✓ Ligado</span>
+                  <button class="btn-edit-key" (click)="openKrakenModal()">Editar</button>
+                </ng-container>
+                <ng-template #krakenConnect>
+                  <button class="btn-connect" (click)="openKrakenModal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
 
@@ -4153,8 +4206,13 @@
                 </div>
               </div>
               <div class="api-integ-action">
-                <span *ngIf="userCoinbaseLinked" class="badge-linked">✓ Ligado</span>
-                <button *ngIf="!userCoinbaseLinked" class="btn-connect" (click)="openCoinbaseModal()">Ligar</button>
+                <ng-container *ngIf="userCoinbaseLinked; else coinbaseConnect">
+                  <span class="badge-linked">✓ Ligado</span>
+                  <button class="btn-edit-key" (click)="openCoinbaseModal()">Editar</button>
+                </ng-container>
+                <ng-template #coinbaseConnect>
+                  <button class="btn-connect" (click)="openCoinbaseModal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
 
@@ -4168,8 +4226,13 @@
                 </div>
               </div>
               <div class="api-integ-action">
-                <span *ngIf="userWiseLinked" class="badge-linked">✓ Ligado</span>
-                <button *ngIf="!userWiseLinked" class="btn-connect" (click)="openWiseModal()">Ligar</button>
+                <ng-container *ngIf="userWiseLinked; else wiseConnect">
+                  <span class="badge-linked">✓ Ligado</span>
+                  <button class="btn-edit-key" (click)="openWiseModal()">Editar</button>
+                </ng-container>
+                <ng-template #wiseConnect>
+                  <button class="btn-connect" (click)="openWiseModal()">Ligar</button>
+                </ng-template>
               </div>
             </div>
 
@@ -4427,7 +4490,7 @@
     <div class="modal-icon" style="background:#0d1117;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
       <svg width="28" height="28" viewBox="0 0 22 22" fill="none"><path d="M11 3 L20 16 L16.5 16 L11 7.5 L5.5 16 L2 16 Z" fill="#4A9EFF"/><path d="M7.5 16 L11 10.5 L14.5 16 Z" fill="#0d1117"/></svg>
     </div>
-    <div class="modal-title">Ligar Trading 212</div>
+    <div class="modal-title">{{ userT212Linked ? 'Editar API Key Trading 212' : 'Ligar Trading 212' }}</div>
     <div class="modal-text">
       Introduz a tua API Key para sincronizarmos os teus investimentos.
       Podes gerar uma em <a href="https://live.trading212.com/settings/api-management" target="_blank" style="color:var(--terra)">Definições > API</a>.
@@ -4435,18 +4498,18 @@
 
     <div class="modal-form" style="margin-top: 24px; text-align: left;">
       <label class="field">
-        <span>Trading 212 API Key</span>
-        <input type="password" [(ngModel)]="t212ApiKey" placeholder="v1.eyJhbGciOi..." style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <span>Trading 212 API Key{{ userT212Linked ? ' (nova)' : '' }}</span>
+        <input type="password" [(ngModel)]="t212ApiKey" placeholder="v1.eyJhbGciOi..." autocomplete="new-password" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
       </label>
       <p style="font-size:11px; color:var(--muted); margin-top:8px">
-        Nota: Recomendamos usar uma key com permissões apenas de <b>leitura</b> para maior segurança.
+        Recomendamos uma key com permissões apenas de <b>leitura</b>. A key anterior será substituída.
       </p>
     </div>
 
     <div class="modal-actions" style="margin-top: 32px; display: flex; gap: 12px;">
       <button class="btn btn-ghost" (click)="closeT212Modal()" style="flex:1">Cancelar</button>
       <button class="btn btn-primary" (click)="saveT212()" [disabled]="savingApis || !t212ApiKey.trim()" style="flex:2">
-        {{ savingApis ? 'A conectar...' : 'Ligar Conta' }}
+        {{ savingApis ? 'A guardar...' : (userT212Linked ? 'Atualizar Key' : 'Ligar Conta') }}
       </button>
     </div>
   </div>

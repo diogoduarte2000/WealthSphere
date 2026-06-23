@@ -975,6 +975,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   deleteAccountError: string = '';
 
   userT212Linked: boolean = false;
+  t212Loading: boolean = false;
+  t212Error: string = '';
   userBinanceLinked: boolean = false;
   userKrakenLinked: boolean = false;
   userCoinbaseLinked: boolean = false;
@@ -1006,8 +1008,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   saveCoinbaseKeys() {
     if (!this.coinbaseApiKeyInput.trim() || !this.coinbaseApiSecretInput.trim() || this.coinbaseSaving) return;
     this.coinbaseSaving = true;
-    const token = localStorage.getItem('ws_token');
-    fetch(`${(window as any).__WS_API__ || 'http://localhost:5000'}/api/users/me/coinbase`, {
+    const token = localStorage.getItem('wealthsphere_access_token');
+    fetch(`${environment.apiUrl}/users/me/coinbase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ apiKey: this.coinbaseApiKeyInput.trim(), apiSecret: this.coinbaseApiSecretInput.trim() })
@@ -1045,8 +1047,8 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   saveWiseToken() {
     if (!this.wiseTokenInput.trim() || this.wiseSaving) return;
     this.wiseSaving = true;
-    const token = localStorage.getItem('ws_token');
-    fetch(`${(window as any).__WS_API__ || 'http://localhost:5000'}/api/users/me/wise`, {
+    const token = localStorage.getItem('wealthsphere_access_token');
+    fetch(`${environment.apiUrl}/users/me/wise`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ apiToken: this.wiseTokenInput.trim() })
@@ -3235,8 +3237,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   loadT212Portfolio() {
+    this.t212Loading = true;
+    this.t212Error = '';
     this.userService.getT212Portfolio().subscribe({
       next: (res: any) => {
+        this.t212Loading = false;
         if (res && res.success) {
           this.t212Portfolio = res.data;
           // Normalize positions: flatten nested T212 API structure into flat fields
@@ -3266,6 +3271,9 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
         }
       },
       error: (err) => {
+        this.t212Loading = false;
+        this.t212Error = err.error?.message || 'Erro ao carregar dados Trading 212. Verifica a tua API key.';
+        this.toast(this.t212Error, 'error');
         console.error('Error loading Trading212 portfolio:', err);
       }
     });
@@ -3309,6 +3317,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   openT212Modal() {
+    this.t212ApiKey = '';
     this.t212ModalOpen = true;
   }
 
@@ -3322,9 +3331,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.userService.updateExternalApis({ trading212ApiKey: this.t212ApiKey }).subscribe({
       next: (res) => {
         this.savingApis = false;
+        this.userT212Linked = true;
+        this.t212Error = '';
         this.closeT212Modal();
-        this.loadProfile();
-        this.toast('API Trading 212 ligada com sucesso!', 'success');
+        this.toast('API Trading 212 guardada! A carregar dados...', 'success');
+        this.loadT212Portfolio();
       },
       error: (err) => {
         this.savingApis = false;

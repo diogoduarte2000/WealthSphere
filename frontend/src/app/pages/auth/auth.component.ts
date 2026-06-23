@@ -45,7 +45,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   
   private morphTimer?: ReturnType<typeof setTimeout>;
-  private readonly apiBaseUrl = this.resolveApiBaseUrl();
+  private readonly apiBaseUrl = environment.apiUrl;
 
   mode: AuthMode = 'login';
   submitted = false;
@@ -267,16 +267,6 @@ export class AuthComponent implements OnInit, OnDestroy {
   }
 
 
-  private resolveApiBaseUrl(): string {
-    const configuredUrl = localStorage.getItem('wealthsphere_api_url')?.trim();
-
-    if (configuredUrl) {
-      return configuredUrl.replace(/\/$/, '');
-    }
-
-    return environment.apiUrl;
-  }
-
   private loadTheme(): void {
     const saved = localStorage.getItem('ws-theme');
     this.isDark = saved ? saved !== 'light' : !this.isDaytime();
@@ -301,7 +291,7 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   private getErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) {
-      return `Não consegui ligar ao backend. Confirma se o servidor em ${environment.apiUrl} está ativo.`;
+      return `Não consegui ligar ao backend (${this.apiBaseUrl}). O servidor pode estar a iniciar — tenta novamente em 30 segundos.`;
     }
 
     if (typeof error.error?.message === 'string') {
