@@ -1804,6 +1804,38 @@ app.get('/api/external/trading212/portfolio', async (req, res) => {
   }
 });
 
+// T212 key diagnostic — returns raw T212 response for debugging
+app.get('/api/external/trading212/test', async (req, res) => {
+  try {
+    const { user } = await authenticateRequest(req);
+    if (!user?.trading212ApiKey) return res.status(400).json({ message: 'No T212 key saved' });
+
+    const key = String(user.trading212ApiKey).trim();
+    const results = [];
+
+    for (const baseUrl of ['https://live.trading212.com/api/v0', 'https://demo.trading212.com/api/v0']) {
+      try {
+        const r = await axios.get(`${baseUrl}/equity/account/summary`, {
+          headers: { Authorization: key },
+          timeout: 10000
+        });
+        results.push({ env: baseUrl.includes('live') ? 'live' : 'demo', status: r.status, data: r.data });
+      } catch (e) {
+        results.push({
+          env: baseUrl.includes('live') ? 'live' : 'demo',
+          status: e.response?.status || null,
+          error: e.message,
+          t212Response: e.response?.data
+        });
+      }
+    }
+
+    res.json({ keyLength: key.length, keyPreview: key.slice(0, 6) + '...' + key.slice(-4), results });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message });
+  }
+});
+
 // Portfolio evolution history
 app.get('/api/external/trading212/history', async (req, res) => {
   try {
