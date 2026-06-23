@@ -3317,6 +3317,7 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
   }
 
   openT212Modal() {
+    this.t212ApiKey = '';
     this.t212ModalOpen = true;
   }
 
@@ -3330,9 +3331,11 @@ export class DashboardUserComponent implements OnInit, AfterViewInit {
     this.userService.updateExternalApis({ trading212ApiKey: this.t212ApiKey }).subscribe({
       next: (res) => {
         this.savingApis = false;
+        this.userT212Linked = true;
+        this.t212Error = '';
         this.closeT212Modal();
-        this.loadProfile();
-        this.toast('API Trading 212 ligada com sucesso!', 'success');
+        this.toast('API Trading 212 guardada! A carregar dados...', 'success');
+        this.loadT212Portfolio();
       },
       error: (err) => {
         this.savingApis = false;
