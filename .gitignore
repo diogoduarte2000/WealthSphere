@@ -112,9 +112,7 @@ render.yaml
 vercel.json
 .gitlab-ci.yml
 
-# Root level package files (use frontend specific ones)
-package.json
-package-lock.json
+# Root level (backend) node_modules only
 node_modules/
 
 # Environment files
